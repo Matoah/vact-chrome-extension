@@ -1,6 +1,6 @@
 //@ts-nocheck
-import TimePoint from './TimePoint';
-import { getTipDom } from './Utils';
+import TimePoint from "./TimePoint";
+import { getTipDom } from "./Utils";
 
 let storage, storage_data;
 const TimePoint_Root = "Time_Point_Root_Data";
@@ -42,9 +42,9 @@ export function add(timePoint) {
   const s = _getStorage();
   let datas,
     key = timePoint.getKey();
-  if (!s.containsKey(key)) {
+  if (!s.has(key)) {
     datas = [];
-    s.put(key, datas);
+    s.set(key, datas);
   } else {
     datas = s.get(key);
   }
@@ -57,7 +57,7 @@ export function remove(sourceKey) {
   const s = _getStorage();
   let datas,
     key = sourceKey;
-  if (!s.containsKey(sourceKey)) {
+  if (!s.has(sourceKey)) {
     return false;
   } else {
     datas = s.get(sourceKey);
@@ -88,7 +88,11 @@ function _resetViewData() {
   const ruleTimePoint = {}; //保存规则时间点
   const methodTimePoint = {}; //保存方法时间点
   const win_Net_ComTimePoint = {}; //保存窗体、构件、网络的时间点
-  s.iterate(function (key, times) {
+  const iteror = s.entries();
+  for (let index = 0; index < s.size; index++) {
+    const next = iteror.next();
+    const entry = next.value;
+    const times = entry[1];
     const dataArray: Data[] = [];
     for (let i = 0; i < times.length; i++) {
       const time: TimePoint = times[i];
@@ -116,7 +120,7 @@ function _resetViewData() {
           scopeId: time.getScopeId(),
           parentScopeId: time.getParentScopeId(),
           ruleCode: time.getRuleCode(),
-          type: TimelineChart.TYPE.INTERVAL,
+          type: "INTERVAL",
           customClass: time.getTypeCode(),
           series: time.getSeries(),
           from: type > 0 ? null : time.getTime(),
@@ -144,7 +148,7 @@ function _resetViewData() {
         }
       }
     }
-  });
+  }
 
   const rootTimePoint = []; //保存根的时间点
   //处理方法的父子关系
@@ -204,10 +208,10 @@ function _resetViewData() {
     rootTimePoint.push(win_Net_ComTimePoint[key]);
   }
   const st = _getDataStorage();
-  st.put(TimePoint_Root, rootTimePoint);
-  st.put(TimePoint_Method, methodTimePoint);
-  st.put(TimePoint_Rule, ruleTimePoint);
-  st.put(TimePoint_WinComNet, win_Net_ComTimePoint);
+  st.set(TimePoint_Root, rootTimePoint);
+  st.set(TimePoint_Method, methodTimePoint);
+  st.set(TimePoint_Rule, ruleTimePoint);
+  st.set(TimePoint_WinComNet, win_Net_ComTimePoint);
 }
 /**
  * 删除已经组装好的数据
@@ -220,12 +224,12 @@ export function clearTreeData() {
  * 获取预览的数据
  * @param String ruleKey 规则key，若为空，则是以根节点处理
  * */
-export function genViewTimePoint(ruleKey) {
+export function genViewTimePoint(ruleKey?: string) {
   const s = _getDataStorage();
   //如果结果是空，则重新生成数据
-  if (!s.containsKey(TimePoint_Root)) {
-    _resetViewData();
-  }
+  //if (!s.has(TimePoint_Root)) {
+  _resetViewData();
+  //}
   const rootTimePoint = s.get(TimePoint_Root);
   const ruleTimePoint = s.get(TimePoint_Rule);
   const resultMap = [];

@@ -1,19 +1,16 @@
-import './App.css';
+import "./App.css";
 
-import {
-  BrowserRouter,
-  Route,
-  Routes,
-} from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from "@mui/material/styles";
 
-import FrontendMonitor from './pages/FrontendMonitor';
-import PerformanceAnalysis from './pages/PerformanceAnalysis';
-import Portal from './pages/Portal';
-import VjsSizeAnalysis from './pages/VjsSizeAnalysis';
-import VjsUrlList from './pages/VjsUrlList';
-import { DarkSpacesTheme } from './themes/DarkSpacesTheme';
+import FrontendMonitor from "./pages/FrontendMonitor";
+import PerformanceAnalysis from "./pages/PerformanceAnalysis";
+import Portal from "./pages/Portal";
+import VjsSizeAnalysis from "./pages/VjsSizeAnalysis";
+import VjsUrlList from "./pages/VjsUrlList";
+import TimelineMonitor from "./pages/TimelineMonitor";
+import { DarkSpacesTheme } from "./themes/DarkSpacesTheme";
 
 function App() {
   return (
@@ -26,6 +23,7 @@ function App() {
           <Route path="/vjsUrlList" element={<VjsUrlList />} />
           <Route path="/vjsSizeAnalysis/:id" element={<VjsSizeAnalysis />} />
           <Route path="/frontendMonitor" element={<FrontendMonitor />} />
+          <Route path="/timelineMonitor" element={<TimelineMonitor />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

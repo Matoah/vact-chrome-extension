@@ -1,4 +1,5 @@
-import * as eventObserver from './EventObserver';
+import { register } from "./EventObserver";
+import { clear, genViewTimePoint } from "./DataManager";
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
@@ -56,11 +57,11 @@ vact_devtools.methods = {
       return result;
     }
   },
-  getInitVjsNames:(){
+  getInitVjsNames: function () {
     return ["vjs.framework.extension.platform.interface.event"];
   },
   vjsInited: function (sandbox) {
-    eventObserver.register(sandbox);
+    register(sandbox);
   },
   isMonitored: function () {
     const res = window.localStorage.getItem("vact_devtools_isMonitored");
@@ -72,7 +73,13 @@ vact_devtools.methods = {
   markUnMonitored: function () {
     window.localStorage.setItem("vact_devtools_isMonitored", "false");
   },
+  clearMonitorData: function () {
+    clear();
+  },
+  getMonitorDatas: function (params) {
+    return genViewTimePoint(params.key);
+  },
 };
 //@ts-ignore
 window.vact_devtools = vact_devtools;
-
+export { vact_devtools };

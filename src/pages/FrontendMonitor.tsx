@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import DeleteIcon from '@mui/icons-material/Delete';
-import PlayCircleFilledWhiteIcon
-  from '@mui/icons-material/PlayCircleFilledWhite';
-import StopCircleIcon from '@mui/icons-material/StopCircle';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
+import DeleteIcon from "@mui/icons-material/Delete";
+import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Navigator from "../components/Navigator";
 
 enum State {
   stoped,
@@ -19,6 +20,19 @@ enum State {
 
 function FrontendMonitor() {
   const [state, setState] = useState(State.stoped);
+  const nav = useNavigate();
+  useEffect(() => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("isMonitored", {});
+      promise
+        .then((monitored: boolean) => {
+          setState(monitored ? State.started : State.stoped);
+        })
+        .catch();
+    }
+  }, []);
   return (
     <Box
       sx={{
@@ -71,7 +85,13 @@ function FrontendMonitor() {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton disabled={state == State.started}>
+          <ListItemButton
+            disabled={state == State.started}
+            onClick={() => {
+              //@ts-ignore
+              window?.vact_devtools?.sendRequest("clearMonitorData", {});
+            }}
+          >
             <ListItemIcon>
               <DeleteIcon color={state == State.started ? "inherit" : "info"} />
             </ListItemIcon>
@@ -82,7 +102,12 @@ function FrontendMonitor() {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton disabled={state == State.started}>
+          <ListItemButton
+            disabled={state == State.started}
+            onClick={() => {
+              nav("/timelineMonitor");
+            }}
+          >
             <ListItemIcon>
               <VisibilityIcon
                 color={state == State.started ? "inherit" : "info"}
@@ -95,6 +120,7 @@ function FrontendMonitor() {
           </ListItemButton>
         </ListItem>
       </List>
+      <Navigator />
     </Box>
   );
 }

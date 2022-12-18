@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 const assetsDirPath = path.resolve("./plugin/dist/assets");
 if (fs.existsSync(assetsDirPath)) {
@@ -9,8 +9,17 @@ if (fs.existsSync(assetsDirPath)) {
     if (file.endsWith(".js")) {
       const absPath = path.resolve(assetsDirPath, file);
       const buff = fs.readFileSync(absPath);
-      const content = new String(buff);
+      let content = new String(buff);
       if (content.indexOf("vactInjectScriptVersion") != -1) {
+        const reg = /export\s+default\s+(.+)?\(\);\n*$/;
+        const matcher = content.match(reg);
+        if (matcher) {
+          content =
+            content.substring(0, content.length - matcher[0].length) +
+            matcher[1] +
+            "();\n";
+          fs.writeFileSync(absPath, content);
+        }
         const contentScriptPath = path.resolve(
           "./plugin/scripts/contentScript.js"
         );

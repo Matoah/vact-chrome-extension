@@ -1,19 +1,17 @@
 //@ts-nocheck
-import * as dataManager from './DataManager';
-import TimePoint from './TimePoint';
+import * as dataManager from "./DataManager";
+import TimePoint from "./TimePoint";
 
 let sb;
 
 function getScopeManager() {
-  return sb.getService(
-    "vjs.framework.extension.platform.interface.scope.ScopeManager"
-  );
+  return sb.getService("v_act_vjs_framework_extension_platform_interface_scope")
+    .ScopeManager;
 }
 
 function getEventManager() {
-  return sb.getService(
-    "vjs.framework.extension.platform.interface.event.EventManager"
-  );
+  return sb.getService("v_act_vjs_framework_extension_platform_interface_event")
+    .EventManager;
 }
 
 /**
@@ -32,24 +30,28 @@ function _getRouteTimePoint(routeContext, type) {
     info.windowCode = scope.getWindowCode();
   }
   var routeCfg = routeContext.getRouteConfig();
-  var funCode = routeCfg.getCode();
-  info.funCode = funCode;
-  var monitorSign = routeContext._monitorSign;
-  info.key = monitorSign;
-  info.type = type;
-  info.series = TimePoint.Series.Route;
-  var parentRule = routeContext.getParentRuleContext();
-  if (
-    parentRule &&
-    !parentRule.getRouteContext().isVirtual &&
-    parentRule._monitorSign
-  ) {
-    info.parentKey = parentRule._monitorSign;
+  if (routeCfg) {
+    var funCode = routeCfg.getCode();
+    info.funCode = funCode;
+    var monitorSign = routeContext._monitorSign;
+    info.key = monitorSign;
+    info.type = type;
+    info.series = TimePoint.Series.Route;
+    var parentRule = routeContext.getParentRuleContext();
+    if (
+      parentRule &&
+      !parentRule.getRouteContext().isVirtual &&
+      parentRule._monitorSign
+    ) {
+      info.parentKey = parentRule._monitorSign;
+    }
+    return new TimePoint(info);
   }
-  return new TimePoint(info);
+  return null;
 }
 
 function _getRuleTimePoint(ruleContext, type) {
+  const scopeManager = getScopeManager();
   var rr = ruleContext.getRouteContext();
   if (rr.isVirtual) {
     //虚拟路由里面的规则不作显示
@@ -160,7 +162,9 @@ function isOpenMonitor() {
 function beforeRouteExe(rr) {
   if (isOpenMonitor()) {
     var time = _getRouteTimePoint(rr, TimePoint.Types.BeforeRouteExe);
-    dataManager.add(time);
+    if (time) {
+      dataManager.add(time);
+    }
   }
 }
 
@@ -177,7 +181,9 @@ function afterRouteExe(rr) {
       } else {
         if (!rr.isVirtual && rr._monitorSign) {
           var time = _getRouteTimePoint(rr, TimePoint.Types.AfterRouteExe);
-          dataManager.add(time);
+          if (time) {
+            dataManager.add(time);
+          }
         }
       }
     }
