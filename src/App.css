@@ -163,7 +163,37 @@ circle.blue-dot {
   height: 10%;
 }
 
-.d3-tip .icon-arrow {
+.d3-tip.s .icon-arrow-down {
+  display: none;
+}
+
+.d3-tip.s .icon-arrow-up {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  margin-left: -5px;
+  width: 0;
+  height: 0;
+  border-right: 10px solid transparent;
+  border-left: 10px solid transparent;
+  border-bottom: 10px solid #999;
+}
+.d3-tip.s .icon-arrow-up:after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 0px;
+  width: 0;
+  height: 0;
+  border-right: 10px solid transparent;
+  border-left: 10px solid transparent;
+  border-bottom: 10px solid #fff;
+}
+
+.d3-tip.n .icon-arrow-up {
+  display: none;
+}
+.d3-tip.n .icon-arrow-down {
   position: absolute;
   bottom: -10px;
   left: 50%;
@@ -174,7 +204,7 @@ circle.blue-dot {
   border-right: 10px solid transparent;
   border-top: 10px solid #999;
 }
-.d3-tip .icon-arrow:after {
+.d3-tip.n .icon-arrow-down:after {
   content: "";
   position: absolute;
   left: -10px;

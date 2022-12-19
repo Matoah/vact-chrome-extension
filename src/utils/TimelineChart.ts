@@ -1,6 +1,7 @@
 //@ts-nocheck
-import * as d3 from "d3";
-import initTip from "d3-tip";
+import * as d3 from 'd3';
+
+import initTip from './D3Tip';
 
 class TimelineChart {
   static TYPE = {

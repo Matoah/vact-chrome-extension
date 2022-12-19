@@ -9,7 +9,7 @@ function getRuleTipDom(data, time: TimePoint) {
   const count = data.to - data.from;
   const componentCode = time.getComponentCode();
   return (
-    '<dl class="item-summary">' +
+    '<i class="icon-arrow icon-arrow-up"></i><dl class="item-summary">' +
     "<dt>" +
     ruleName +
     "(" +
@@ -30,7 +30,7 @@ function getRuleTipDom(data, time: TimePoint) {
       ? '<dd class="double-click-desc" style="text-align:center;">双击查看详情</dd>'
       : "") +
     "</dl>" +
-    '<i class="icon-arrow"></i>'
+    '<i class="icon-arrow icon-arrow-down"></i>'
   );
 }
 

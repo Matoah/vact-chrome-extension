@@ -1,12 +1,19 @@
-import { useState, useRef } from "react";
-import Box from "@mui/material/Box";
-import Navigator from "../components/Navigator";
-import CircularProgress from "@mui/material/CircularProgress";
-import Typography from "@mui/material/Typography";
-import TimelineChart from "../utils/TimelineChart";
-import $ from "jquery";
-import { useEffect } from "react";
-import { uuid } from "../utils/StringUtils";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
+import $ from 'jquery';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+
+import Navigator from '../components/Navigator';
+import { getMonitorMockDatas } from '../utils/MockUtils';
+import { uuid } from '../utils/StringUtils';
+import TimelineChart from '../utils/TimelineChart';
 
 function addTopNode(params: any) {
   const funName = params.funName,
@@ -56,7 +63,7 @@ function _createTimeLineChart(data: any) {
   targetDom.html("");
   new TimelineChart(targetDom[0], data, {
     intervalMinWidth: 16,
-    enableLiveTimer: true,
+    enableLiveTimer: false,
     tip: function (evt: any, d: any) {
       if (d.customClass == "type-rule" && d.children.length > 0) {
         this.style.cursor = "pointer";
@@ -123,17 +130,24 @@ function getMonitorDatas(
   fail?: (e: any) => void
 ) {
   //@ts-ignore
-  const promise = window.vact_devtools.sendRequest("getMonitorDatas", params);
-  promise
-    .then((datas: any) => {
-      _dealMonitorDatas(datas);
-      success(datas);
-    })
-    .catch((e: any) => {
-      if (fail) {
-        fail(e);
-      }
-    });
+  if (window.vact_devtools) {
+    //@ts-ignore
+    const promise = window.vact_devtools.sendRequest("getMonitorDatas", params);
+    promise
+      .then((datas: any) => {
+        _dealMonitorDatas(datas);
+        success(datas);
+      })
+      .catch((e: any) => {
+        if (fail) {
+          fail(e);
+        }
+      });
+  } else {
+    const datas = getMonitorMockDatas();
+    _dealMonitorDatas(datas);
+    success(datas);
+  }
 }
 
 function TimelineMonitor() {

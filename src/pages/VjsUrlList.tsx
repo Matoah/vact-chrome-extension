@@ -158,8 +158,11 @@ function VjsUrlList() {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell align="center" sx={{ width: "100px" }}>
-                      <Typography noWrap>
+                    <TableCell
+                      align="center"
+                      sx={{ width: "100px", display: "inline-block" }}
+                    >
+                      <Typography>
                         <Tooltip title={"大小分析"} arrow>
                           <IconButton
                             component={RouterLink}
