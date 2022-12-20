@@ -1,7 +1,7 @@
 //@ts-nocheck
-import * as d3 from 'd3';
+import * as d3 from "d3";
 
-import initTip from './D3Tip';
+import initTip from "./D3Tip";
 
 class TimelineChart {
   static TYPE = {
@@ -131,6 +131,9 @@ class TimelineChart {
       .enter()
       .append("g")
       .attr("clip-path", "url(#chart-content)")
+      .attr("y", (d, i) => {
+        return groupHeight * i + groupHeight / 2 - 10;
+      })
       .attr("transform", (d, i) => `translate(0, ${groupHeight * i})`)
       .selectAll(".dot")
       .data((d) => d.data.filter((_) => _.type === TimelineChart.TYPE.INTERVAL))
