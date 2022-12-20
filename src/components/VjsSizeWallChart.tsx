@@ -1,18 +1,17 @@
 import {
   useEffect,
   useRef,
-  useState,
 } from 'react';
 
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 
-import BubbleChart from '../utils/BubbleChart';
 import { toFileSize } from '../utils/NumberUtils';
 import Vjs from '../utils/Vjs';
 import VjsContentAnalysis from '../utils/VjsContentAnalysis';
+import WallMapChart from '../utils/WallMapChart';
 
-interface VjsSizeBubbleChartProps {
+interface VjsSizeWallChartProps {
   content: string;
 }
 
@@ -34,9 +33,8 @@ const toJsonList = function (vjsList: Vjs[]) {
   return result;
 };
 
-function VjsSizeBubbleChart(props: VjsSizeBubbleChartProps) {
+function VjsSizeWallChart(props: VjsSizeWallChartProps) {
   const { content } = props;
-  const [type, setType] = useState("bubble");
   const ref = useRef<any>(null);
   useEffect(() => {
     const renderChart = () => {
@@ -44,17 +42,19 @@ function VjsSizeBubbleChart(props: VjsSizeBubbleChartProps) {
       const vjsList = vjsSizeAnalyze.analyze();
       const datas = toJsonList(vjsList);
       //@ts-ignore
-      const chart = new BubbleChart(datas, {
-        label: (data: VjsData) => toFileSize(data.size),
-        //@ts-ignore
-        value: (data: VjsData) => data.size,
-        group: (data: VjsData) => data.vjsName,
+      const chart = new WallMapChart(datas, {
+        path: (data: VjsData) => data.vjsName,
+        label: (data: VjsData) => data.vjsName + `\n(${toFileSize(data.size)})`,
         title: (data: VjsData) => data.vjsName,
+        //@ts-ignore
+        value: (data: VjsData) => {
+          return data ? data.size : 0;
+        },
+        group: (data: VjsData) => data.vjsName,
         //@ts-ignore
         width: ref.current.clientWidth,
         height: ref.current.clientHeight,
       });
-      //setChildren(null);
       ref.current.innerHTML = "";
       ref.current.appendChild(chart);
     };
@@ -63,7 +63,7 @@ function VjsSizeBubbleChart(props: VjsSizeBubbleChartProps) {
     return () => {
       window.removeEventListener("resize", renderChart);
     };
-  }, [type]);
+  }, []);
   return (
     <div ref={ref} style={{ width: "100%", height: "100%" }}>
       <div
@@ -90,4 +90,4 @@ function VjsSizeBubbleChart(props: VjsSizeBubbleChartProps) {
   );
 }
 
-export default VjsSizeBubbleChart;
+export default VjsSizeWallChart;

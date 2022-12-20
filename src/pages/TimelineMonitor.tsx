@@ -158,37 +158,43 @@ function TimelineMonitor() {
   });
   const ref = useRef(null);
   useEffect(() => {
-    getMonitorDatas({}, (datas: any) => {
-      let hasData = false;
-      for (var i = 0, l = datas.length; i < l; i++) {
-        if (datas[i]["data"].length > 0) {
-          hasData = true;
-          break;
+    const renderMonitor = () => {
+      getMonitorDatas({}, (datas: any) => {
+        let hasData = false;
+        for (var i = 0, l = datas.length; i < l; i++) {
+          if (datas[i]["data"].length > 0) {
+            hasData = true;
+            break;
+          }
         }
-      }
-      if (hasData) {
-        _createTimeLineChart(datas);
-        addTopNode({
-          funKey: "ROOTKEY" + uuid(),
-          funName: "ROOT",
-          resetFunc: _createTimeLineChart,
-        });
-      } else {
-        setChildren(
-          <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Typography>暂无数据</Typography>
-          </Box>
-        );
-      }
+        if (hasData) {
+          _createTimeLineChart(datas);
+          addTopNode({
+            funKey: "ROOTKEY" + uuid(),
+            funName: "ROOT",
+            resetFunc: _createTimeLineChart,
+          });
+        } else {
+          setChildren(
+            <Box
+              sx={{
+                display: "flex",
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography>暂无数据</Typography>
+            </Box>
+          );
+        }
+      });
+    };
+    window.addEventListener("resize", () => {
+      renderMonitor();
     });
+    renderMonitor();
   }, []);
   return (
     <Box

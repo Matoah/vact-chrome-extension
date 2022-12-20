@@ -17,6 +17,7 @@ import Menu from '@mui/material/Menu';
 // import Popover from '@mui/material/Popover';
 import MenuItem from '@mui/material/MenuItem';
 import { styled } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
 
 const NavigatorButton = styled(Box)(
   ({ theme }) => `
@@ -50,10 +51,15 @@ const NavigatorButton = styled(Box)(
 
 interface NavigatorProps {
   backUrl?: string;
+  menus?: Array<{
+    title: string;
+    icon: JSX.Element;
+    click: () => void;
+  }>;
 }
 
 function Navigator(props: NavigatorProps) {
-  const { backUrl } = props;
+  const { backUrl, menus } = props;
   const ref = useRef<any>(null);
   const [isOpen, setOpen] = useState<boolean>(false);
   const handleOpen = (): void => {
@@ -64,16 +70,13 @@ function Navigator(props: NavigatorProps) {
     setOpen(false);
   };
   const nav = useNavigate();
-  let goBack = null;
-  if (backUrl) {
-    goBack = () => {
-      nav(backUrl);
-    };
-  } else {
-    goBack = () => {
-      nav(-1);
-    };
-  }
+  let goBack = backUrl
+    ? () => {
+        nav(backUrl);
+      }
+    : () => {
+        nav(-1);
+      };
   return (
     <Fragment>
       <NavigatorButton>
@@ -94,14 +97,35 @@ function Navigator(props: NavigatorProps) {
             horizontal: "right",
           }}
         >
+          {menus
+            ? menus.map((menu) => {
+                return (
+                  <MenuItem
+                    onClick={() => {
+                      handleClose();
+                      menu.click();
+                    }}
+                    key={menu.title}
+                  >
+                    <Tooltip title={menu.title}>{menu.icon}</Tooltip>
+                  </MenuItem>
+                );
+              })
+            : null}
           <MenuItem
             onClick={() => {
+              handleClose();
               nav("/");
             }}
           >
             <HouseIcon fontSize="large" />
           </MenuItem>
-          <MenuItem onClick={goBack}>
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              goBack();
+            }}
+          >
             <ArrowCircleLeftIcon fontSize="large" />
           </MenuItem>
         </Menu>

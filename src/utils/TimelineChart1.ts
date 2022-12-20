@@ -8,47 +8,84 @@ class TimelineChart {
     POINT: "POINT",
     INTERVAL: "INTERVAL",
   };
+  onVizChangeFn?: (...args: any[]) => any;
   constructor(
     element: any,
     data: Array<{ label: string; data: any }>,
-    options
+    opts: any
   ) {
     let self = this;
+
     element.classList.add("timeline-chart");
+
+    let options = this.extendOptions(opts);
+
     let allElements = data.reduce((agg, e) => agg.concat(e.data), []);
     let minDt = d3.min(allElements, this.getPointMinDt);
     let maxDt = d3.max(allElements, this.getPointMaxDt);
-    let elementWidth = element.clientWidth;
-    let elementHeight = element.clientHeight;
+
+    let elementWidth = options.width || element.clientWidth;
+    let elementHeight = options.height || element.clientHeight;
+
     let margin = {
       top: 0,
       right: 0,
       bottom: 20,
       left: 0,
     };
-    let groupWidth = 200;
+
     let width = elementWidth - margin.left - margin.right;
     let height = elementHeight - margin.top - margin.bottom;
+
+    let groupWidth = 200;
+
     let x = d3.scaleTime().domain([minDt, maxDt]).range([groupWidth, width]);
 
     let xAxis = d3.axisBottom(x).tickSize(-height);
     let zoom = d3.zoom().on("zoom", zoomed);
 
-    const svg = d3
+    let svg = d3
       .select(element)
       .append("svg")
-      .attr("width", elementWidth)
-      .attr("height", elementHeight)
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("class", "view")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
       .call(zoom);
 
     svg
+      .append("defs")
+      .append("clipPath")
+      .attr("id", "chart-content")
+      .append("rect")
+      .attr("x", groupWidth)
+      .attr("y", 0)
+      .attr("height", height)
+      .attr("width", width - groupWidth);
+
+    svg
+      .append("rect")
+      .attr("class", "chart-bounds")
+      .attr("x", groupWidth)
+      .attr("y", 0)
+      .attr("height", height)
+      .attr("width", width - groupWidth);
+
+    svg
       .append("g")
-      .attr("class", "xaxis")
+      .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
+
+    if (options.enableLiveTimer) {
+      self.now = svg
+        .append("line")
+        .attr("clip-path", "url(#chart-content)")
+        .attr("class", "vertical-marker now")
+        .attr("y1", 0)
+        .attr("y2", height);
+    }
 
     let groupHeight = height / data.length;
     svg
@@ -104,7 +141,9 @@ class TimelineChart {
     let intervals = groupIntervalItems
       .append("rect")
       .attr("class", withCustom("interval"))
-      .attr("width", (d) => Math.max(8, x(d.to) - x(d.from)))
+      .attr("width", (d) =>
+        Math.max(options.intervalMinWidth, x(d.to) - x(d.from))
+      )
       .attr("height", intervalBarHeight)
       .attr("y", intervalBarMargin)
       .attr("x", (d) => x(d.from));
@@ -138,18 +177,32 @@ class TimelineChart {
       .attr("cy", groupHeight / 2)
       .attr("r", 5);
 
-    var tip = initTip().attr("class", "d3-tip").html(options.tip);
-    svg.call(tip);
-    intervals.on("mouseover", tip.show).on("mouseout", tip.hide);
-    var func = options.dblclick,
-      hideFn = tip ? tip.hide : null;
-    if (func) {
-      intervals.on("dblclick", function () {
-        if (hideFn) {
-          hideFn();
-        }
-        func.apply(this, arguments);
-      });
+    if (options.tip || options.dblclick) {
+      var tip = initTip().attr("class", "d3-tip").html(options.tip);
+      svg.call(tip);
+      intervals.on("mouseover", tip.show).on("mouseout", tip.hide);
+      var func = options.dblclick,
+        hideFn = tip ? tip.hide : null;
+      if (func) {
+        intervals.on("dblclick", function () {
+          if (hideFn) {
+            hideFn();
+          }
+          func.apply(this, arguments);
+        });
+      }
+    }
+
+    //zoomed();
+
+    if (options.enableLiveTimer) {
+      setInterval(updateNowMarker, options.timerTickInterval);
+    }
+
+    function updateNowMarker() {
+      let nowX = x(new Date());
+
+      self.now.attr("x1", nowX).attr("x2", nowX);
     }
 
     function withCustom(defaultClass) {
@@ -249,11 +302,26 @@ class TimelineChart {
       }*/
     }
   }
+  extendOptions(ext = {}) {
+    let defaultOptions = {
+      intervalMinWidth: 8, // px
+      tip: undefined,
+      textTruncateThreshold: 30,
+      enableLiveTimer: false,
+      timerTickInterval: 1000,
+    };
+    Object.keys(ext).map((k) => (defaultOptions[k] = ext[k]));
+    return defaultOptions;
+  }
   getPointMinDt(p) {
     return p.type === TimelineChart.TYPE.POINT ? p.at : p.from;
   }
   getPointMaxDt(p) {
     return p.type === TimelineChart.TYPE.POINT ? p.at : p.to;
+  }
+  onVizChange(fn) {
+    this.onVizChangeFn = fn;
+    return this;
   }
 }
 
