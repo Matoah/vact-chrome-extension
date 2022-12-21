@@ -170,7 +170,7 @@ function VjsDepAnalysis() {
         });
       }
     );
-  }, [data.key]);
+  }, [data.key, data.type.code]);
 
   return (
     <Fragment>
