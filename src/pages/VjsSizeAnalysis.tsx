@@ -1,48 +1,19 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from "react";
 
-import { useParams } from 'react-router-dom';
+import { useParams } from "react-router-dom";
 
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import BubbleChartIcon from '@mui/icons-material/BubbleChart';
-import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CircularProgress from '@mui/material/CircularProgress';
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import BubbleChartIcon from "@mui/icons-material/BubbleChart";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Navigator from '../components/Navigator';
-import VjsSizeBubbleChart from '../components/VjsSizeBubbleChart';
-import VjsSizeWallChart from '../components/VjsSizeWallChart';
-import { getVjsContent as getMockVjsContent } from '../utils/MockUtils';
-
-//import { getScript } from '../script';
-function getVjsContent(
-  id: string,
-  success: (content: string) => void,
-  fail?: (e: any) => void
-) {
-  //@ts-ignore
-  if (window.vact_devtools && window.vact_devtools.sendRequest) {
-    //@ts-ignore
-    const promise = window.vact_devtools.sendRequest("getVjsContent", {
-      id: id,
-    });
-    promise
-      .then((content: string) => {
-        success(content);
-      })
-      .catch((e: any) => {
-        if (fail) {
-          fail(e);
-        }
-      });
-  } else {
-    success(getMockVjsContent());
-  }
-}
+import Navigator from "../components/Navigator";
+import VjsSizeBubbleChart from "../components/VjsSizeBubbleChart";
+import VjsSizeWallChart from "../components/VjsSizeWallChart";
+import { getVjsContent } from "../utils/VjsUtils";
 
 enum ChartType {
   Bubble,

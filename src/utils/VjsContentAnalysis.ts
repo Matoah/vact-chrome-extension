@@ -1,4 +1,4 @@
-import Vjs from './Vjs';
+import Vjs from "./Vjs";
 
 class VjsContentAnalysis {
   content: string;
@@ -47,7 +47,13 @@ class VjsContentAnalysis {
             defineJson.pop();
             let defineStr = defineJson.join("");
             let define = JSON.parse(defineStr);
-            result.push(new Vjs(define.name, size + 1));
+            result.push(
+              new Vjs(
+                define.name,
+                size + 1,
+                define.deps ? Object.keys(define.deps) : []
+              )
+            );
             size = -1;
             defineJson = [];
             bracketStack = [];

@@ -1,12 +1,14 @@
-import { toFileSize } from './NumberUtils';
+import { toFileSize } from "./NumberUtils";
 
 class Vjs {
   name: string;
   size: number;
+  deps: string[];
 
-  constructor(name: string, size: number) {
+  constructor(name: string, size: number, deps: string[]) {
     this.name = name;
     this.size = size;
+    this.deps = deps;
   }
 
   getName() {
@@ -19,6 +21,10 @@ class Vjs {
 
   getFormatSize() {
     return toFileSize(this.size);
+  }
+
+  getDeps() {
+    return this.deps;
   }
 }
 

@@ -1,30 +1,30 @@
-import {
-  ChangeEvent,
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from "react-router-dom";
 
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import SearchIcon from '@mui/icons-material/Search';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import SearchIcon from "@mui/icons-material/Search";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
-import Navigator from '../components/Navigator';
+import Navigator from "../components/Navigator";
+
+interface VjsUrlListProps {
+  tip: string;
+  click: (id: string) => void;
+}
 
 interface VjsUrl {
   id: string;
@@ -83,7 +83,8 @@ function filter(
   return res;
 }
 
-function VjsUrlList() {
+function VjsUrlList(pros: VjsUrlListProps) {
+  const { click, tip } = pros;
   const [urls, setUrls] = useState<VjsUrl[]>(function () {
     return [
       {
@@ -176,10 +177,11 @@ function VjsUrlList() {
                     </TableCell>
                     <TableCell align="center" sx={{ width: "100px" }}>
                       <Typography>
-                        <Tooltip title={"大小分析"} arrow>
+                        <Tooltip title={tip} arrow>
                           <IconButton
-                            component={RouterLink}
-                            to={`/vjsSizeAnalysis/${url.id}`}
+                            onClick={() => {
+                              click(url.id);
+                            }}
                             color="primary"
                           >
                             <AnalyticsIcon />
