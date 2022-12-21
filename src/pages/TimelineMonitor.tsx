@@ -6,62 +6,26 @@ import {
 
 import $ from 'jquery';
 
+import HomeIcon from '@mui/icons-material/Home';
 import Box from '@mui/material/Box';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
 import CircularProgress from '@mui/material/CircularProgress';
+import Link from '@mui/material/Link';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
 
 import Navigator from '../components/Navigator';
 import { getMonitorMockDatas } from '../utils/MockUtils';
-import { uuid } from '../utils/StringUtils';
 import TimelineChart from '../utils/TimelineChart';
 
-function addTopNode(params: any) {
-  const funName = params.funName,
-    funKey = params.funKey,
-    resetFunc = params.resetFunc;
-  const targetDom = $("#ul");
-  $(targetDom).find("li").removeClass("cur");
-  const nfStyle = funKey.indexOf("ROOTKEY") != -1 ? "nav-first" : "";
-  const li =
-    '<li id="' +
-    funKey +
-    '" class="' +
-    nfStyle +
-    ' cur"><a href="#">' +
-    funName +
-    "</a></li>";
-  targetDom.append(li);
-  targetDom.find("li[id='" + funKey + "']").on("click", function () {
-    var isDelete = false;
-    $("#ul")
-      .find("li")
-      .each(function () {
-        //@ts-ignore
-        var key = $(this).attr("id");
-        if (!isDelete) {
-          if (key == funKey) {
-            //@ts-ignore
-            $(this).addClass("cur");
-            isDelete = true;
-          }
-        } else {
-          //@ts-ignore
-          $(this).remove();
-        }
-      });
-    if (typeof resetFunc == "function") {
-      var dom = $("#chart")[0];
-      getMonitorDatas(dom, (datas: any) => {
-        resetFunc(dom, datas);
-      });
-    }
-  });
-}
-
-function _createTimeLineChart(data: any) {
+function _createTimeLineChart(params: {
+  datas: any;
+  click: (evt: any, data: any) => void;
+}) {
   const targetDom = $("#chart");
   targetDom.html("");
-  new TimelineChart(targetDom[0], data, {
+  new TimelineChart(targetDom[0], params.datas, {
     intervalMinWidth: 16,
     enableLiveTimer: false,
     tip: function (evt: any, d: any) {
@@ -74,28 +38,7 @@ function _createTimeLineChart(data: any) {
       }
       return showDom;
     },
-    dblclick: function (data: any) {
-      //@ts-ignore
-      $(event.target).trigger("mouseout");
-      if (
-        data.customClass == "type-rule" &&
-        data.children &&
-        data.children.length > 0
-      ) {
-        var funKey = data.children[0].key;
-        var funCode = data.children[0].funCode;
-        var ruleKey = data.key;
-        addTopNode({
-          funKey: funKey,
-          funName: funCode,
-          ruleKey: ruleKey,
-          resetFunc: _createTimeLineChart,
-        });
-        getMonitorDatas({ key: ruleKey }, (showData: any) => {
-          _createTimeLineChart(showData);
-        });
-      }
-    },
+    click: params.click,
   });
 }
 
@@ -156,10 +99,16 @@ function TimelineMonitor() {
       <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
     );
   });
+  const [data, setData] = useState<{
+    headers: Array<{ id: string; title: string }>;
+    parentKey: null | string;
+  }>(function () {
+    return { headers: [{ id: "_$Root$_", title: "ROOT" }], parentKey: null };
+  });
   const ref = useRef(null);
   useEffect(() => {
     const renderMonitor = () => {
-      getMonitorDatas({}, (datas: any) => {
+      getMonitorDatas({ key: data.parentKey }, (datas: any) => {
         let hasData = false;
         for (var i = 0, l = datas.length; i < l; i++) {
           if (datas[i]["data"].length > 0) {
@@ -168,11 +117,30 @@ function TimelineMonitor() {
           }
         }
         if (hasData) {
-          _createTimeLineChart(datas);
-          addTopNode({
-            funKey: "ROOTKEY" + uuid(),
-            funName: "ROOT",
-            resetFunc: _createTimeLineChart,
+          _createTimeLineChart({
+            datas,
+            click: function (evt: any, item: any) {
+              //@ts-ignore
+              $(event.target).trigger("mouseout");
+              if (
+                item.customClass == "type-rule" &&
+                item.children &&
+                item.children.length > 0
+              ) {
+                const funKey = item.children[0].key;
+                const funCode = item.children[0].funCode;
+                const ruleKey = item.key;
+                const headers = data.headers;
+                headers.push({
+                  id: ruleKey,
+                  title: funCode,
+                });
+                setData({
+                  headers,
+                  parentKey: ruleKey,
+                });
+              }
+            },
           });
         } else {
           setChildren(
@@ -195,7 +163,7 @@ function TimelineMonitor() {
       renderMonitor();
     });
     renderMonitor();
-  }, []);
+  }, [data.parentKey]);
   return (
     <Box
       sx={{
@@ -210,10 +178,54 @@ function TimelineMonitor() {
         ref={ref}
         sx={{
           width: "100%",
+          display: "flex",
+          flexDirection: "column",
           height: "100%",
         }}
       >
-        <section id="section">
+        <List>
+          <ListItem>
+            <Breadcrumbs>
+              {data.headers.map((header) => {
+                return (
+                  <Link
+                    key={header.id}
+                    underline="hover"
+                    color="inherit"
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => {
+                      const headers = [];
+                      for (
+                        let index = 0;
+                        index < data.headers.length;
+                        index++
+                      ) {
+                        const item = data.headers[index];
+                        headers.push(item);
+                        if (item.id == header.id) {
+                          break;
+                        }
+                      }
+                      setData({
+                        headers: headers,
+                        parentKey: header.id == "_$Root$_" ? null : header.id,
+                      });
+                    }}
+                  >
+                    {header.id == "_$Root$_" ? (
+                      <HomeIcon
+                        sx={{ mr: 0.5, mb: "-3.5px" }}
+                        fontSize="small"
+                      />
+                    ) : null}
+                    {header.title}
+                  </Link>
+                );
+              })}
+            </Breadcrumbs>
+          </ListItem>
+        </List>
+        <section id="section" style={{ flex: 1 }}>
           <div id="chart">{children}</div>
         </section>
       </Box>

@@ -1,5 +1,8 @@
-import { register } from "./EventObserver";
-import { clear, genViewTimePoint } from "./DataManager";
+import {
+  clear,
+  genViewTimePoint,
+} from './DataManager';
+import { register } from './EventObserver';
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
@@ -77,7 +80,7 @@ vact_devtools.methods = {
     clear();
   },
   getMonitorDatas: function (params) {
-    return genViewTimePoint(params.key);
+    return genViewTimePoint(params ? params.key : null);
   },
 };
 //@ts-ignore

@@ -1,17 +1,23 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from 'react';
 
-import DeleteIcon from "@mui/icons-material/Delete";
-import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
-import StopCircleIcon from "@mui/icons-material/StopCircle";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import Box from "@mui/material/Box";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Navigator from "../components/Navigator";
+import { useNavigate } from 'react-router-dom';
+
+import DeleteIcon from '@mui/icons-material/Delete';
+import PlayCircleFilledWhiteIcon
+  from '@mui/icons-material/PlayCircleFilledWhite';
+import StopCircleIcon from '@mui/icons-material/StopCircle';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+
+import Navigator from '../components/Navigator';
 
 enum State {
   stoped,
@@ -19,7 +25,7 @@ enum State {
 }
 
 function FrontendMonitor() {
-  const [state, setState] = useState(State.stoped);
+  const [state, setState] = useState({ status: State.stoped, cleared: false });
   const nav = useNavigate();
   useEffect(() => {
     //@ts-ignore
@@ -28,7 +34,12 @@ function FrontendMonitor() {
       const promise = window.vact_devtools.sendRequest("isMonitored", {});
       promise
         .then((monitored: boolean) => {
-          setState(monitored ? State.started : State.stoped);
+          setState((pre) => {
+            return {
+              status: monitored ? State.started : State.stoped,
+              cleared: pre.cleared,
+            };
+          });
         })
         .catch();
     }
@@ -46,16 +57,21 @@ function FrontendMonitor() {
       <List sx={{ width: 360 }}>
         <ListItem disablePadding>
           <ListItemButton
-            disabled={state != State.stoped}
+            disabled={state.status != State.stoped}
             onClick={() => {
-              setState(State.started);
+              setState((pre) => {
+                return {
+                  status: State.started,
+                  cleared: false,
+                };
+              });
               //@ts-ignore
               window?.vact_devtools?.sendRequest("markMonitored", {});
             }}
           >
             <ListItemIcon>
               <PlayCircleFilledWhiteIcon
-                color={state != State.stoped ? "inherit" : "info"}
+                color={state.status != State.stoped ? "inherit" : "info"}
               />
             </ListItemIcon>
             <ListItemText
@@ -66,16 +82,21 @@ function FrontendMonitor() {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton
-            disabled={state != State.started}
+            disabled={state.status != State.started}
             onClick={() => {
-              setState(State.stoped);
+              setState((pre) => {
+                return {
+                  status: State.stoped,
+                  cleared: pre.cleared,
+                };
+              });
               //@ts-ignore
               window?.vact_devtools?.sendRequest("markUnMonitored", {});
             }}
           >
             <ListItemIcon>
               <StopCircleIcon
-                color={state != State.started ? "inherit" : "info"}
+                color={state.status != State.started ? "inherit" : "info"}
               />
             </ListItemIcon>
             <ListItemText
@@ -86,14 +107,40 @@ function FrontendMonitor() {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton
-            disabled={state == State.started}
+            disabled={state.status == State.started || state.cleared}
             onClick={() => {
               //@ts-ignore
-              window?.vact_devtools?.sendRequest("clearMonitorData", {});
+              const promise = window?.vact_devtools?.sendRequest(
+                "clearMonitorData",
+                {}
+              );
+              if (promise) {
+                promise.then(() => {
+                  setState((pre) => {
+                    return {
+                      status: pre.status,
+                      cleared: true,
+                    };
+                  });
+                });
+              } else {
+                setState((pre) => {
+                  return {
+                    status: pre.status,
+                    cleared: true,
+                  };
+                });
+              }
             }}
           >
             <ListItemIcon>
-              <DeleteIcon color={state == State.started ? "inherit" : "info"} />
+              <DeleteIcon
+                color={
+                  state.status == State.started || state.cleared
+                    ? "inherit"
+                    : "info"
+                }
+              />
             </ListItemIcon>
             <ListItemText
               primary="清除"
@@ -103,14 +150,14 @@ function FrontendMonitor() {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton
-            disabled={state == State.started}
+            disabled={state.status == State.started}
             onClick={() => {
               nav("/timelineMonitor");
             }}
           >
             <ListItemIcon>
               <VisibilityIcon
-                color={state == State.started ? "inherit" : "info"}
+                color={state.status == State.started ? "inherit" : "info"}
               />
             </ListItemIcon>
             <ListItemText

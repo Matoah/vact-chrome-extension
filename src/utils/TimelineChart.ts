@@ -1,7 +1,7 @@
 //@ts-nocheck
-import * as d3 from "d3";
+import * as d3 from 'd3';
 
-import initTip from "./D3Tip";
+import initTip from './D3Tip';
 
 function withCustom(defaultClass) {
   return (d) =>
@@ -40,21 +40,11 @@ class TimelineChart {
         .call(d3.axisBottom(x).tickSize(-height));
     const zoom = d3.zoom().on("zoom", function ({ transform }) {
       gx.call(xAxis, transform.rescaleX(x));
-      console.log(transform);
-
       svg
         .selectAll("rect.interval")
         .attr("transform", function () {
           const { y } = this.getBBox();
-          return (
-            "translate(" +
-            transform.x +
-            "," +
-            8 / transform.y +
-            ") scale(" +
-            transform.k +
-            ")"
-          );
+          return "translate(" + transform.x + ",0) scale(" + transform.k + ")";
         })
         .attr("style", function () {
           const { height } = this.getBBox();
@@ -128,14 +118,16 @@ class TimelineChart {
     var tip = initTip().attr("class", "d3-tip").html(options.tip);
     svg.call(tip);
     intervals.on("mouseover", tip.show).on("mouseout", tip.hide);
-    var func = options.dblclick,
+    var func = options.click,
       hideFn = tip ? tip.hide : null;
     if (func) {
-      intervals.on("dblclick", function () {
+      intervals.on("click", function (evt) {
         if (hideFn) {
           hideFn();
         }
         func.apply(this, arguments);
+        evt.preventDefault();
+        return false;
       });
     }
     svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);

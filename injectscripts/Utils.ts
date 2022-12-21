@@ -8,30 +8,28 @@ function getRuleTipDom(data, time: TimePoint) {
   const ruleInstanceCode = time.getRuleInstanceCode();
   const count = data.to - data.from;
   const componentCode = time.getComponentCode();
-  return (
-    '<i class="icon-arrow icon-arrow-up"></i><dl class="item-summary">' +
-    "<dt>" +
-    ruleName +
-    "(" +
-    ruleInstanceCode +
-    ") 执行耗时信息</dt>" +
-    (ruleName ? "<dd>规则名称：" + ruleName + "</dd>" : "") +
-    "<dd>所属构件：" +
-    componentCode +
-    "</dd>" +
-    (windowCode ? "<dd>所属窗体：" + windowCode + "</dd>" : "") +
-    "<dd>所属方法：" +
-    funcCode +
-    "</dd>" +
-    '<dd>耗时：<span><i class="rect-method"></i>' +
-    count +
-    "ms</span></dd>" +
-    (ruleCode == "ExecuteRuleSet" || ruleCode == "OpenComponentReturnData"
-      ? '<dd class="double-click-desc" style="text-align:center;">双击查看详情</dd>'
-      : "") +
-    "</dl>" +
-    '<i class="icon-arrow icon-arrow-down"></i>'
-  );
+  return `
+      <i class="icon-arrow icon-arrow-up"></i>
+      <dl class="item-summary">
+        <dt>${ruleName}(${ruleInstanceCode})执行耗时信息</dt>
+        ${ruleName ? "<dd>规则名称：" + ruleName + "</dd>" : ""}
+        <dd>规则编号：${ruleCode}</dd>
+        <dd>所属构件：${componentCode}</dd>
+        ${windowCode ? "<dd>所属窗体：" + windowCode + "</dd>" : ""}
+        <dd>所属方法：${funcCode}</dd>
+        <dd>耗时：
+          <span>
+            <i class="rect-method"></i>
+            ${count}ms
+          </span>
+        </dd>
+        ${
+          ruleCode == "ExecuteRuleSet" || ruleCode == "OpenComponentReturnData"
+            ? '<dd class="double-click-desc" style="text-align:center;">单击查看详情</dd>'
+            : ""
+        }
+      </dl>
+      <i class="icon-arrow icon-arrow-down"></i>`;
 }
 
 function getFunctionTipDom(data, time: TimePoint) {
@@ -40,6 +38,7 @@ function getFunctionTipDom(data, time: TimePoint) {
   const count = data.to - data.from;
   const componentCode = time.getComponentCode();
   return (
+    '<i class="icon-arrow icon-arrow-up"></i><dl class="item-summary">' +
     '<dl class="item-summary">' +
     "<dt>方法：" +
     funCode +
@@ -52,7 +51,7 @@ function getFunctionTipDom(data, time: TimePoint) {
     count +
     "ms</span></dd>" +
     "</dl>" +
-    '<i class="icon-arrow"></i>'
+    '<i class="icon-arrow icon-arrow-down"></i>'
   );
 }
 
@@ -66,6 +65,7 @@ function getInitOrRenderTipDom(data, time: TimePoint) {
   const winCode = time.getWindowCode();
   const count = data.to - data.from;
   return (
+    '<i class="icon-arrow icon-arrow-up"></i><dl class="item-summary">' +
     '<dl class="item-summary">' +
     "<dt>窗体：" +
     winCode +
@@ -79,7 +79,7 @@ function getInitOrRenderTipDom(data, time: TimePoint) {
     count +
     "ms</span></dd>" +
     "</dl>" +
-    '<i class="icon-arrow"></i>'
+    '<i class="icon-arrow icon-arrow-down"></i>'
   );
 }
 
@@ -87,6 +87,7 @@ function getComponentLoadTipDom(data, time: TimePoint) {
   const count = data.to - data.from;
   const componentCode = time.getComponentCode();
   return (
+    '<i class="icon-arrow icon-arrow-up"></i><dl class="item-summary">' +
     '<dl class="item-summary">' +
     "<dt>构件：" +
     componentCode +
@@ -95,7 +96,7 @@ function getComponentLoadTipDom(data, time: TimePoint) {
     count +
     "ms</span></dd>" +
     "</dl>" +
-    '<i class="icon-arrow"></i>'
+    '<i class="icon-arrow icon-arrow-down"></i>'
   );
 }
 
@@ -105,6 +106,7 @@ function getRPCTipDom(data, time: TimePoint) {
   const count = data.to - data.from;
   const componentCode = time.getComponentCode();
   return (
+    '<i class="icon-arrow icon-arrow-up"></i><dl class="item-summary">' +
     '<dl class="item-summary">' +
     "<dt>请求：" +
     rpcCode +
@@ -117,7 +119,7 @@ function getRPCTipDom(data, time: TimePoint) {
     count +
     "ms</span></dd>" +
     "</dl>" +
-    '<i class="icon-arrow"></i>'
+    '<i class="icon-arrow icon-arrow-down"></i>'
   );
 }
 

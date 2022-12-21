@@ -3,6 +3,7 @@
 import { map } from 'd3-collection';
 import {
   select,
+  selectAll,
   selection,
 } from 'd3-selection';
 
@@ -15,7 +16,11 @@ function D3Tip() {
     point = null,
     target = null,
     node = initNode();
+  function clear() {
+    selectAll(".d3-tip").remove();
+  }
 
+  clear();
   function tip(vis) {
     svg = getSVGNode(vis);
     if (!svg) return;
@@ -47,6 +52,12 @@ function D3Tip() {
     var left = coords.left + poffset[1] + scrollLeft;
     var clientX = event.clientX;
     var arrawLeft = clientX - left - 5;
+    if (arrawLeft < 0) {
+      arrawLeft = 5;
+      left = left - arrawLeft;
+    } else if (arrawLeft > left + node.offsetWidth) {
+      left = arrawLeft - node.offsetWidth;
+    }
     nodel
       .classed(coords.direction, true)
       .style("top", coords.top + poffset[0] + scrollTop + "px")
@@ -188,13 +199,38 @@ function D3Tip() {
     }),
     directions = directionCallbacks.keys();
   function directionAuto() {
-    const directions = [
+    const bodyWidth = document.body.clientWidth;
+    const bbox = getScreenBBox(this);
+    const target = event?.target;
+    const targetWidth = bbox.ne.x - bbox.nw.x;
+    const targetHeight = bbox.s.y - bbox.n.y;
+    const tipPanelWidth = node?.offsetWidth;
+    const tipPanelHeight = node?.offsetHeight;
+    const pointLeft = event.clientX;
+    let direction = "n",
+      top = 0,
+      left = pointLeft - tipPanelWidth / 2;
+    if (left < 0) {
+      left = 0;
+    } else if (left + tipPanelWidth > bodyWidth) {
+      left = bodyWidth - tipPanelWidth;
+    }
+    if (bbox.n.y > tipPanelHeight) {
+      top = bbox.n.y - tipPanelHeight - 5;
+    } else {
+      direction = "s";
+      top = bbox.se.y + targetHeight - 3;
+    }
+    return {
+      left,
+      top,
+      direction,
+    };
+    /*const directions = [
       { fn: directionNorth, offsetTop: -5, offsetLeft: 0, direction: "n" },
       { fn: directionSouth, offsetTop: 20, offsetLeft: 0, direction: "s" },
     ];
     var def = null;
-    var bodyWidth = document.body.clientWidth,
-      bodyHeight = document.body.clientHeight;
     for (var i = 0, l = directions.length; i < l; i++) {
       var direction = directions[i];
       var func = direction.fn;
@@ -217,7 +253,7 @@ function D3Tip() {
         return rs;
       }
     }
-    return def;
+    return def;*/
   }
 
   function directionNorth() {

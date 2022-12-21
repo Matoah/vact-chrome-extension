@@ -44,19 +44,31 @@ function filter(
         const children = [];
         if (index > 0) {
           children.push(
-            <Typography variant="subtitle1">
+            <Typography variant="subtitle1" component="span">
               {url.substring(0, index)}
             </Typography>
           );
         }
         children.push(
-          <Typography variant="subtitle1" sx={{ backgroundColor: "yellow" }}>
+          <Typography
+            variant="subtitle1"
+            component="span"
+            sx={{
+              backgroundColor: "#ff9632",
+              color: "black",
+              wordBreak: "break-all",
+            }}
+          >
             {search}
           </Typography>
         );
         if (index + search.length < url.length) {
           children.push(
-            <Typography variant="subtitle1">
+            <Typography
+              variant="subtitle1"
+              sx={{ wordBreak: "break-all" }}
+              component="span"
+            >
               {url.substring(index + search.length)}
             </Typography>
           );
@@ -98,7 +110,11 @@ function VjsUrlList() {
     urls.forEach((url) => {
       vjsUrls.push({
         id: url.id,
-        child: <Typography variant="subtitle1">{url.url}</Typography>,
+        child: (
+          <Typography variant="subtitle1" sx={{ wordBreak: "break-all" }}>
+            {url.url}
+          </Typography>
+        ),
       });
     });
   } else {
@@ -153,15 +169,12 @@ function VjsUrlList() {
                   <TableRow hover key={url.id}>
                     <TableCell sx={{ flex: "0 0 auto" }}>
                       <Box display="flex">
-                        <Box pl={1} sx={{ flex: 0 }}>
+                        <Box pl={1} sx={{ flex: 1 }}>
                           {url.child}
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{ width: "100px", display: "inline-block" }}
-                    >
+                    <TableCell align="center" sx={{ width: "100px" }}>
                       <Typography>
                         <Tooltip title={"大小分析"} arrow>
                           <IconButton
