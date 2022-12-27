@@ -1,26 +1,15 @@
-import { getVjsContent as getMockVjsContent } from "../utils/MockUtils";
+import { getVjsContent as getRPCVjsContent } from "../utils/RPCUtils";
 
 export function getVjsContent(
   id: string,
   success: (content: string) => void,
   fail?: (e: any) => void
 ) {
-  //@ts-ignore
-  if (window.vact_devtools && window.vact_devtools.sendRequest) {
-    //@ts-ignore
-    const promise = window.vact_devtools.sendRequest("getVjsContent", {
-      id: id,
+  getRPCVjsContent(id)
+    .then(success)
+    .catch((e: any) => {
+      if (fail) {
+        fail(e);
+      }
     });
-    promise
-      .then((content: string) => {
-        success(content);
-      })
-      .catch((e: any) => {
-        if (fail) {
-          fail(e);
-        }
-      });
-  } else {
-    success(getMockVjsContent());
-  }
 }

@@ -20,6 +20,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import Navigator from "../components/Navigator";
+import { getVjsUrls } from "../utils/RPCUtils";
 
 interface VjsUrlListProps {
   tip: string;
@@ -86,25 +87,11 @@ function filter(
 function VjsUrlList(pros: VjsUrlListProps) {
   const { click, tip } = pros;
   const [urls, setUrls] = useState<VjsUrl[]>(function () {
-    return [
-      {
-        id: "1",
-        url: "itop/vjs/combo/static/8a819b4e850e57d40185199867a646f5_b5e3df22d9698f0bfec7be73cf357835.js?vjsRequest=true&packageAliases=&vjsNames=%5B%7B%22vjs.framework.core%22%3Afalse%2C%22v_act_application%22%3Afalse%2C%22vact.vjs.framework.extension.platform.init.view.schema.window.vbase_prd_page_init.EmptyPageInit%22%3Afalse%7D%5D&condition=%7B%22clientType%22%3A%22pc%22%2C%22theme%22%3A%22default_theme%22%2C%22themeType%22%3A%22Default%22%2C%22isPure%22%3A%22false%22%2C%22domain%22%3Anull%7D",
-      },
-    ];
+    return [];
   });
   const [search, setSearch] = useState("");
   useEffect(() => {
-    //@ts-ignore
-    if (window.vact_devtools && window.vact_devtools.sendRequest) {
-      //@ts-ignore
-      const promise = window.vact_devtools.sendRequest("getVjsUrls", {});
-      promise
-        .then((vjsUrls: VjsUrl[]) => {
-          setUrls(vjsUrls);
-        })
-        .catch();
-    }
+    getVjsUrls().then(setUrls);
   }, []);
   let vjsUrls: Array<{ id: string; child: JSX.Element }> = [];
   if (search == "") {

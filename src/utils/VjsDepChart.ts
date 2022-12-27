@@ -34,27 +34,31 @@ function linkArc(d: any) {
     `;
 }
 
+const colorTypes = ["licensing", "suit", "resolved"];
+
 function VjsDepChart(element: any, vjsList: Vjs[]) {
   const width = element.clientWidth,
     height = element.clientHeight;
   const links: Array<{ source: string; target: string; type: string }> = [];
-  const nodes: Array<{ id: string }> = [];
-  const types = Array.from(new Set(links.map((d) => d.type)));
-  const color = d3.scaleOrdinal(types, d3.schemeCategory10);
+  const nodes: Array<{ id: string; type: string }> = [];
   vjsList.forEach((vjs) => {
+    const randomColor =
+      colorTypes[Math.floor(Math.random() * colorTypes.length)];
     const vjsName = vjs.getName();
-    nodes.push({ id: vjsName });
+    nodes.push({ id: vjsName, type: randomColor });
     const deps = vjs.getDeps();
     if (deps && deps.length > 0) {
       deps.forEach((dep) => {
         links.push({
           source: vjsName,
           target: dep,
-          type: "licensing",
+          type: randomColor,
         });
       });
     }
   });
+  const types = Array.from(new Set(links.map((d) => d.type)));
+  const color = d3.scaleOrdinal(types, d3.schemeCategory10);
   const simulation = d3
     .forceSimulation(nodes)
     .force(
@@ -91,11 +95,10 @@ function VjsDepChart(element: any, vjsList: Vjs[]) {
     .selectAll("path")
     .data(links)
     .join("path")
-    .attr("stroke", (d) => "#ff7f0e")
+    .attr("stroke", (d) => color(d.type))
     .attr(
       "marker-end",
-      (d) =>
-        `url(https://d3.static.observableusercontent.com/next/worker-7a638b73.html#arrow-suit)`
+      (d) => `url(${new URL(`#arrow-${d.type}`, window.location)})`
     );
 
   const node = svg
@@ -110,7 +113,7 @@ function VjsDepChart(element: any, vjsList: Vjs[]) {
 
   node
     .append("circle")
-    .attr("stroke", "white")
+    .attr("stroke", (d) => color(d.type))
     .attr("stroke-width", 1.5)
     .attr("r", 4);
 

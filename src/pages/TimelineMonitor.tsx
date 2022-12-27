@@ -1,23 +1,19 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useRef, useState } from "react";
 
-import $ from 'jquery';
+import $ from "jquery";
 
-import HomeIcon from '@mui/icons-material/Home';
-import Box from '@mui/material/Box';
-import Breadcrumbs from '@mui/material/Breadcrumbs';
-import CircularProgress from '@mui/material/CircularProgress';
-import Link from '@mui/material/Link';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import Typography from '@mui/material/Typography';
+import HomeIcon from "@mui/icons-material/Home";
+import Box from "@mui/material/Box";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
+import CircularProgress from "@mui/material/CircularProgress";
+import Link from "@mui/material/Link";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
 
-import Navigator from '../components/Navigator';
-import { getMonitorMockDatas } from '../utils/MockUtils';
-import TimelineChart from '../utils/TimelineChart';
+import Navigator from "../components/Navigator";
+import { getMonitorDatas } from "../utils/RPCUtils";
+import TimelineChart from "../utils/TimelineChart";
 
 function _createTimeLineChart(params: {
   datas: any;
@@ -67,31 +63,6 @@ function _dealDatas(datas: MonitorData[]) {
   });
   return;
 }
-function getMonitorDatas(
-  params: any,
-  success: (datas: any) => void,
-  fail?: (e: any) => void
-) {
-  //@ts-ignore
-  if (window.vact_devtools) {
-    //@ts-ignore
-    const promise = window.vact_devtools.sendRequest("getMonitorDatas", params);
-    promise
-      .then((datas: any) => {
-        _dealMonitorDatas(datas);
-        success(datas);
-      })
-      .catch((e: any) => {
-        if (fail) {
-          fail(e);
-        }
-      });
-  } else {
-    const datas = getMonitorMockDatas();
-    _dealMonitorDatas(datas);
-    success(datas);
-  }
-}
 
 function TimelineMonitor() {
   const [children, setChildren] = useState(function () {
@@ -108,7 +79,8 @@ function TimelineMonitor() {
   const ref = useRef(null);
   useEffect(() => {
     const renderMonitor = () => {
-      getMonitorDatas({ key: data.parentKey }, (datas: any) => {
+      getMonitorDatas({ key: data.parentKey }).then((datas: any) => {
+        _dealMonitorDatas(datas);
         let hasData = false;
         for (var i = 0, l = datas.length; i < l; i++) {
           if (datas[i]["data"].length > 0) {

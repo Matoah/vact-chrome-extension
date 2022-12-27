@@ -1,23 +1,25 @@
+import { useEffect, useState } from "react";
+
+import { useNavigate } from "react-router-dom";
+
+import DeleteIcon from "@mui/icons-material/Delete";
+import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+
+import Navigator from "../components/Navigator";
 import {
-  useEffect,
-  useState,
-} from 'react';
-
-import { useNavigate } from 'react-router-dom';
-
-import DeleteIcon from '@mui/icons-material/Delete';
-import PlayCircleFilledWhiteIcon
-  from '@mui/icons-material/PlayCircleFilledWhite';
-import StopCircleIcon from '@mui/icons-material/StopCircle';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-
-import Navigator from '../components/Navigator';
+  clearMonitorData,
+  isMonitored,
+  markMonitored,
+  markUnMonitored,
+} from "../utils/RPCUtils";
 
 enum State {
   stoped,
@@ -28,21 +30,16 @@ function FrontendMonitor() {
   const [state, setState] = useState({ status: State.stoped, cleared: false });
   const nav = useNavigate();
   useEffect(() => {
-    //@ts-ignore
-    if (window.vact_devtools && window.vact_devtools.sendRequest) {
-      //@ts-ignore
-      const promise = window.vact_devtools.sendRequest("isMonitored", {});
-      promise
-        .then((monitored: boolean) => {
-          setState((pre) => {
-            return {
-              status: monitored ? State.started : State.stoped,
-              cleared: pre.cleared,
-            };
-          });
-        })
-        .catch();
-    }
+    isMonitored()
+      .then((monitored: boolean) => {
+        setState((pre) => {
+          return {
+            status: monitored ? State.started : State.stoped,
+            cleared: pre.cleared,
+          };
+        });
+      })
+      .catch();
   }, []);
   return (
     <Box
@@ -65,8 +62,7 @@ function FrontendMonitor() {
                   cleared: false,
                 };
               });
-              //@ts-ignore
-              window?.vact_devtools?.sendRequest("markMonitored", {});
+              markMonitored();
             }}
           >
             <ListItemIcon>
@@ -90,8 +86,7 @@ function FrontendMonitor() {
                   cleared: pre.cleared,
                 };
               });
-              //@ts-ignore
-              window?.vact_devtools?.sendRequest("markUnMonitored", {});
+              markUnMonitored();
             }}
           >
             <ListItemIcon>
@@ -109,13 +104,16 @@ function FrontendMonitor() {
           <ListItemButton
             disabled={state.status == State.started || state.cleared}
             onClick={() => {
-              //@ts-ignore
-              const promise = window?.vact_devtools?.sendRequest(
-                "clearMonitorData",
-                {}
-              );
-              if (promise) {
-                promise.then(() => {
+              clearMonitorData()
+                .then(() => {
+                  setState((pre) => {
+                    return {
+                      status: pre.status,
+                      cleared: true,
+                    };
+                  });
+                })
+                .catch(() => {
                   setState((pre) => {
                     return {
                       status: pre.status,
@@ -123,14 +121,6 @@ function FrontendMonitor() {
                     };
                   });
                 });
-              } else {
-                setState((pre) => {
-                  return {
-                    status: pre.status,
-                    cleared: true,
-                  };
-                });
-              }
             }}
           >
             <ListItemIcon>

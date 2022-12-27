@@ -15,7 +15,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { getVjsContent } from "../utils/VjsUtils";
 import Vjs from "../utils/Vjs";
 import VjsContentAnalysis from "../utils/VjsContentAnalysis";
-import VjsDepChart from "../utils/VjsDepChart";
+import VjsDepNetworkChart from "../components/VjsDepNetworkChart";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Tooltip from "@mui/material/Tooltip";
 
 enum DepType {
   InverseDep,
@@ -66,6 +70,18 @@ function dep2VjsMap(vjsList: Vjs[]) {
   return map;
 }
 
+function exits(vjsName: string, vjsList: Vjs[]) {
+  let result = false;
+  for (let index = 0; index < vjsList.length; index++) {
+    const vjs = vjsList[index];
+    if (vjsName == vjs.getName()) {
+      result = true;
+      break;
+    }
+  }
+  return result;
+}
+
 function filterVjsList(
   vjsList: Vjs[],
   type: DepType,
@@ -90,7 +106,16 @@ function filterVjsList(
         type == DepType.InverseDep ? depToVjsMap[key] : vjs.getDeps();
       if (deps && deps.length > 0) {
         deps.forEach((dep) => {
-          filterVjsList(vjsList, type, dep, result, nameToVjsmap, depToVjsMap);
+          if (!exits(dep, result || [])) {
+            filterVjsList(
+              vjsList,
+              type,
+              dep,
+              result,
+              nameToVjsmap,
+              depToVjsMap
+            );
+          }
         });
       }
     }
@@ -100,7 +125,14 @@ function filterVjsList(
   return result;
 }
 
-function filterDepNoExists(vjsList: Vjs[]) {
+/**
+ * 调整结果
+ * 1、剔除在本次结果中不存定义的vjs依赖
+ * 2、调整依赖关系，解决依赖图复杂问题
+ * @param vjsList
+ * @returns
+ */
+function adjustResult(vjsList: Vjs[]) {
   const temp: Vjs[] = [];
   const nameMap = name2VjsMap(vjsList);
   vjsList.forEach((vjs) => {
@@ -122,11 +154,13 @@ function VjsDepAnalysis() {
     type: { code: DepType; label: string; desc: string };
     vjsList: string[];
     key: null | string;
+    simplify: boolean;
     children: JSX.Element;
   }>({
     type: options[0],
     vjsList: [],
     key: null,
+    simplify: false,
     children: (
       <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
     ),
@@ -152,11 +186,14 @@ function VjsDepAnalysis() {
         setData({
           ...data,
           vjsList: getVjsNames(vjsList),
+          children: (
+            <VjsDepNetworkChart
+              vjsList={adjustResult(
+                filterVjsList(vjsList, data.type.code, data.key)
+              )}
+            ></VjsDepNetworkChart>
+          ),
         });
-        VjsDepChart(
-          ref.current,
-          filterDepNoExists(filterVjsList(vjsList, data.type.code, data.key))
-        );
       },
       (e: any) => {
         setData({
@@ -170,7 +207,7 @@ function VjsDepAnalysis() {
         });
       }
     );
-  }, [data.key, data.type.code]);
+  }, [data.key, data.type.code, data.simplify]);
 
   return (
     <Fragment>
@@ -251,6 +288,24 @@ function VjsDepAnalysis() {
                 />
               )}
             ></Autocomplete>
+            <FormGroup sx={{ ml: 1 }}>
+              <Tooltip title="去除一些vjs依赖，简化依赖图形，方便查找问题">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={data.simplify}
+                      onChange={(evt, value) => {
+                        setData({
+                          ...data,
+                          simplify: value,
+                        });
+                      }}
+                    />
+                  }
+                  label="精简依赖"
+                />
+              </Tooltip>
+            </FormGroup>
           </Box>
         </Card>
         <Card ref={ref} sx={{ flex: 1, width: "100%", height: "100%" }}>

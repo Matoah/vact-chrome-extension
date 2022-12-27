@@ -1,12 +1,16 @@
-import {
-  clear,
-  genViewTimePoint,
-} from './DataManager';
-import { register } from './EventObserver';
-
+import { clear, genViewTimePoint } from "./DataManager";
+import { register } from "./EventObserver";
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
 vact_devtools.storage = { vjsUrls: [] };
+const _getVjsUrl = function (id) {
+  let item = vact_devtools.storage.vjsUrls.find((item) => item.id == id);
+  let url = null;
+  if (item) {
+    url = item.url;
+  }
+  return url;
+};
 vact_devtools.methods = {
   vactInjectScriptVersion: "1.0",
   isVActPlatform: function () {
@@ -19,14 +23,13 @@ vact_devtools.methods = {
   getVjsUrls: function () {
     return vact_devtools.storage.vjsUrls;
   },
+  getVjsUrl: function ({ id }) {
+    return _getVjsUrl(id);
+  },
   getVjsContent: function ({ id }) {
     let result = "",
       hasError = false;
-    let item = vact_devtools.storage.vjsUrls.find((item) => item.id == id);
-    let url = null;
-    if (item) {
-      url = item.url;
-    }
+    let url = _getVjsUrl(id);
     if (url) {
       //@ts-ignore
       $.ajax({
