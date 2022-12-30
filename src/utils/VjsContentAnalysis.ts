@@ -1,4 +1,4 @@
-import Vjs from "./Vjs";
+import Vjs from './Vjs';
 
 class VjsContentAnalysis {
   content: string;
@@ -51,7 +51,8 @@ class VjsContentAnalysis {
               new Vjs(
                 define.name,
                 size + 1,
-                define.deps ? Object.keys(define.deps) : []
+                define.deps ? Object.keys(define.deps) : [],
+                define.impls ? define.impls : []
               )
             );
             size = -1;

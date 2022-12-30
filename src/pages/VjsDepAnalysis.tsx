@@ -1,25 +1,33 @@
-import { Fragment, useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
-import Box from "@mui/material/Box";
-import ListItem from "@mui/material/ListItem";
-import TextField from "@mui/material/TextField";
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import ListItemText from "@mui/material/ListItemText";
-import ListItemButton from "@mui/material/ListItemButton";
-import Card from "@mui/material/Card";
-import Autocomplete from "@mui/material/Autocomplete";
-import Navigator from "../components/Navigator";
-import Alert from "@mui/material/Alert";
-import AlertTitle from "@mui/material/AlertTitle";
-import CircularProgress from "@mui/material/CircularProgress";
-import { getVjsContent } from "../utils/VjsUtils";
-import Vjs from "../utils/Vjs";
-import VjsContentAnalysis from "../utils/VjsContentAnalysis";
-import VjsDepNetworkChart from "../components/VjsDepNetworkChart";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Tooltip from "@mui/material/Tooltip";
+import { useParams } from 'react-router-dom';
+
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+
+import Navigator from '../components/Navigator';
+import VjsDepNetworkChart from '../components/VjsDepNetworkChart';
+import { getVjsUrl } from '../utils/RPCUtils';
+import Vjs from '../utils/Vjs';
+import VjsContentAnalysis from '../utils/VjsContentAnalysis';
+import { getVjsContent } from '../utils/VjsUtils';
 
 enum DepType {
   InverseDep,
@@ -125,6 +133,73 @@ function filterVjsList(
   return result;
 }
 
+function simplifyResult(vjsList: Vjs[], url: string, key: string | null) {
+  if (!key) {
+    return vjsList;
+  }
+  const tmp: Vjs[] = [];
+  const params = new URLSearchParams(url);
+  const vjsListStr = params.get("vjsNames");
+  let requestVjsList: string[] = [];
+  if (vjsListStr && vjsListStr.length > 0) {
+    const json = JSON.parse(vjsListStr);
+    json.forEach((item: { [vjsName: string]: boolean }) => {
+      requestVjsList = requestVjsList.concat(Object.keys(item));
+    });
+  }
+  const nameToDef: { [vjsName: string]: Vjs } = {};
+  const interfaceNameToDef: { [vjsName: string]: Vjs } = {};
+  vjsList.forEach((vjs) => {
+    nameToDef[vjs.getName()] = vjs;
+    const impls = vjs.getImpls();
+    if (impls) {
+      impls.forEach((impl) => {
+        interfaceNameToDef[impl.name] = vjs;
+      });
+    }
+  });
+  const foundedVjsList: Vjs[] = [];
+  const iterate = (vjs: Vjs) => {
+    if (!exits(vjs.getName(), tmp) && !exits(vjs.getName(), foundedVjsList)) {
+      tmp.push(vjs);
+      foundedVjsList.push(vjs);
+      const vjsName = vjs.getName();
+      if (key == vjsName) {
+        return true;
+      } else {
+        const deps = vjs.getDeps();
+        if (deps && deps.length > 0) {
+          let hasFounded = false;
+          for (let index = 0; index < deps.length; index++) {
+            const dep = deps[index];
+            const def = nameToDef[dep] || interfaceNameToDef[dep];
+            if (def) {
+              const res = iterate(def);
+              if (res) {
+                hasFounded = true;
+              }
+            }
+          }
+          if (!hasFounded) {
+            tmp.pop();
+          }
+          return hasFounded;
+        } else {
+          tmp.pop();
+        }
+      }
+    }
+    return false;
+  };
+  requestVjsList.forEach((vjsName) => {
+    const vjs = nameToDef[vjsName] || interfaceNameToDef[vjsName];
+    if (vjs) {
+      iterate(vjs);
+    }
+  });
+  return tmp;
+}
+
 /**
  * 调整结果
  * 1、剔除在本次结果中不存定义的vjs依赖
@@ -160,7 +235,7 @@ function VjsDepAnalysis() {
     type: options[0],
     vjsList: [],
     key: null,
-    simplify: false,
+    simplify: true,
     children: (
       <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
     ),
@@ -181,19 +256,35 @@ function VjsDepAnalysis() {
       //@ts-ignore
       vjsId,
       (content: string) => {
-        const vjsSizeAnalyze = new VjsContentAnalysis(content);
-        const vjsList = vjsSizeAnalyze.analyze();
-        setData({
-          ...data,
-          vjsList: getVjsNames(vjsList),
-          children: (
-            <VjsDepNetworkChart
-              vjsList={adjustResult(
-                filterVjsList(vjsList, data.type.code, data.key)
-              )}
-            ></VjsDepNetworkChart>
-          ),
-        });
+        //@ts-ignore
+        getVjsUrl(vjsId)
+          .then((url) => {
+            const vjsSizeAnalyze = new VjsContentAnalysis(content);
+            const vjsList = vjsSizeAnalyze.analyze();
+            let result = filterVjsList(vjsList, data.type.code, data.key);
+            if (data.simplify) {
+              result = simplifyResult(result, url, data.key);
+            }
+            result = adjustResult(result);
+            setData({
+              ...data,
+              vjsList: getVjsNames(vjsList),
+              children: (
+                <VjsDepNetworkChart vjsList={result}></VjsDepNetworkChart>
+              ),
+            });
+          })
+          .catch((e: any) => {
+            setData({
+              ...data,
+              children: (
+                <Alert severity="error">
+                  <AlertTitle>分析Vjs依赖失败</AlertTitle>
+                  遇到未知异常，原因：${e.message}
+                </Alert>
+              ),
+            });
+          });
       },
       (e: any) => {
         setData({

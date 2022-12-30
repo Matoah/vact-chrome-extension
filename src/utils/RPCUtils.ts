@@ -1,8 +1,9 @@
 import {
   getMonitorMockDatas,
   getVjsContent as getMockVjsContent,
+  getVjsUrl as getMockVjsUrl,
   getVjsUrlList,
-} from "./MockUtils";
+} from './MockUtils';
 
 export function isMonitored() {
   return new Promise<boolean>((resolve, reject) => {
@@ -99,6 +100,19 @@ export function getVjsUrls() {
       promise.then(resolve).catch(reject);
     } else {
       resolve(getVjsUrlList());
+    }
+  });
+}
+
+export function getVjsUrl(id: string) {
+  return new Promise<string>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getVjsUrl", { id });
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockVjsUrl());
     }
   });
 }
