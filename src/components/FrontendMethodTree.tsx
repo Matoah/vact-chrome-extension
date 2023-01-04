@@ -148,28 +148,6 @@ function toWindowId(data: Method) {
   return `${componentCode}_$_component_@_windows_$_${windowCode}`;
 }
 
-const renderTreeChildren = (node: TreeNode) => (
-  <StyledTreeItem
-    key={node.id}
-    nodeId={node.id}
-    labelText={node.label}
-    labelIcon={
-      node.type == "component"
-        ? CallToActionIcon
-        : node.type == "catalog"
-        ? FolderIcon
-        : node.type == "window"
-        ? ViewTimelineIcon
-        : SchemaIcon
-    }
-    sx={{ textAlign: "left" }}
-  >
-    {Array.isArray(node.children)
-      ? node.children.map((node) => renderTreeChildren(node))
-      : null}
-  </StyledTreeItem>
-);
-
 interface Option {
   code: string;
   label: string;
@@ -244,6 +222,7 @@ type StyledTreeItemProps = TreeItemProps & {
   bgColor?: string;
   color?: string;
   labelIcon: React.ElementType<SvgIconProps>;
+  highlight?: boolean;
   labelInfo?: string;
   labelText: string;
 };
@@ -280,8 +259,14 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
 }));
 
 function StyledTreeItem(props: StyledTreeItemProps) {
-  const { bgColor, color, labelIcon: LabelIcon, labelText, ...other } = props;
-
+  const {
+    bgColor,
+    color,
+    labelIcon: LabelIcon,
+    labelText,
+    highlight,
+    ...other
+  } = props;
   return (
     <StyledTreeItemRoot
       label={
@@ -289,9 +274,25 @@ function StyledTreeItem(props: StyledTreeItemProps) {
           <Box component={LabelIcon} color="inherit" sx={{ mr: 1 }} />
           <Typography
             variant="body2"
-            sx={{ fontWeight: "inherit", flexGrow: 1 }}
+            sx={{
+              fontWeight: "inherit",
+              flexGrow: 1,
+            }}
           >
-            {labelText}
+            {highlight ? (
+              <Typography
+                component="span"
+                sx={{
+                  backgroundColor: "#ff9632",
+                  color: "black",
+                  wordBreak: "break-all",
+                }}
+              >
+                {labelText}
+              </Typography>
+            ) : (
+              labelText
+            )}
           </Typography>
         </Box>
       }
@@ -317,6 +318,28 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
       datas: [],
     };
   });
+  const renderTreeChildren = (node: TreeNode) => (
+    <StyledTreeItem
+      key={node.id}
+      nodeId={node.id}
+      labelText={node.label}
+      highlight={data.search ? data.search.code == node.id : false}
+      labelIcon={
+        node.type == "component"
+          ? CallToActionIcon
+          : node.type == "catalog"
+          ? FolderIcon
+          : node.type == "window"
+          ? ViewTimelineIcon
+          : SchemaIcon
+      }
+      sx={{ textAlign: "left" }}
+    >
+      {Array.isArray(node.children)
+        ? node.children.map((node) => renderTreeChildren(node))
+        : null}
+    </StyledTreeItem>
+  );
   const tree = toTree(data.datas);
   const options = toOptions(data.datas);
   useEffect(() => {
