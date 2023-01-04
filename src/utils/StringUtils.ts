@@ -4,3 +4,7 @@ export function uuid() {
   };
   return S4() + S4() + S4() + S4() + S4() + S4() + S4() + S4();
 }
+
+export function notEmpty(str: any) {
+  return typeof str == "string" && str.trim() != "";
+}

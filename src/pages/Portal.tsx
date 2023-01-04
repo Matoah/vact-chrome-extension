@@ -26,7 +26,7 @@ function getDatas(): Data[] {
       title: "功能调试",
       avatarIcon: <PestControlIcon sx={{ width: "68px", height: "68px" }} />,
       desc: "分析前端性能，包括js脚本大小分析，方法执行耗时，js加载耗时...",
-      to: "",
+      to: "/frontendDebugger",
     },
   ];
 }

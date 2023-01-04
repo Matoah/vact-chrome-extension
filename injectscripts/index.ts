@@ -1,8 +1,12 @@
-import { clear, genViewTimePoint } from "./DataManager";
-import { register } from "./EventObserver";
+import {
+  clear,
+  genViewTimePoint,
+} from './DataManager';
+import { register } from './EventObserver';
+
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
-vact_devtools.storage = { vjsUrls: [] };
+vact_devtools.storage = { vjsUrls: [], sandbox: null };
 const _getVjsUrl = function (id) {
   let item = vact_devtools.storage.vjsUrls.find((item) => item.id == id);
   let url = null;
@@ -67,6 +71,7 @@ vact_devtools.methods = {
     return ["vjs.framework.extension.platform.interface.event"];
   },
   vjsInited: function (sandbox) {
+    vact_devtools.storage.sandbox = sandbox;
     register(sandbox);
   },
   isMonitored: function () {
@@ -84,6 +89,74 @@ vact_devtools.methods = {
   },
   getMonitorDatas: function (params) {
     return genViewTimePoint(params ? params.key : null);
+  },
+  getFrontendMethods: function () {
+    const result: Array<{
+      componentCode: string;
+      componentName: string;
+      windowCode?: string;
+      windowName?: string;
+      methodCode: string;
+      methodName: string;
+    }> = [];
+    if (vact_devtools.storage.sandbox) {
+      try {
+        const winParam = vact_devtools.storage.sandbox.getService(
+          "v_act_vjs_framework_extension_platform_data_storage_schema_param"
+        ).WindowParam;
+        const defines = winParam.getWindowDefines();
+        defines.forEach(function ({ componentCode, windowCode }) {
+          const componentMetadata = vact_devtools.storage.sandbox
+            .getService(
+              `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
+            )
+            .default.returnComponentSchema();
+          const windowMetadata = vact_devtools.storage.sandbox
+            .getService(
+              `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
+            )
+            .getWindowDefine()
+            .getWindowMetadata();
+          const componentName = componentMetadata.$.name;
+          let componentLogics = componentMetadata.logics;
+          if (typeof componentLogics != "string") {
+            componentLogics = Array.isArray(componentLogics.logic)
+              ? componentLogics.logic
+              : [componentLogics.logic];
+            componentLogics.forEach((logic) => {
+              const ruleSet = logic.ruleSets.ruleSet.$;
+              result.push({
+                componentCode,
+                componentName,
+                methodCode: ruleSet.code,
+                methodName: ruleSet.name,
+              });
+            });
+          }
+          let windowLogics = windowMetadata.logics;
+          if (typeof windowLogics != "string") {
+            const windowName = windowMetadata.$.name;
+            windowLogics = Array.isArray(windowLogics.logic)
+              ? windowLogics.logic
+              : [windowLogics.logic];
+            windowLogics.forEach((logic) => {
+              const ruleSet = logic.ruleSets.ruleSet.$;
+              result.push({
+                componentCode,
+                componentName,
+                windowCode,
+                windowName,
+                methodCode: ruleSet.code,
+                methodName: ruleSet.name,
+              });
+            });
+          }
+        });
+      } catch (e) {
+        return result;
+      }
+    }
+    return result;
   },
 };
 //@ts-ignore

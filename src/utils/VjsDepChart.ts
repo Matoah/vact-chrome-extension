@@ -1,5 +1,7 @@
-import Vjs from "./Vjs";
-import * as d3 from "d3";
+//@ts-nocheck
+import * as d3 from 'd3';
+
+import Vjs from './Vjs';
 
 const drag = (simulation: any) => {
   function dragstarted(event: any, d: any) {
