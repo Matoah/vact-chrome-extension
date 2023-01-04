@@ -40,6 +40,7 @@ interface Method {
 
 interface FrontendMethodTreeProps {
   value?: Method;
+  onNodeSelect?: (id: string) => void;
 }
 
 interface TreeNode {
@@ -304,10 +305,15 @@ function StyledTreeItem(props: StyledTreeItemProps) {
 }
 
 function FrontendMethodTree(props: FrontendMethodTreeProps) {
-  const { value } = props;
-  const [data, setData] = useState<{ search?: Option; datas: Method[] }>(() => {
+  const { value, onNodeSelect } = props;
+  const [data, setData] = useState<{
+    search?: Option;
+    currentId?: string;
+    datas: Method[];
+  }>(() => {
     return {
       search: undefined,
+      currentId: undefined,
       datas: [],
     };
   });
@@ -368,6 +374,15 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
             defaultCollapseIcon={<ArrowDropDownIcon />}
             defaultExpandIcon={<ArrowRightIcon />}
             defaultEndIcon={<div style={{ width: 24 }} />}
+            onNodeSelect={(evt: any, nodeId: any) => {
+              if (
+                typeof onNodeSelect == "function" &&
+                nodeId != data.currentId
+              ) {
+                setData({ ...data, currentId: nodeId });
+                onNodeSelect(nodeId);
+              }
+            }}
           >
             {tree.map((node) => renderTreeChildren(node))}
           </TreeView>

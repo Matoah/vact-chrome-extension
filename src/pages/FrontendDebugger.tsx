@@ -6,7 +6,7 @@ import Navigator from '../components/Navigator';
 function FrontendDebugger() {
   return (
     <Fragment>
-      <FrontendMethodTree></FrontendMethodTree>
+      <FrontendMethodTree onNodeSelect={(id) => alert(id)}></FrontendMethodTree>
       <Navigator />
     </Fragment>
   );
