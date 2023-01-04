@@ -6,7 +6,14 @@ import {
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
-import TreeItem from '@mui/lab/TreeItem';
+import CallToActionIcon from '@mui/icons-material/CallToAction';
+import FolderIcon from '@mui/icons-material/Folder';
+import SchemaIcon from '@mui/icons-material/Schema';
+import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
+import TreeItem, {
+  treeItemClasses,
+  TreeItemProps,
+} from '@mui/lab/TreeItem';
 import TreeView from '@mui/lab/TreeView';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -14,7 +21,10 @@ import Card from '@mui/material/Card';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import { styled } from '@mui/material/styles';
+import { SvgIconProps } from '@mui/material/SvgIcon';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 
 import { getFrontendMethods } from '../utils/RPCUtils';
 import { notEmpty } from '../utils/StringUtils';
@@ -138,16 +148,25 @@ function toWindowId(data: Method) {
 }
 
 const renderTreeChildren = (node: TreeNode) => (
-  <TreeItem
+  <StyledTreeItem
     key={node.id}
     nodeId={node.id}
-    label={node.label}
+    labelText={node.label}
+    labelIcon={
+      node.type == "component"
+        ? CallToActionIcon
+        : node.type == "catalog"
+        ? FolderIcon
+        : node.type == "window"
+        ? ViewTimelineIcon
+        : SchemaIcon
+    }
     sx={{ textAlign: "left" }}
   >
     {Array.isArray(node.children)
       ? node.children.map((node) => renderTreeChildren(node))
       : null}
-  </TreeItem>
+  </StyledTreeItem>
 );
 
 interface Option {
@@ -213,12 +232,82 @@ const toOptions = function (datas: Array<Method>): Option[] {
   });
   return options;
 };
+declare module "react" {
+  interface CSSProperties {
+    "--tree-view-color"?: string;
+    "--tree-view-bg-color"?: string;
+  }
+}
+
+type StyledTreeItemProps = TreeItemProps & {
+  bgColor?: string;
+  color?: string;
+  labelIcon: React.ElementType<SvgIconProps>;
+  labelInfo?: string;
+  labelText: string;
+};
+
+const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+  [`& .${treeItemClasses.content}`]: {
+    color: theme.palette.text.secondary,
+    borderTopRightRadius: theme.spacing(2),
+    borderBottomRightRadius: theme.spacing(2),
+    paddingRight: theme.spacing(1),
+    fontWeight: theme.typography.fontWeightMedium,
+    "&.Mui-expanded": {
+      fontWeight: theme.typography.fontWeightRegular,
+    },
+    "&:hover": {
+      backgroundColor: theme.palette.action.hover,
+    },
+    "&.Mui-focused, &.Mui-selected, &.Mui-selected.Mui-focused": {
+      backgroundColor: `var(--tree-view-bg-color, ${theme.palette.action.selected})`,
+      color: "var(--tree-view-color)",
+    },
+    [`& .${treeItemClasses.label}`]: {
+      fontWeight: "inherit",
+      color: "inherit",
+    },
+  },
+  [`& .${treeItemClasses.group}`]: {
+    marginLeft: 0,
+    [`& .${treeItemClasses.content}`]: {
+      paddingLeft: theme.spacing(2),
+    },
+  },
+}));
+
+function StyledTreeItem(props: StyledTreeItemProps) {
+  const { bgColor, color, labelIcon: LabelIcon, labelText, ...other } = props;
+
+  return (
+    <StyledTreeItemRoot
+      label={
+        <Box sx={{ display: "flex", alignItems: "center", p: 0.5, pr: 0 }}>
+          <Box component={LabelIcon} color="inherit" sx={{ mr: 1 }} />
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: "inherit", flexGrow: 1 }}
+          >
+            {labelText}
+          </Typography>
+        </Box>
+      }
+      style={{
+        "--tree-view-color": color,
+        "--tree-view-bg-color": bgColor,
+      }}
+      {...other}
+    />
+  );
+}
 
 function FrontendMethodTree(props: FrontendMethodTreeProps) {
   const { value } = props;
-  const [data, setData] = useState(() => {
+  const [data, setData] = useState<{ search?: Option; datas: Method[] }>(() => {
     return {
-      search: "",
+      search: undefined,
       datas: [],
     };
   });
@@ -249,7 +338,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
             options={options}
             autoHighlight
             autoSelect
-            onChange={(evt, option) => {
+            onChange={(evt, option: any) => {
               setData({ ...data, search: option });
             }}
             getOptionLabel={(option) => option.label}
