@@ -1,33 +1,26 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowRightIcon from '@mui/icons-material/ArrowRight';
-import CallToActionIcon from '@mui/icons-material/CallToAction';
-import FolderIcon from '@mui/icons-material/Folder';
-import SchemaIcon from '@mui/icons-material/Schema';
-import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
-import TreeItem, {
-  treeItemClasses,
-  TreeItemProps,
-} from '@mui/lab/TreeItem';
-import TreeView from '@mui/lab/TreeView';
-import Autocomplete from '@mui/material/Autocomplete';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import { styled } from '@mui/material/styles';
-import { SvgIconProps } from '@mui/material/SvgIcon';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import CallToActionIcon from "@mui/icons-material/CallToAction";
+import FolderIcon from "@mui/icons-material/Folder";
+import SchemaIcon from "@mui/icons-material/Schema";
+import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
+import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
+import TreeView from "@mui/lab/TreeView";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import { styled } from "@mui/material/styles";
+import { SvgIconProps } from "@mui/material/SvgIcon";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 
-import { getFrontendMethods } from '../utils/RPCUtils';
-import { notEmpty } from '../utils/StringUtils';
+import { getFrontendMethods } from "../utils/RPCUtils";
+import { notEmpty } from "../utils/StringUtils";
 
 interface Method {
   componentCode: string;
@@ -132,6 +125,11 @@ function toTree(datas: Array<Method>): TreeNode[] {
     }
   });
   return tree;
+}
+
+function toNodeId(data: Method) {
+  const { windowCode } = data;
+  return windowCode ? toWindowMethodId(data) : toComponentMethodId(data);
 }
 
 function toWindowMethodId(data: Method) {
@@ -305,17 +303,55 @@ function StyledTreeItem(props: StyledTreeItemProps) {
   );
 }
 
+const getAllNodeIds = function (tree: TreeNode[]): string[] {
+  let result: string[] = [];
+  tree.forEach((node) => {
+    result.push(node.id);
+    const children = node.children;
+    if (children && children.length > 0) {
+      result = result.concat(getAllNodeIds(children));
+    }
+  });
+  return result;
+};
+
+const filter = function (tree: TreeNode[], search?: string) {
+  if (search) {
+    const result: TreeNode[] = [];
+    tree.forEach((node) => {
+      if (search.startsWith(node.id)) {
+        result.push({
+          ...node,
+          children:
+            node.id == search
+              ? node.children
+              : node.children
+              ? filter(node.children, search)
+              : [],
+        });
+      }
+    });
+    return result;
+  } else {
+    return tree;
+  }
+};
+
 function FrontendMethodTree(props: FrontendMethodTreeProps) {
   const { value, onNodeSelect } = props;
   const [data, setData] = useState<{
     search?: Option;
     currentId?: string;
-    datas: Method[];
+    options: Option[];
+    tree: TreeNode[];
+    selected: string[];
   }>(() => {
     return {
       search: undefined,
       currentId: undefined,
-      datas: [],
+      options: [],
+      tree: [],
+      selected: value ? [toNodeId(value)] : [],
     };
   });
   const renderTreeChildren = (node: TreeNode) => (
@@ -340,15 +376,15 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
         : null}
     </StyledTreeItem>
   );
-  const tree = toTree(data.datas);
-  const options = toOptions(data.datas);
   useEffect(() => {
     getFrontendMethods()
       .then((datas) => {
-        setData({ ...data, datas });
+        setData({ ...data, tree: toTree(datas), options: toOptions(datas) });
       })
       .catch();
   }, []);
+  const expanded = getAllNodeIds(data.tree);
+  const tree = filter(data.tree, data.search ? data.search.code : undefined);
   return (
     <Fragment>
       <Box
@@ -361,10 +397,9 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
       >
         <Box sx={{ display: "flex", mb: 1 }}>
           <Autocomplete
-            disableClearable
             value={data.search}
             sx={{ width: "100%" }}
-            options={options}
+            options={data.options}
             autoHighlight
             autoSelect
             onChange={(evt, option: any) => {
@@ -394,6 +429,8 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
         </Box>
         <Card sx={{ flex: 1 }}>
           <TreeView
+            expanded={expanded}
+            selected={data.selected}
             defaultCollapseIcon={<ArrowDropDownIcon />}
             defaultExpandIcon={<ArrowRightIcon />}
             defaultEndIcon={<div style={{ width: 24 }} />}
@@ -402,7 +439,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
                 typeof onNodeSelect == "function" &&
                 nodeId != data.currentId
               ) {
-                setData({ ...data, currentId: nodeId });
+                setData({ ...data, currentId: nodeId, selected: [nodeId] });
                 onNodeSelect(nodeId);
               }
             }}
