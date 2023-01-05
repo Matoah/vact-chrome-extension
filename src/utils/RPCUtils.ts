@@ -1,4 +1,5 @@
 import {
+  getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
   getMonitorMockDatas,
   getVjsContent as getMockVjsContent,
@@ -139,6 +140,26 @@ export function getFrontendMethods() {
       promise.then(resolve).catch(reject);
     } else {
       resolve(getMockFrontendMethods());
+    }
+  });
+}
+
+export function getFrontendMethod(params: {
+  componentCode: string;
+  methodCode: string;
+  windowCode?: string;
+}) {
+  return new Promise((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "getFrontendMethod",
+        params
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockFrontendMethod());
     }
   });
 }

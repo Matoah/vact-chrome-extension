@@ -1,26 +1,44 @@
-import { Fragment, useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import ArrowRightIcon from "@mui/icons-material/ArrowRight";
-import CallToActionIcon from "@mui/icons-material/CallToAction";
-import FolderIcon from "@mui/icons-material/Folder";
-import SchemaIcon from "@mui/icons-material/Schema";
-import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
-import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
-import TreeView from "@mui/lab/TreeView";
-import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import { styled } from "@mui/material/styles";
-import { SvgIconProps } from "@mui/material/SvgIcon";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import {
+  animated,
+  useSpring,
+} from 'react-spring';
 
-import { getFrontendMethods } from "../utils/RPCUtils";
-import { notEmpty } from "../utils/StringUtils";
+import CallToActionIcon from '@mui/icons-material/CallToAction';
+import FolderIcon from '@mui/icons-material/Folder';
+import SchemaIcon from '@mui/icons-material/Schema';
+import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
+import TreeItem, {
+  treeItemClasses,
+  TreeItemProps,
+} from '@mui/lab/TreeItem';
+import TreeView from '@mui/lab/TreeView';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Collapse from '@mui/material/Collapse';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import {
+  alpha,
+  styled,
+} from '@mui/material/styles';
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import TextField from '@mui/material/TextField';
+import { TransitionProps } from '@mui/material/transitions';
+import Typography from '@mui/material/Typography';
+
+import { getFrontendMethods } from '../utils/RPCUtils';
+import {
+  notEmpty,
+  uuid,
+} from '../utils/StringUtils';
 
 interface Method {
   componentCode: string;
@@ -32,8 +50,10 @@ interface Method {
 }
 
 interface FrontendMethodTreeProps {
-  value?: Method;
+  value?: { componentCode: string; methodCode?: string; windowCode?: string };
+  filter?: Option;
   onNodeSelect?: (id: string) => void;
+  onFilter?: (filter: Option) => void;
 }
 
 interface TreeNode {
@@ -81,11 +101,11 @@ function toTree(datas: Array<Method>): TreeNode[] {
       }
       const componentWindows = componentWindowNode.children || [];
       let windowNode = componentWindows.find(
-        (node) => node.id == toWindowId(data)
+        (node) => node.id == toWindowId({ componentCode, windowCode })
       );
       if (!windowNode) {
         windowNode = {
-          id: toWindowId(data),
+          id: toWindowId({ componentCode, windowCode }),
           label: windowName || "",
           type: "window",
         };
@@ -93,7 +113,7 @@ function toTree(datas: Array<Method>): TreeNode[] {
       }
       const windowMethods = windowNode.children || [];
       windowMethods.push({
-        id: toWindowMethodId(data),
+        id: toWindowMethodId({ componentCode, windowCode, methodCode }),
         label: methodName,
         type: "method",
       });
@@ -127,27 +147,32 @@ function toTree(datas: Array<Method>): TreeNode[] {
   return tree;
 }
 
-function toNodeId(data: Method) {
-  const { windowCode } = data;
-  return windowCode ? toWindowMethodId(data) : toComponentMethodId(data);
-}
-
-function toWindowMethodId(data: Method) {
+function toWindowMethodId(data: {
+  componentCode: string;
+  methodCode: string;
+  windowCode: string;
+}) {
   const { componentCode, windowCode, methodCode } = data;
-  return `${componentCode}_$_component_@_windows_$_${windowCode}_$_${methodCode}`;
+  return `${componentCode}_$_component_@_windows_$_${windowCode}_$_window_@_methods_$_${methodCode}`;
 }
 
-function toComponentMethodId(data: Method) {
+function toComponentMethodId(data: {
+  componentCode: string;
+  methodCode: string;
+}) {
   const { componentCode, methodCode } = data;
   return `${componentCode}_$_component_@_methods_$_${methodCode}`;
 }
-function toWindowId(data: Method) {
+function toWindowId(data: { componentCode: string; windowCode: string }) {
   const { componentCode, windowCode } = data;
   return `${componentCode}_$_component_@_windows_$_${windowCode}`;
 }
 
 interface Option {
   code: string;
+  componentCode: string;
+  windowCode?: string;
+  methodCode?: string;
   label: string;
 }
 
@@ -166,45 +191,53 @@ const toOptions = function (datas: Array<Method>): Option[] {
     if (tmp.indexOf(componentCode) == -1) {
       tmp.push(componentCode);
       options.push({
-        code: componentCode,
+        code: uuid(),
+        componentCode,
         label: componentCode,
       });
       if (notEmpty(componentName)) {
         options.push({
-          code: componentCode,
+          code: uuid(),
+          componentCode,
           label: componentName,
         });
       }
     }
     if (windowCode) {
-      const windowId = toWindowId(data);
+      const windowId = toWindowId({ componentCode, windowCode });
       if (tmp.indexOf(windowId) == -1) {
+        tmp.push(windowId);
         options.push({
-          code: windowId,
+          code: uuid(),
+          componentCode,
+          windowCode,
           label: windowCode,
         });
         if (notEmpty(windowName)) {
           options.push({
-            code: windowId,
+            code: uuid(),
+            componentCode,
+            windowCode,
             label: windowName || "",
           });
         }
       }
     }
-    const methodId = windowCode
-      ? toWindowMethodId(data)
-      : toComponentMethodId(data);
-    if (tmp.indexOf(methodId) == -1) {
+    options.push({
+      code: uuid(),
+      componentCode,
+      windowCode,
+      methodCode,
+      label: methodCode,
+    });
+    if (notEmpty(methodName)) {
       options.push({
-        code: methodId,
-        label: methodCode,
+        code: uuid(),
+        componentCode,
+        windowCode,
+        methodCode,
+        label: methodName,
       });
-      if (notEmpty(methodName)) {
-        options.push({
-          code: methodId,
-          label: methodName,
-        });
-      }
     }
   });
   return options;
@@ -229,15 +262,16 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
   color: theme.palette.text.secondary,
   [`& .${treeItemClasses.content}`]: {
     color: theme.palette.text.secondary,
-    borderTopRightRadius: theme.spacing(2),
-    borderBottomRightRadius: theme.spacing(2),
+    cursor: "default",
+    //borderTopRightRadius: theme.spacing(2),
+    //borderBottomRightRadius: theme.spacing(2),
     paddingRight: theme.spacing(1),
     fontWeight: theme.typography.fontWeightMedium,
     "&.Mui-expanded": {
       fontWeight: theme.typography.fontWeightRegular,
     },
     "&:hover": {
-      backgroundColor: theme.palette.action.hover,
+      backgroundColor: theme.palette.action.selected,
     },
     "&.Mui-focused, &.Mui-selected, &.Mui-selected.Mui-focused": {
       backgroundColor: `var(--tree-view-bg-color, ${theme.palette.action.selected})`,
@@ -249,12 +283,48 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
     },
   },
   [`& .${treeItemClasses.group}`]: {
-    marginLeft: 0,
-    [`& .${treeItemClasses.content}`]: {
-      paddingLeft: theme.spacing(2),
-    },
+    marginLeft: 15,
+    paddingLeft: 18,
+    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
   },
 }));
+
+function MinusSquare(props: SvgIconProps) {
+  return (
+    <SvgIcon fontSize="inherit" style={{ width: 14, height: 14 }} {...props}>
+      {/* tslint:disable-next-line: max-line-length */}
+      <path d="M22.047 22.074v0 0-20.147 0h-20.12v0 20.147 0h20.12zM22.047 24h-20.12q-.803 0-1.365-.562t-.562-1.365v-20.147q0-.776.562-1.351t1.365-.575h20.147q.776 0 1.351.575t.575 1.351v20.147q0 .803-.575 1.365t-1.378.562v0zM17.873 11.023h-11.826q-.375 0-.669.281t-.294.682v0q0 .401.294 .682t.669.281h11.826q.375 0 .669-.281t.294-.682v0q0-.401-.294-.682t-.669-.281z" />
+    </SvgIcon>
+  );
+}
+
+function PlusSquare(props: SvgIconProps) {
+  return (
+    <SvgIcon fontSize="inherit" style={{ width: 14, height: 14 }} {...props}>
+      {/* tslint:disable-next-line: max-line-length */}
+      <path d="M22.047 22.074v0 0-20.147 0h-20.12v0 20.147 0h20.12zM22.047 24h-20.12q-.803 0-1.365-.562t-.562-1.365v-20.147q0-.776.562-1.351t1.365-.575h20.147q.776 0 1.351.575t.575 1.351v20.147q0 .803-.575 1.365t-1.378.562v0zM17.873 12.977h-4.923v4.896q0 .401-.281.682t-.682.281v0q-.375 0-.669-.281t-.294-.682v-4.896h-4.923q-.401 0-.682-.294t-.281-.669v0q0-.401.281-.682t.682-.281h4.923v-4.896q0-.401.294-.682t.669-.281v0q.401 0 .682.281t.281.682v4.896h4.923q.401 0 .682.281t.281.682v0q0 .375-.281.669t-.682.294z" />
+    </SvgIcon>
+  );
+}
+
+function TransitionComponent(props: TransitionProps) {
+  const style = useSpring({
+    from: {
+      opacity: 0,
+      transform: "translate3d(20px,0,0)",
+    },
+    to: {
+      opacity: props.in ? 1 : 0,
+      transform: `translate3d(${props.in ? 0 : 20}px,0,0)`,
+    },
+  });
+
+  return (
+    <animated.div style={style}>
+      <Collapse {...props} />
+    </animated.div>
+  );
+}
 
 function StyledTreeItem(props: StyledTreeItemProps) {
   const {
@@ -267,6 +337,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
   } = props;
   return (
     <StyledTreeItemRoot
+      TransitionComponent={TransitionComponent}
       label={
         <Box sx={{ display: "flex", alignItems: "center", p: 0.5, pr: 0 }}>
           <Box component={LabelIcon} color="inherit" sx={{ mr: 1 }} />
@@ -315,18 +386,40 @@ const getAllNodeIds = function (tree: TreeNode[]): string[] {
   return result;
 };
 
-const filter = function (tree: TreeNode[], search?: string) {
-  if (search) {
+const optionToTreeNodeId = function (option: {
+  componentCode: string;
+  windowCode?: string;
+  methodCode?: string;
+}) {
+  const { componentCode, windowCode, methodCode } = option;
+  if (windowCode) {
+    if (methodCode) {
+      return toWindowMethodId({ componentCode, windowCode, methodCode });
+    } else {
+      return toWindowId({ componentCode, windowCode });
+    }
+  } else {
+    if (methodCode) {
+      return toComponentMethodId({ componentCode, methodCode });
+    } else {
+      return componentCode;
+    }
+  }
+};
+
+const filterTree = function (tree: TreeNode[], filter?: Option) {
+  if (filter) {
     const result: TreeNode[] = [];
+    const key = optionToTreeNodeId(filter);
     tree.forEach((node) => {
-      if (search.startsWith(node.id)) {
+      if (key.startsWith(node.id)) {
         result.push({
           ...node,
           children:
-            node.id == search
+            node.id == key
               ? node.children
               : node.children
-              ? filter(node.children, search)
+              ? filterTree(node.children, filter)
               : [],
         });
       }
@@ -338,20 +431,14 @@ const filter = function (tree: TreeNode[], search?: string) {
 };
 
 function FrontendMethodTree(props: FrontendMethodTreeProps) {
-  const { value, onNodeSelect } = props;
+  const { value, filter, onFilter, onNodeSelect } = props;
   const [data, setData] = useState<{
-    search?: Option;
-    currentId?: string;
     options: Option[];
     tree: TreeNode[];
-    selected: string[];
   }>(() => {
     return {
-      search: undefined,
-      currentId: undefined,
       options: [],
       tree: [],
-      selected: value ? [toNodeId(value)] : [],
     };
   });
   const renderTreeChildren = (node: TreeNode) => (
@@ -359,7 +446,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
       key={node.id}
       nodeId={node.id}
       labelText={node.label}
-      highlight={data.search ? data.search.code == node.id : false}
+      highlight={filter ? optionToTreeNodeId(filter) == node.id : false}
       labelIcon={
         node.type == "component"
           ? CallToActionIcon
@@ -384,7 +471,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
       .catch();
   }, []);
   const expanded = getAllNodeIds(data.tree);
-  const tree = filter(data.tree, data.search ? data.search.code : undefined);
+  const tree = filterTree(data.tree, filter);
   return (
     <Fragment>
       <Box
@@ -397,13 +484,15 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
       >
         <Box sx={{ display: "flex", mb: 1 }}>
           <Autocomplete
-            value={data.search}
+            value={filter}
             sx={{ width: "100%" }}
             options={data.options}
             autoHighlight
             autoSelect
             onChange={(evt, option: any) => {
-              setData({ ...data, search: option });
+              if (onFilter) {
+                onFilter(option);
+              }
             }}
             getOptionLabel={(option) => option.label}
             renderOption={(props, option) => {
@@ -430,16 +519,13 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
         <Card sx={{ flex: 1 }}>
           <TreeView
             expanded={expanded}
-            selected={data.selected}
-            defaultCollapseIcon={<ArrowDropDownIcon />}
-            defaultExpandIcon={<ArrowRightIcon />}
+            selected={value ? [optionToTreeNodeId(value)] : []}
+            defaultCollapseIcon={<MinusSquare />}
+            defaultExpandIcon={<PlusSquare />}
             defaultEndIcon={<div style={{ width: 24 }} />}
             onNodeSelect={(evt: any, nodeId: any) => {
-              if (
-                typeof onNodeSelect == "function" &&
-                nodeId != data.currentId
-              ) {
-                setData({ ...data, currentId: nodeId, selected: [nodeId] });
+              //setData({ ...data, currentId: nodeId, selected: [nodeId] });
+              if (onNodeSelect) {
                 onNodeSelect(nodeId);
               }
             }}

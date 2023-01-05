@@ -158,6 +158,44 @@ vact_devtools.methods = {
     }
     return result;
   },
+  getFrontendMethod: function (params: {
+    componentCode: string;
+    methodCode: string;
+    windowCode?: string;
+  }) {
+    if (vact_devtools.storage.sandbox) {
+      try {
+        const { componentCode, methodCode, windowCode } = params;
+        let metadata = null;
+        if (windowCode) {
+          metadata = vact_devtools.storage.sandbox
+            .getService(
+              `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
+            )
+            .getWindowDefine()
+            .getWindowMetadata();
+        } else {
+          metadata = vact_devtools.storage.sandbox
+            .getService(
+              `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
+            )
+            .default.returnComponentSchema();
+        }
+        //@ts-ignore
+        const logics = Array.isArray(metadata.logics.logic)
+          ? //@ts-ignore
+            metadata.logics.logic
+          : //@ts-ignore
+            [metadata.logics.logic];
+        return logics.find(
+          (logic) => logic.ruleSets.ruleSet.$.code == methodCode
+        );
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  },
 };
 //@ts-ignore
 window.vact_devtools = vact_devtools;
