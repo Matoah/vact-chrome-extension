@@ -1,46 +1,34 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import {
-  animated,
-  useSpring,
-} from 'react-spring';
-import {
-  Element,
-  xml2js,
-} from 'xml-js';
+import { animated, useSpring } from "react-spring";
+import { Element, xml2js } from "xml-js";
 
-import PestControlIcon from '@mui/icons-material/PestControl';
-import TreeItem, {
-  treeItemClasses,
-  TreeItemProps,
-} from '@mui/lab/TreeItem';
-import TreeView from '@mui/lab/TreeView';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Collapse from '@mui/material/Collapse';
-import {
-  alpha,
-  styled,
-} from '@mui/material/styles';
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
-import { TransitionProps } from '@mui/material/transitions';
-import Typography from '@mui/material/Typography';
+import PestControlIcon from "@mui/icons-material/PestControl";
+import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
+import TreeView from "@mui/lab/TreeView";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Collapse from "@mui/material/Collapse";
+import { alpha, styled } from "@mui/material/styles";
+import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
+import { TransitionProps } from "@mui/material/transitions";
+import Typography, { TypographyProps } from "@mui/material/Typography";
 
-import { getFrontendMethod } from '../utils/RPCUtils';
-import { uuid } from '../utils/StringUtils';
+import { getFrontendMethod } from "../utils/RPCUtils";
+import { uuid } from "../utils/StringUtils";
+import { breakpoints } from "@mui/system";
+
+interface Breakpoint {
+  componentCode: string;
+  windowCode?: string;
+  methodCode: string;
+  ruleCode: string;
+}
 
 interface FrontendMethodConfigTreeProps {
   value?: { componentCode: string; windowCode?: string; methodCode: string };
-  breakpoints?: Array<{
-    componentCode: string;
-    windowCode?: string;
-    methodCode: string;
-    ruleCode: string;
-  }>;
+  breakpoints?: Breakpoint[];
+  onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
 }
 
 declare module "react" {
@@ -56,6 +44,9 @@ type StyledTreeItemProps = TreeItemProps & {
   labelText: string;
   type: "rule" | "if" | "else" | "foreach";
   labelDesc?: string;
+  scope?: { componentCode: string; windowCode?: string; methodCode: string };
+  breakpoints?: Breakpoint[];
+  onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
   debug?: boolean | { debug: boolean; condition: string };
 };
 
@@ -98,6 +89,62 @@ function TransitionComponent(props: TransitionProps) {
 const StyledTypography = styled(Typography)(({ theme }) => ({
   color: theme.palette.primary.main,
 }));
+
+function DebugIcon(props: {
+  type: "rule" | "if" | "else" | "foreach";
+  value: boolean;
+  onToggle: (debuged: boolean) => void;
+}) {
+  const { value, onToggle, type } = props;
+  const attrs: TypographyProps = {
+    variant: "caption",
+    color: "inherit",
+    sx: {
+      width: "70px",
+    },
+    onClick: () => {
+      if (type == "rule") {
+        onToggle(!value);
+      }
+    },
+  };
+  if (type != "rule") {
+    return <Typography {...attrs}></Typography>;
+  } else {
+    return value ? (
+      <StyledTypography {...attrs}>
+        <PestControlIcon fontSize="small" sx={{ cursor: "pointer" }} />
+      </StyledTypography>
+    ) : (
+      <Typography {...attrs}>
+        <PestControlIcon fontSize="small" sx={{ cursor: "pointer" }} />
+      </Typography>
+    );
+  }
+}
+
+function isDebuged(
+  code: string,
+  scope?: { componentCode: string; windowCode?: string; methodCode: string },
+  breakpoints?: Breakpoint[]
+) {
+  if (breakpoints) {
+    return !!breakpoints.find((breakpoint) => {
+      const { componentCode, methodCode, windowCode, ruleCode } = breakpoint;
+      if (
+        code == ruleCode &&
+        scope &&
+        componentCode == scope.componentCode &&
+        methodCode == scope.methodCode
+      ) {
+        return typeof windowCode == typeof scope.windowCode;
+      }
+      return false;
+    });
+  }
+  return false;
+}
+
 const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
   color: theme.palette.text.secondary,
   [`& .${treeItemClasses.content}`]: {
@@ -130,7 +177,19 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
 }));
 
 function StyledTreeItem(props: StyledTreeItemProps) {
-  const { bgColor, color, labelText, labelDesc, debug, type, ...other } = props;
+  const {
+    bgColor,
+    color,
+    breakpoints,
+    labelText,
+    labelDesc,
+    debug,
+    type,
+    scope,
+    onBreakpointChanged,
+    ...other
+  } = props;
+  const nodeId = props.nodeId;
   return (
     <StyledTreeItemRoot
       TransitionComponent={TransitionComponent}
@@ -148,13 +207,15 @@ function StyledTreeItem(props: StyledTreeItemProps) {
           <Typography variant="caption" color="inherit" sx={{ width: "70px" }}>
             {labelDesc ? labelDesc : ""}
           </Typography>
-          <StyledTypography
-            variant="caption"
-            color="inherit"
-            sx={{ width: "70px" }}
-          >
-            {type == "rule" ? <PestControlIcon fontSize="small" /> : null}
-          </StyledTypography>
+          <DebugIcon
+            type={type}
+            value={isDebuged(nodeId, scope, breakpoints)}
+            onToggle={(debuged: boolean) => {
+              if (onBreakpointChanged && scope) {
+                onBreakpointChanged(debuged, { ...scope, ruleCode: nodeId });
+              }
+            }}
+          ></DebugIcon>
         </Box>
       }
       style={{
@@ -385,7 +446,7 @@ const getAllNodeIds = function (tree: TreeNode[]): string[] {
 };
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
-  const { value } = props;
+  const { value, breakpoints, onBreakpointChanged } = props;
   const [data, setData] = useState<{
     current: null | string;
     tree: TreeNode[];
@@ -404,6 +465,9 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       type={node.type}
       labelText={node.label}
       labelDesc={node.desc}
+      breakpoints={breakpoints}
+      scope={value}
+      onBreakpointChanged={onBreakpointChanged}
       sx={{ textAlign: "left" }}
     >
       {Array.isArray(node.children)

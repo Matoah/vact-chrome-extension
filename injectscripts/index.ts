@@ -1,8 +1,12 @@
-import {
-  clear,
-  genViewTimePoint,
-} from './DataManager';
-import { register } from './EventObserver';
+import { clear, genViewTimePoint } from "./DataManager";
+import { register } from "./EventObserver";
+
+interface Breakpoint {
+  componentCode: string;
+  windowCode?: string;
+  methodCode: string;
+  ruleCode: string;
+}
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
@@ -195,6 +199,63 @@ vact_devtools.methods = {
       }
     }
     return null;
+  },
+  addBreakpoint: function (breakpoint: Breakpoint) {
+    const breakpointJson = window.localStorage.getItem(
+      "vact_devtools_breakpoints"
+    );
+    const breakpoints = breakpointJson ? JSON.parse(breakpointJson) : [];
+    breakpoints.push(breakpoint);
+    window.localStorage.setItem(
+      "vact_devtools_breakpoints",
+      JSON.stringify(breakpoints)
+    );
+  },
+  removeBreakpoint: function (breakpoint: Breakpoint) {
+    const breakpointJson = window.localStorage.getItem(
+      "vact_devtools_breakpoints"
+    );
+    const breakpoints = breakpointJson ? JSON.parse(breakpointJson) : [];
+    const storage: Breakpoint[] = [];
+    breakpoints.forEach((bp) => {
+      let flag = true;
+      if (
+        bp.componentCode == breakpoint.componentCode &&
+        bp.methodCode == breakpoint.methodCode &&
+        bp.ruleCode == breakpoint.ruleCode
+      ) {
+        if (typeof bp.windowCode == typeof breakpoint.windowCode) {
+          flag = false;
+        }
+      }
+      if (flag) {
+        storage.push(bp);
+      }
+    });
+    window.localStorage.setItem(
+      "vact_devtools_breakpoints",
+      JSON.stringify(storage)
+    );
+  },
+  getBreakpoints: function () {
+    const breakpointJson = window.localStorage.getItem(
+      "vact_devtools_breakpoints"
+    );
+    return breakpointJson ? JSON.parse(breakpointJson) : [];
+  },
+  isBreakAllRule: function () {
+    const flag = window.localStorage.getItem("vact_devtools_breakallrule");
+    return flag == "true";
+  },
+  markBreakAllRule: function () {
+    window.localStorage.setItem("vact_devtools_breakallrule", "true");
+  },
+  unmarkBreakAllRule: function () {
+    window.localStorage.setItem("vact_devtools_breakallrule", "false");
+  },
+  clearBreakpoint: function () {
+    window.localStorage.setItem("vact_devtools_breakallrule", "false");
+    window.localStorage.setItem("vact_devtools_breakpoints", "[]");
   },
 };
 //@ts-ignore

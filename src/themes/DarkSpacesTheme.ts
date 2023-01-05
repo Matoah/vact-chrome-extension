@@ -1,8 +1,4 @@
-import {
-  alpha,
-  createTheme,
-  darken,
-} from '@mui/material/styles';
+import { alpha, createTheme, darken } from "@mui/material/styles";
 
 // import i18n from 'src/i18n/i18n';
 
@@ -1177,7 +1173,7 @@ export const DarkSpacesTheme = createTheme({
   },
   typography: {
     fontFamily:
-      '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+      '"Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", 微软雅黑, Arial, sans-serif',
     h1: {
       fontWeight: 700,
       fontSize: 35,

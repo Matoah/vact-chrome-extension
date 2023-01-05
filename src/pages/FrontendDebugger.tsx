@@ -1,13 +1,22 @@
+import { Fragment, useState, useEffect } from "react";
+
+import Box from "@mui/material/Box";
+
+import FrontendDebugAttrPanel from "../components/FrontendDebugAttrPanel";
+import FrontendMethodConfigTree from "../components/FrontendMethodConfigTree";
+import FrontendMethodTree from "../components/FrontendMethodTree";
+import Navigator from "../components/Navigator";
 import {
-  Fragment,
-  useState,
-} from 'react';
-
-import Box from '@mui/material/Box';
-
-import FrontendMethodConfigTree from '../components/FrontendMethodConfigTree';
-import FrontendMethodTree from '../components/FrontendMethodTree';
-import Navigator from '../components/Navigator';
+  addBreakpoint,
+  getBreakpoints,
+  removeBreakpoint,
+} from "../utils/RPCUtils";
+interface Breakpoint {
+  componentCode: string;
+  windowCode?: string;
+  methodCode: string;
+  ruleCode: string;
+}
 
 function FrontendDebugger() {
   const [data, setData] = useState<{
@@ -38,6 +47,16 @@ function FrontendDebugger() {
       breakpoints: [],
     };
   });
+  useEffect(() => {
+    getBreakpoints()
+      .then((breakpoints) => {
+        setData({
+          ...data,
+          breakpoints,
+        });
+      })
+      .catch((e) => console.error(e));
+  }, []);
   return (
     <Fragment>
       <Box sx={{ display: "flex", height: "100%", width: "100%" }}>
@@ -78,7 +97,36 @@ function FrontendDebugger() {
         <Box sx={{ flexGrow: 1, height: "100%" }}>
           <FrontendMethodConfigTree
             value={data.currentMethod}
+            breakpoints={data.breakpoints}
+            onBreakpointChanged={(debuged: boolean, breakpoint: Breakpoint) => {
+              if (debuged) {
+                addBreakpoint(breakpoint)
+                  .then(() => {
+                    getBreakpoints().then((breakpoints) => {
+                      setData({
+                        ...data,
+                        breakpoints,
+                      });
+                    });
+                  })
+                  .catch();
+              } else {
+                removeBreakpoint(breakpoint)
+                  .then(() => {
+                    getBreakpoints().then((breakpoints) => {
+                      setData({
+                        ...data,
+                        breakpoints,
+                      });
+                    });
+                  })
+                  .catch((e) => console.error(e));
+              }
+            }}
           ></FrontendMethodConfigTree>
+        </Box>
+        <Box sx={{ width: "300px", height: "100%" }}>
+          <FrontendDebugAttrPanel />
         </Box>
       </Box>
       <Navigator />
