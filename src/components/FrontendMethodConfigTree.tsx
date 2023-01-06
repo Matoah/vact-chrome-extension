@@ -1,22 +1,38 @@
-import { Fragment, useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import { animated, useSpring } from "react-spring";
-import { Element, xml2js } from "xml-js";
+import {
+  animated,
+  useSpring,
+} from 'react-spring';
+import {
+  Element,
+  xml2js,
+} from 'xml-js';
 
-import PestControlIcon from "@mui/icons-material/PestControl";
-import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
-import TreeView from "@mui/lab/TreeView";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Collapse from "@mui/material/Collapse";
-import { alpha, styled } from "@mui/material/styles";
-import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
-import { TransitionProps } from "@mui/material/transitions";
-import Typography, { TypographyProps } from "@mui/material/Typography";
+import PestControlIcon from '@mui/icons-material/PestControl';
+import TreeItem, {
+  treeItemClasses,
+  TreeItemProps,
+} from '@mui/lab/TreeItem';
+import TreeView from '@mui/lab/TreeView';
+import { Tooltip } from '@mui/material';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Collapse from '@mui/material/Collapse';
+import {
+  alpha,
+  styled,
+} from '@mui/material/styles';
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { TransitionProps } from '@mui/material/transitions';
+import Typography, { TypographyProps } from '@mui/material/Typography';
 
-import { getFrontendMethod } from "../utils/RPCUtils";
-import { uuid } from "../utils/StringUtils";
-import { breakpoints } from "@mui/system";
+import { getFrontendMethod } from '../utils/RPCUtils';
+import { uuid } from '../utils/StringUtils';
 
 interface Breakpoint {
   componentCode: string;
@@ -99,8 +115,9 @@ function DebugIcon(props: {
   const attrs: TypographyProps = {
     variant: "caption",
     color: "inherit",
+    align: "center",
     sx: {
-      width: "70px",
+      width: "50px",
     },
     onClick: () => {
       if (type == "rule") {
@@ -204,9 +221,20 @@ function StyledTreeItem(props: StyledTreeItemProps) {
           >
             {labelText}
           </Typography>
-          <Typography variant="caption" color="inherit" sx={{ width: "70px" }}>
-            {labelDesc ? labelDesc : ""}
-          </Typography>
+          <Tooltip title={labelDesc}>
+            <Typography
+              variant="caption"
+              color="inherit"
+              sx={{
+                width: "300px",
+                textTransform: "none",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {labelDesc ? labelDesc : ""}
+            </Typography>
+          </Tooltip>
           <DebugIcon
             type={type}
             value={isDebuged(nodeId, scope, breakpoints)}
@@ -399,12 +427,14 @@ function ruleInstanceToMap(ruleInstances: {
   ruleInstance: RuleInstance | RuleInstance[];
 }) {
   const map: { [instanceCode: string]: RuleInstance } = {};
-  const instances = Array.isArray(ruleInstances.ruleInstance)
-    ? ruleInstances.ruleInstance
-    : [ruleInstances.ruleInstance];
-  instances.forEach((inst) => {
-    map[inst.$.instanceCode] = inst;
-  });
+  if (ruleInstances && ruleInstances.ruleInstance) {
+    const instances = Array.isArray(ruleInstances.ruleInstance)
+      ? ruleInstances.ruleInstance
+      : [ruleInstances.ruleInstance];
+    instances.forEach((inst) => {
+      map[inst.$.instanceCode] = inst;
+    });
+  }
   return map;
 }
 
@@ -506,7 +536,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
           height: "100%",
         }}
       >
-        <Card sx={{ flex: 1, ml: 1 }}>
+        <Card sx={{ flex: 1, ml: 1, overflow: "auto" }}>
           <TreeView
             expanded={expanded}
             selected={data.selected}

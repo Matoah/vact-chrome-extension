@@ -516,7 +516,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
             )}
           />
         </Box>
-        <Card sx={{ flex: 1 }}>
+        <Card sx={{ flex: 1, overflow: "auto" }}>
           <TreeView
             expanded={expanded}
             selected={value ? [optionToTreeNodeId(value)] : []}

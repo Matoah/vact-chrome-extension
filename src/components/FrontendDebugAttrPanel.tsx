@@ -1,26 +1,29 @@
-import { Fragment, useState } from "react";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import IconButton from "@mui/material/IconButton";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import Typography from "@mui/material/Typography";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import PauseIcon from "@mui/icons-material/Pause";
-import KeyboardTabIcon from "@mui/icons-material/KeyboardTab";
-import DownloadIcon from "@mui/icons-material/Download";
-import UploadIcon from "@mui/icons-material/Upload";
-import ClearIcon from "@mui/icons-material/Clear";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import LabelOffIcon from "@mui/icons-material/LabelOff";
-import Tooltip from "@mui/material/Tooltip";
-import { styled, alpha } from "@mui/material/styles";
-import { ContactsTwoTone } from "@mui/icons-material";
+import {
+  Fragment,
+  useState,
+} from 'react';
+
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import KeyboardTabIcon from '@mui/icons-material/KeyboardTab';
+import LabelOffIcon from '@mui/icons-material/LabelOff';
+import PauseIcon from '@mui/icons-material/Pause';
+import UploadIcon from '@mui/icons-material/Upload';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import IconButton from '@mui/material/IconButton';
+import { styled } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+
 interface FrontendDebugAttrPanelProps {}
 
 const StyledBox = styled(Box)(({ theme }) => ({
-  boxShadow: `0px 0px 2px ${alpha(theme.palette.text.primary, 0.4)}`,
+  boxShadow: `0px 0px 2px #996a6a`,
   //borderBottom: `1px solid ${alpha(theme.palette.text.primary, 0.4)}`,
 }));
 
@@ -101,7 +104,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
               </IconButton>
             </Tooltip>
           </StyledBox>
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, mt: 1 }}>
             <Accordion
               expanded={data.expand["monitor"]}
               onChange={() => {
