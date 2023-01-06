@@ -1,12 +1,36 @@
-import { clear, genViewTimePoint } from "./DataManager";
-import { register } from "./EventObserver";
+import {
+  clear,
+  genViewTimePoint,
+} from './DataManager';
+import { register } from './EventObserver';
 
 interface Breakpoint {
-  componentCode: string;
-  windowCode?: string;
-  methodCode: string;
-  ruleCode: string;
+  enable: boolean;
+  location: {
+    componentCode: string;
+    windowCode?: string;
+    methodCode: string;
+    ruleCode: string;
+  };
 }
+
+const indexOf = function (breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
+  for (let index = 0; index < breakpoints.length; index++) {
+    const bp = breakpoints[index];
+    if (
+      bp.location.componentCode == breakpoint.location.componentCode &&
+      bp.location.methodCode == breakpoint.location.methodCode &&
+      bp.location.ruleCode == breakpoint.location.ruleCode
+    ) {
+      if (
+        typeof bp.location.windowCode == typeof breakpoint.location.windowCode
+      ) {
+        return index;
+      }
+    }
+  }
+  return -1;
+};
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
@@ -211,24 +235,45 @@ vact_devtools.methods = {
       JSON.stringify(breakpoints)
     );
   },
-  removeBreakpoint: function (breakpoint: Breakpoint) {
+  updateBreakpoint: function (breakpoint: Breakpoint) {
     const breakpointJson = window.localStorage.getItem(
       "vact_devtools_breakpoints"
     );
-    const breakpoints = breakpointJson ? JSON.parse(breakpointJson) : [];
-    const storage: Breakpoint[] = [];
-    breakpoints.forEach((bp) => {
-      let flag = true;
+    const breakpoints: Breakpoint[] = breakpointJson
+      ? JSON.parse(breakpointJson)
+      : [];
+    for (let index = 0; index < breakpoints.length; index++) {
+      const bp = breakpoints[index];
       if (
-        bp.componentCode == breakpoint.componentCode &&
-        bp.methodCode == breakpoint.methodCode &&
-        bp.ruleCode == breakpoint.ruleCode
+        bp.location.componentCode == breakpoint.location.componentCode &&
+        bp.location.methodCode == breakpoint.location.methodCode &&
+        bp.location.ruleCode == breakpoint.location.ruleCode
       ) {
-        if (typeof bp.windowCode == typeof breakpoint.windowCode) {
-          flag = false;
+        if (
+          typeof bp.location.windowCode == typeof breakpoint.location.windowCode
+        ) {
+          breakpoints[index] = breakpoint;
         }
       }
-      if (flag) {
+    }
+    window.localStorage.setItem(
+      "vact_devtools_breakpoints",
+      JSON.stringify(breakpoints)
+    );
+  },
+  removeBreakpoint: function (breakpoint: Breakpoint | Breakpoint[]) {
+    const breakpointJson = window.localStorage.getItem(
+      "vact_devtools_breakpoints"
+    );
+    const breakpoints: Breakpoint[] = breakpointJson
+      ? JSON.parse(breakpointJson)
+      : [];
+    const removed: Breakpoint[] = Array.isArray(breakpoint)
+      ? breakpoint
+      : [breakpoint];
+    const storage: Breakpoint[] = [];
+    breakpoints.forEach((bp) => {
+      if (indexOf(bp, removed) == -1) {
         storage.push(bp);
       }
     });
@@ -256,6 +301,17 @@ vact_devtools.methods = {
   clearBreakpoint: function () {
     window.localStorage.setItem("vact_devtools_breakallrule", "false");
     window.localStorage.setItem("vact_devtools_breakpoints", "[]");
+  },
+  markIgnoreBreakpoints: function () {
+    window.localStorage.setItem("vact_devtools_ignorebreakpoints", "true");
+  },
+  unmarkIgnoreBreakpoints: function () {
+    window.localStorage.setItem("vact_devtools_ignorebreakpoints", "false");
+  },
+  isIgnoreBreakpoints: function () {
+    return (
+      window.localStorage.getItem("vact_devtools_ignorebreakpoints") == "true"
+    );
   },
 };
 //@ts-ignore

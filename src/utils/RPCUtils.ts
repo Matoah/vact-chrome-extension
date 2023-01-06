@@ -1,18 +1,23 @@
 import {
+  addBreakpoint as addMockBreakpoint,
+  clearBreakpoint as clearMockBreakpoint,
+  getBreakpoints as getMockBreakpoints,
   getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
   getMonitorMockDatas,
   getVjsContent as getMockVjsContent,
   getVjsUrl as getMockVjsUrl,
   getVjsUrlList,
-  addBreakpoint as addMockBreakpoint,
-  removeBreakpoint as removeMockBreakpoint,
-  getBreakpoints as getMockBreakpoints,
-  clearBreakpoint as clearMockBreakpoint,
-  markBreakAllRule as markMockBreakAllRule,
   isBreakAllRule as isMockBreakAllRule,
+  isIgnoreBreakpoints as isMockIgnoreBreakpoints,
+  markBreakAllRule as markMockBreakAllRule,
+  markIgnoreBreakpoints as markMockIgnoreBreakpoints,
+  removeBreakpoint as removeMockBreakpoint,
   unmarkBreakAllRule as unmarkMockBreakAllRule,
-} from "./MockUtils";
+  unmarkIgnoreBreakpoints as unmarkMockIgnoreBreakpoints,
+  updateBreakpoint as updateMockBreakpoint,
+} from './MockUtils';
+import { Breakpoint } from './Types';
 
 export function isMonitored() {
   return new Promise<boolean>((resolve, reject) => {
@@ -171,13 +176,6 @@ export function getFrontendMethod(params: {
   });
 }
 
-interface Breakpoint {
-  componentCode: string;
-  windowCode?: string;
-  methodCode: string;
-  ruleCode: string;
-}
-
 export function addBreakpoint(breakpoint: Breakpoint) {
   return new Promise((resolve, reject) => {
     //@ts-ignore
@@ -194,7 +192,23 @@ export function addBreakpoint(breakpoint: Breakpoint) {
   });
 }
 
-export function removeBreakpoint(breakpoint: Breakpoint) {
+export function updateBreakpoint(breakpoint: Breakpoint) {
+  return new Promise((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "updateBreakpoint",
+        breakpoint
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(updateMockBreakpoint(breakpoint));
+    }
+  });
+}
+
+export function removeBreakpoint(breakpoint: Breakpoint | Breakpoint[]) {
   return new Promise((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
@@ -274,6 +288,54 @@ export function unmarkBreakAllRule() {
       promise.then(resolve).catch(reject);
     } else {
       resolve(unmarkMockBreakAllRule());
+    }
+  });
+}
+
+export function markIgnoreBreakpoints() {
+  return new Promise((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "markIgnoreBreakpoints",
+        {}
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(markMockIgnoreBreakpoints());
+    }
+  });
+}
+
+export function unmarkIgnoreBreakpoints() {
+  return new Promise((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "unmarkIgnoreBreakpoints",
+        {}
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(unmarkMockIgnoreBreakpoints());
+    }
+  });
+}
+
+export function isIgnoreBreakpoints() {
+  return new Promise<boolean>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "isIgnoreBreakpoints",
+        {}
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(isMockIgnoreBreakpoints());
     }
   });
 }

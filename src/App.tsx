@@ -17,6 +17,7 @@ import VjsDepAnalysis from './pages/VjsDepAnalysis';
 import VjsDepUrlList from './pages/VjsDepUrlList';
 import VjsSizeAnalysis from './pages/VjsSizeAnalysis';
 import VjsSizeUlList from './pages/VjsSizeUlList';
+import Status500 from './status/500';
 import { DarkSpacesTheme } from './themes/DarkSpacesTheme';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
           <Route path="/frontendMonitor" element={<FrontendMonitor />} />
           <Route path="/timelineMonitor" element={<TimelineMonitor />} />
           <Route path="/frontendDebugger" element={<FrontendDebugger />} />
+          <Route path="/500" element={<Status500 />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

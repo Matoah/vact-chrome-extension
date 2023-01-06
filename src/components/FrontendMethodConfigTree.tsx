@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react';
 
+import { useNavigate } from 'react-router-dom';
 import {
   animated,
   useSpring,
@@ -33,13 +34,7 @@ import Typography, { TypographyProps } from '@mui/material/Typography';
 
 import { getFrontendMethod } from '../utils/RPCUtils';
 import { uuid } from '../utils/StringUtils';
-
-interface Breakpoint {
-  componentCode: string;
-  windowCode?: string;
-  methodCode: string;
-  ruleCode: string;
-}
+import { Breakpoint } from '../utils/Types';
 
 interface FrontendMethodConfigTreeProps {
   value?: { componentCode: string; windowCode?: string; methodCode: string };
@@ -147,7 +142,9 @@ function isDebuged(
 ) {
   if (breakpoints) {
     return !!breakpoints.find((breakpoint) => {
-      const { componentCode, methodCode, windowCode, ruleCode } = breakpoint;
+      const {
+        location: { componentCode, methodCode, windowCode, ruleCode },
+      } = breakpoint;
       if (
         code == ruleCode &&
         scope &&
@@ -166,7 +163,7 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
   color: theme.palette.text.secondary,
   [`& .${treeItemClasses.content}`]: {
     color: theme.palette.text.secondary,
-    cursor: "default",
+    //cursor: "default",
     //borderTopRightRadius: theme.spacing(2),
     //borderBottomRightRadius: theme.spacing(2),
     paddingRight: theme.spacing(1),
@@ -240,7 +237,10 @@ function StyledTreeItem(props: StyledTreeItemProps) {
             value={isDebuged(nodeId, scope, breakpoints)}
             onToggle={(debuged: boolean) => {
               if (onBreakpointChanged && scope) {
-                onBreakpointChanged(debuged, { ...scope, ruleCode: nodeId });
+                onBreakpointChanged(debuged, {
+                  enable: true,
+                  location: { ...scope, ruleCode: nodeId },
+                });
               }
             }}
           ></DebugIcon>
@@ -481,11 +481,13 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
     current: null | string;
     tree: TreeNode[];
     selected: string[];
+    expanded: string[];
   }>(() => {
     return {
       current: null,
       tree: [],
       selected: [],
+      expanded: [],
     };
   });
   const renderTreeChildren = (node: TreeNode) => (
@@ -505,19 +507,24 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
         : null}
     </StyledTreeItem>
   );
+  const nav = useNavigate();
+  const errHandler = (e: any) => {
+    console.error(e);
+    nav("/500");
+  };
   useEffect(() => {
     if (value) {
       getFrontendMethod(value)
         .then((logic: any) => {
           try {
-            setData({ ...data, tree: toTree(logic) });
+            const tree = toTree(logic);
+            const expanded = getAllNodeIds(tree);
+            setData({ ...data, tree, expanded });
           } catch (e) {
-            console.error(e);
+            errHandler(e);
           }
         })
-        .catch((e) => {
-          console.error(e);
-        });
+        .catch(errHandler);
     } else {
       setData({ ...data, tree: [] });
     }
@@ -526,7 +533,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       ? `${value.componentCode}_$_${value.methodCode}_$_${value.windowCode}`
       : value,
   ]);
-  const expanded = getAllNodeIds(data.tree);
+
   return (
     <Fragment>
       <Box
@@ -538,8 +545,14 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       >
         <Card sx={{ flex: 1, ml: 1, overflow: "auto" }}>
           <TreeView
-            expanded={expanded}
+            expanded={data.expanded}
             selected={data.selected}
+            onNodeToggle={(evt, expanded) => {
+              setData({
+                ...data,
+                expanded,
+              });
+            }}
             defaultCollapseIcon={<MinusSquare />}
             defaultExpandIcon={<PlusSquare />}
             defaultEndIcon={<div style={{ width: 24 }} />}

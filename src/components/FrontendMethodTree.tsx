@@ -262,7 +262,7 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
   color: theme.palette.text.secondary,
   [`& .${treeItemClasses.content}`]: {
     color: theme.palette.text.secondary,
-    cursor: "default",
+    //cursor: "default",
     //borderTopRightRadius: theme.spacing(2),
     //borderBottomRightRadius: theme.spacing(2),
     paddingRight: theme.spacing(1),
@@ -337,7 +337,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
   } = props;
   return (
     <StyledTreeItemRoot
-      TransitionComponent={TransitionComponent}
+      //TransitionComponent={TransitionComponent}
       label={
         <Box sx={{ display: "flex", alignItems: "center", p: 0.5, pr: 0 }}>
           <Box component={LabelIcon} color="inherit" sx={{ mr: 1 }} />
@@ -435,10 +435,12 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
   const [data, setData] = useState<{
     options: Option[];
     tree: TreeNode[];
+    expanded: string[];
   }>(() => {
     return {
       options: [],
       tree: [],
+      expanded: [],
     };
   });
   const renderTreeChildren = (node: TreeNode) => (
@@ -466,11 +468,16 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
   useEffect(() => {
     getFrontendMethods()
       .then((datas) => {
-        setData({ ...data, tree: toTree(datas), options: toOptions(datas) });
+        const tree = toTree(datas);
+        setData({
+          ...data,
+          tree,
+          options: toOptions(datas),
+          expanded: getAllNodeIds(tree),
+        });
       })
       .catch();
   }, []);
-  const expanded = getAllNodeIds(data.tree);
   const tree = filterTree(data.tree, filter);
   return (
     <Fragment>
@@ -518,13 +525,18 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
         </Box>
         <Card sx={{ flex: 1, overflow: "auto" }}>
           <TreeView
-            expanded={expanded}
+            expanded={data.expanded}
             selected={value ? [optionToTreeNodeId(value)] : []}
             defaultCollapseIcon={<MinusSquare />}
             defaultExpandIcon={<PlusSquare />}
             defaultEndIcon={<div style={{ width: 24 }} />}
+            onNodeToggle={(evt, expanded) => {
+              setData({
+                ...data,
+                expanded,
+              });
+            }}
             onNodeSelect={(evt: any, nodeId: any) => {
-              //setData({ ...data, currentId: nodeId, selected: [nodeId] });
               if (onNodeSelect) {
                 onNodeSelect(nodeId);
               }
