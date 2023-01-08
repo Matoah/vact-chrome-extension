@@ -1,44 +1,28 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import {
-  animated,
-  useSpring,
-} from 'react-spring';
+import { animated, useSpring } from "react-spring";
 
-import CallToActionIcon from '@mui/icons-material/CallToAction';
-import FolderIcon from '@mui/icons-material/Folder';
-import SchemaIcon from '@mui/icons-material/Schema';
-import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
-import TreeItem, {
-  treeItemClasses,
-  TreeItemProps,
-} from '@mui/lab/TreeItem';
-import TreeView from '@mui/lab/TreeView';
-import Autocomplete from '@mui/material/Autocomplete';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Collapse from '@mui/material/Collapse';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import {
-  alpha,
-  styled,
-} from '@mui/material/styles';
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
-import TextField from '@mui/material/TextField';
-import { TransitionProps } from '@mui/material/transitions';
-import Typography from '@mui/material/Typography';
+import CallToActionIcon from "@mui/icons-material/CallToAction";
+import FolderIcon from "@mui/icons-material/Folder";
+import SchemaIcon from "@mui/icons-material/Schema";
+import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
+import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
+import TreeView from "@mui/lab/TreeView";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Collapse from "@mui/material/Collapse";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import { alpha, styled } from "@mui/material/styles";
+import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
+import TextField from "@mui/material/TextField";
+import { TransitionProps } from "@mui/material/transitions";
+import Typography from "@mui/material/Typography";
 
-import { getFrontendMethods } from '../utils/RPCUtils';
-import {
-  notEmpty,
-  uuid,
-} from '../utils/StringUtils';
+import { getFrontendMethods } from "../utils/RPCUtils";
+import { notEmpty, uuid } from "../utils/StringUtils";
 
 interface Method {
   componentCode: string;
@@ -447,6 +431,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
     <StyledTreeItem
       key={node.id}
       nodeId={node.id}
+      id={node.id}
       labelText={node.label}
       highlight={filter ? optionToTreeNodeId(filter) == node.id : false}
       labelIcon={
@@ -478,6 +463,13 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
       })
       .catch();
   }, []);
+  useEffect(() => {
+    if (value) {
+      document
+        .getElementById(optionToTreeNodeId(value))
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [value]);
   const tree = filterTree(data.tree, filter);
   return (
     <Fragment>

@@ -21,8 +21,20 @@ import { getFrontendMethod } from "../utils/RPCUtils";
 import { uuid } from "../utils/StringUtils";
 import { Breakpoint, Operations } from "../utils/Types";
 
+interface FrontendMethodConfigTreeValue {
+  componentCode: string;
+  windowCode?: string;
+  methodCode: string;
+  ruleCode: string;
+}
+
 interface FrontendMethodConfigTreeProps {
-  value?: { componentCode: string; windowCode?: string; methodCode: string };
+  value?: FrontendMethodConfigTreeValue;
+  currentMethod?: {
+    componentCode: string;
+    windowCode?: string;
+    methodCode: string;
+  };
   breakpoints?: Breakpoint[];
   operations: Operations;
   onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
@@ -41,7 +53,11 @@ type StyledTreeItemProps = TreeItemProps & {
   labelText: string;
   type: "rule" | "if" | "else" | "foreach";
   labelDesc?: string;
-  scope?: { componentCode: string; windowCode?: string; methodCode: string };
+  currentMethod?: {
+    componentCode: string;
+    windowCode?: string;
+    methodCode: string;
+  };
   breakpoints?: Breakpoint[];
   disabledAllBreakpoint: boolean;
   onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
@@ -126,25 +142,13 @@ function DebugIcon(props: {
   }
 }
 
-function isDebuged(
-  code: string,
-  scope?: { componentCode: string; windowCode?: string; methodCode: string },
-  breakpoints?: Breakpoint[]
-) {
+function isDebuged(nodeId: string, breakpoints?: Breakpoint[]) {
   if (breakpoints) {
     return !!breakpoints.find((breakpoint) => {
-      const {
-        location: { componentCode, methodCode, windowCode, ruleCode },
-      } = breakpoint;
-      if (
-        code == ruleCode &&
-        scope &&
-        componentCode == scope.componentCode &&
-        methodCode == scope.methodCode
-      ) {
-        return typeof windowCode == typeof scope.windowCode;
-      }
-      return false;
+      return (
+        nodeId ==
+        ruleInstanceToId(breakpoint.location.ruleCode, breakpoint.location)
+      );
     });
   }
   return false;
@@ -191,7 +195,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     debug,
     type,
     disabledAllBreakpoint,
-    scope,
+    currentMethod,
     onBreakpointChanged,
     ...other
   } = props;
@@ -227,12 +231,12 @@ function StyledTreeItem(props: StyledTreeItemProps) {
           <DebugIcon
             type={type}
             disabled={disabledAllBreakpoint}
-            value={isDebuged(nodeId, scope, breakpoints)}
+            value={isDebuged(nodeId, breakpoints)}
             onToggle={(debuged: boolean) => {
-              if (onBreakpointChanged && scope) {
+              if (onBreakpointChanged && currentMethod) {
                 onBreakpointChanged(debuged, {
                   enable: true,
-                  location: { ...scope, ruleCode: nodeId },
+                  location: { ...currentMethod, ruleCode: nodeId },
                 });
               }
             }}
@@ -280,23 +284,47 @@ interface Logic {
   };
 }
 
+function ruleInstanceToId(
+  ruleCode: string,
+  currentMethod: {
+    componentCode: string;
+    methodCode: string;
+    windowCode?: string;
+  }
+) {
+  const { componentCode, windowCode, methodCode } = currentMethod;
+  return windowCode
+    ? `window_rule_$_${componentCode}_$_${windowCode}_$_${methodCode}_$_${ruleCode}`
+    : `component_rule_$_${componentCode}_$_${methodCode}_$_${ruleCode}`;
+}
+
 const dispatcher = {
   dispatch: function (
     element: Element,
-    map: { [ruleCode: string]: RuleInstance }
+    map: { [ruleCode: string]: RuleInstance },
+    currentMethod: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+    }
   ): TreeNode {
     const name = element.name;
     //@ts-ignore
     const handler = dispatcher[name + ""];
     if (handler) {
-      return handler(element, map);
+      return handler(element, map, currentMethod);
     } else {
       throw Error("未识别节点！节点名称：" + name);
     }
   },
   if: function (
     element: Element,
-    map: { [ruleCode: string]: RuleInstance }
+    map: { [ruleCode: string]: RuleInstance },
+    currentMethod: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+    }
   ): TreeNode {
     const elements = element.elements;
     let condition = "";
@@ -320,7 +348,7 @@ const dispatcher = {
       } else if (name == "sequence") {
         const elements = ele.elements;
         elements?.forEach((ele) => {
-          children.push(dispatcher.dispatch(ele, map));
+          children.push(dispatcher.dispatch(ele, map, currentMethod));
         });
       }
     });
@@ -334,7 +362,12 @@ const dispatcher = {
   },
   else: function (
     element: Element,
-    map: { [ruleCode: string]: RuleInstance }
+    map: { [ruleCode: string]: RuleInstance },
+    currentMethod: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+    }
   ): TreeNode {
     const children: TreeNode[] = [];
     const elements = element.elements;
@@ -343,7 +376,7 @@ const dispatcher = {
       if (name == "sequence") {
         const elements = ele.elements;
         elements?.forEach((ele) => {
-          children.push(dispatcher.dispatch(ele, map));
+          children.push(dispatcher.dispatch(ele, map, currentMethod));
         });
       }
     });
@@ -357,11 +390,16 @@ const dispatcher = {
   },
   evaluateRule: function (
     element: Element,
-    map: { [ruleCode: string]: RuleInstance }
+    map: { [ruleCode: string]: RuleInstance },
+    currentMethod: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+    }
   ): TreeNode {
     const code = element.attributes?.code + "";
     return {
-      id: code,
+      id: ruleInstanceToId(code, currentMethod),
       type: "rule",
       label: map[code].$.instanceName || map[code].$.ruleName,
       desc: "",
@@ -369,7 +407,12 @@ const dispatcher = {
   },
   foreach: function (
     element: Element,
-    map: { [ruleCode: string]: RuleInstance }
+    map: { [ruleCode: string]: RuleInstance },
+    currentMethod: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+    }
   ): TreeNode {
     const elements = element.elements;
     let entityCode = "",
@@ -402,7 +445,7 @@ const dispatcher = {
       } else if (name == "sequence") {
         const elements = ele.elements;
         elements?.forEach((ele) => {
-          children.push(dispatcher.dispatch(ele, map));
+          children.push(dispatcher.dispatch(ele, map, currentMethod));
         });
       }
     });
@@ -431,7 +474,14 @@ function ruleInstanceToMap(ruleInstances: {
   return map;
 }
 
-function toTree(logic: Logic): TreeNode[] {
+function toTree(
+  logic: Logic,
+  currentMethod: {
+    componentCode: string;
+    methodCode: string;
+    windowCode?: string;
+  }
+): TreeNode[] {
   const tree: TreeNode[] = [];
   if (logic) {
     let xmlStr = logic.ruleSets.ruleSet.ruleRoute._;
@@ -449,7 +499,7 @@ function toTree(logic: Logic): TreeNode[] {
       });
       const elements = json.elements[0].elements;
       elements?.forEach((ele: Element) => {
-        tree.push(dispatcher.dispatch(ele, map));
+        tree.push(dispatcher.dispatch(ele, map, currentMethod));
       });
     }
   }
@@ -469,17 +519,16 @@ const getAllNodeIds = function (tree: TreeNode[]): string[] {
 };
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
-  const { value, breakpoints, onBreakpointChanged, operations } = props;
+  const { value, breakpoints, onBreakpointChanged, operations, currentMethod } =
+    props;
   const [data, setData] = useState<{
     current: null | string;
     tree: TreeNode[];
-    selected: string[];
     expanded: string[];
   }>(() => {
     return {
       current: null,
       tree: [],
-      selected: [],
       expanded: [],
     };
   });
@@ -487,12 +536,13 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
     <StyledTreeItem
       key={node.id}
       nodeId={node.id}
+      id={node.id}
       type={node.type}
       labelText={node.label}
       labelDesc={node.desc}
       breakpoints={breakpoints}
       disabledAllBreakpoint={operations.disableAll.active}
-      scope={value}
+      currentMethod={value}
       onBreakpointChanged={onBreakpointChanged}
       sx={{ textAlign: "left" }}
     >
@@ -507,11 +557,11 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
     nav("/500");
   };
   useEffect(() => {
-    if (value) {
-      getFrontendMethod(value)
+    if (currentMethod) {
+      getFrontendMethod(currentMethod)
         .then((logic: any) => {
           try {
-            const tree = toTree(logic);
+            const tree = toTree(logic, currentMethod);
             const expanded = getAllNodeIds(tree);
             setData({ ...data, tree, expanded });
           } catch (e) {
@@ -523,11 +573,17 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       setData({ ...data, tree: [] });
     }
   }, [
-    value
-      ? `${value.componentCode}_$_${value.methodCode}_$_${value.windowCode}`
-      : value,
+    currentMethod
+      ? `${currentMethod.componentCode}_$_${currentMethod.methodCode}_$_${currentMethod.windowCode}`
+      : currentMethod,
   ]);
-
+  useEffect(() => {
+    if (value && currentMethod) {
+      document
+        .getElementById(ruleInstanceToId(value.ruleCode, currentMethod))
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [value]);
   return (
     <Fragment>
       <Box
@@ -540,7 +596,11 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
         <Card sx={{ flex: 1, ml: 1, overflow: "auto" }}>
           <TreeView
             expanded={data.expanded}
-            selected={data.selected}
+            selected={
+              value && currentMethod
+                ? [ruleInstanceToId(value.ruleCode, currentMethod)]
+                : []
+            }
             onNodeToggle={(evt, expanded) => {
               setData({
                 ...data,

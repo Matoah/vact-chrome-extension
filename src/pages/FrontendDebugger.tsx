@@ -31,6 +31,12 @@ function FrontendDebugger() {
           methodCode: string;
           windowCode?: string;
         };
+    currentRule?: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+      ruleCode: string;
+    };
     filter?: {
       code: string;
       componentCode: string;
@@ -43,6 +49,7 @@ function FrontendDebugger() {
   }>(() => {
     return {
       currentMethod: undefined,
+      currentRule: undefined,
       filter: undefined,
       operations: {
         pause: { disabled: true, active: false },
@@ -120,7 +127,8 @@ function FrontendDebugger() {
         </Box>
         <Box sx={{ flexGrow: 1, height: "100%" }}>
           <FrontendMethodConfigTree
-            value={data.currentMethod}
+            value={data.currentRule}
+            currentMethod={data.currentMethod}
             breakpoints={data.breakpoints}
             operations={data.operations}
             onBreakpointChanged={(debuged: boolean, breakpoint: Breakpoint) => {
@@ -158,6 +166,7 @@ function FrontendDebugger() {
             onBreakpointLocation={(breakpoint: Breakpoint) => {
               setData({
                 ...data,
+                currentRule: breakpoint.location,
                 currentMethod: breakpoint.location,
               });
             }}
