@@ -58,6 +58,7 @@ type StyledTreeItemProps = TreeItemProps & {
     windowCode?: string;
     methodCode: string;
   };
+  ruleCode?: string;
   breakpoints?: Breakpoint[];
   disabledAllBreakpoint: boolean;
   onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
@@ -194,6 +195,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     labelDesc,
     debug,
     type,
+    ruleCode,
     disabledAllBreakpoint,
     currentMethod,
     onBreakpointChanged,
@@ -233,10 +235,10 @@ function StyledTreeItem(props: StyledTreeItemProps) {
             disabled={disabledAllBreakpoint}
             value={isDebuged(nodeId, breakpoints)}
             onToggle={(debuged: boolean) => {
-              if (onBreakpointChanged && currentMethod) {
+              if (onBreakpointChanged && currentMethod && ruleCode) {
                 onBreakpointChanged(debuged, {
                   enable: true,
-                  location: { ...currentMethod, ruleCode: nodeId },
+                  location: { ...currentMethod, ruleCode },
                 });
               }
             }}
@@ -257,6 +259,7 @@ interface TreeNode {
   label: string;
   type: "rule" | "if" | "else" | "foreach";
   desc?: string;
+  ruleCode?: string;
   debug?: boolean | { debug: boolean; condition: string };
   children?: TreeNode[];
 }
@@ -401,6 +404,7 @@ const dispatcher = {
     return {
       id: ruleInstanceToId(code, currentMethod),
       type: "rule",
+      ruleCode: code,
       label: map[code].$.instanceName || map[code].$.ruleName,
       desc: "",
     };
@@ -539,10 +543,11 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       id={node.id}
       type={node.type}
       labelText={node.label}
+      ruleCode={node.ruleCode}
       labelDesc={node.desc}
       breakpoints={breakpoints}
       disabledAllBreakpoint={operations.disableAll.active}
-      currentMethod={value}
+      currentMethod={currentMethod}
       onBreakpointChanged={onBreakpointChanged}
       sx={{ textAlign: "left" }}
     >

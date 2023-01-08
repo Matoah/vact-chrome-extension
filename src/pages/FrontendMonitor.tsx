@@ -67,7 +67,7 @@ function FrontendMonitor() {
           >
             <ListItemIcon>
               <PlayCircleFilledWhiteIcon
-                color={state.status != State.stoped ? "inherit" : "info"}
+                color={state.status != State.stoped ? "inherit" : "primary"}
               />
             </ListItemIcon>
             <ListItemText
@@ -91,7 +91,7 @@ function FrontendMonitor() {
           >
             <ListItemIcon>
               <StopCircleIcon
-                color={state.status != State.started ? "inherit" : "info"}
+                color={state.status != State.started ? "inherit" : "primary"}
               />
             </ListItemIcon>
             <ListItemText
@@ -128,7 +128,7 @@ function FrontendMonitor() {
                 color={
                   state.status == State.started || state.cleared
                     ? "inherit"
-                    : "info"
+                    : "primary"
                 }
               />
             </ListItemIcon>
@@ -147,7 +147,7 @@ function FrontendMonitor() {
           >
             <ListItemIcon>
               <VisibilityIcon
-                color={state.status == State.started ? "inherit" : "info"}
+                color={state.status == State.started ? "inherit" : "primary"}
               />
             </ListItemIcon>
             <ListItemText
