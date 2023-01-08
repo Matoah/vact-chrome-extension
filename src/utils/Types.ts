@@ -8,4 +8,11 @@ interface Breakpoint {
   };
 }
 
-export { type Breakpoint };
+interface Operations {
+  [operation: string]: {
+    disabled: boolean;
+    active: boolean;
+  };
+}
+
+export { type Breakpoint, type Operations };

@@ -1,38 +1,33 @@
-import {
-  Fragment,
-  ReactNode,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, ReactNode, useEffect, useState } from "react";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import DoneAllIcon from '@mui/icons-material/DoneAll';
-import DownloadIcon from '@mui/icons-material/Download';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import KeyboardTabIcon from '@mui/icons-material/KeyboardTab';
-import LabelOffIcon from '@mui/icons-material/LabelOff';
-import PauseIcon from '@mui/icons-material/Pause';
-import UploadIcon from '@mui/icons-material/Upload';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DownloadIcon from "@mui/icons-material/Download";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import KeyboardTabIcon from "@mui/icons-material/KeyboardTab";
+import LabelOffIcon from "@mui/icons-material/LabelOff";
+import PauseIcon from "@mui/icons-material/Pause";
+import UploadIcon from "@mui/icons-material/Upload";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { styled } from "@mui/material/styles";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
-import { isEqual } from '../utils/BreakpointUtils';
+import { isEqual } from "../utils/BreakpointUtils";
 import {
   clearBreakpoint,
   isBreakAllRule,
@@ -43,13 +38,14 @@ import {
   unmarkBreakAllRule,
   unmarkIgnoreBreakpoints,
   updateBreakpoint,
-} from '../utils/RPCUtils';
-import { Breakpoint } from '../utils/Types';
+} from "../utils/RPCUtils";
+import { Breakpoint, Operations } from "../utils/Types";
 
 interface FrontendDebugAttrPanelProps {
   breakpoints?: Breakpoint[];
+  operations: Operations;
   onBreakpointLocation?: (breakpoint: Breakpoint) => void;
-  refreshBreakpoints: () => void;
+  refresh: () => void;
 }
 
 const StyledBox = styled(Box)(({ theme }) => ({
@@ -74,18 +70,16 @@ function OperationButton(props: {
       onClick(!active);
     }
   };
-  return (
+  return active && !disabled ? (
     <Tooltip title={title}>
-      {active ? (
-        <StyledButton disabled={disabled} onClick={chickHandler}>
-          {icon}
-        </StyledButton>
-      ) : (
-        <IconButton disabled={disabled} onClick={chickHandler}>
-          {icon}
-        </IconButton>
-      )}
+      <StyledButton disabled={disabled} onClick={chickHandler}>
+        {icon}
+      </StyledButton>
     </Tooltip>
+  ) : (
+    <IconButton disabled={disabled} onClick={chickHandler}>
+      {icon}
+    </IconButton>
   );
 }
 
@@ -98,20 +92,12 @@ const breakpointToKey = function (breakpoint: Breakpoint) {
 };
 
 function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
-  const { breakpoints, refreshBreakpoints, onBreakpointLocation } = props;
+  const { breakpoints, refresh, onBreakpointLocation, operations } = props;
   const [contextMenu, setContextMenu] = useState<{
     mousePosition: { mouseX: number; mouseY: number } | null;
     breakpoint?: Breakpoint;
   }>({ mousePosition: null, breakpoint: undefined });
   const [data, setData] = useState({
-    operations: {
-      pause: { disabled: true, active: false },
-      next: { disabled: true, active: false },
-      stepIn: { disabled: true, active: false },
-      stepOut: { disabled: true, active: false },
-      disableAll: { disabled: false, active: false },
-      breakAll: { disabled: false, active: false },
-    },
     expand: {
       monitor: true,
       breakpoint: true,
@@ -122,24 +108,6 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
     console.error(e);
     nav("/500");
   };
-  useEffect(() => {
-    isIgnoreBreakpoints()
-      .then((ignoreAll: boolean) => {
-        isBreakAllRule()
-          .then((breakAll: boolean) => {
-            setData({
-              ...data,
-              operations: {
-                ...data.operations,
-                disableAll: { disabled: false, active: ignoreAll },
-                breakAll: { disabled: false, active: breakAll },
-              },
-            });
-          })
-          .catch(errHandler);
-      })
-      .catch(errHandler);
-  }, []);
   const handleContextMenu = (
     event: React.MouseEvent,
     breakpoint: Breakpoint
@@ -167,7 +135,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
   ) => {
     if (type && contextMenu.breakpoint) {
       const callback = () => {
-        refreshBreakpoints();
+        refresh();
       };
       const breakpoint = contextMenu.breakpoint;
       if (type == "remove") {
@@ -210,91 +178,56 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           <StyledBox sx={{ width: "100%" }}>
             <OperationButton
               title="暂停"
-              active={data.operations.pause.active}
-              disabled={data.operations.pause.disabled}
+              active={operations.pause.active}
+              disabled={operations.pause.disabled}
               onClick={() => {}}
               icon={<PauseIcon fontSize="small" />}
             />
             <OperationButton
               title="执行到下一个规则"
-              active={data.operations.next.active}
-              disabled={data.operations.next.disabled}
+              active={operations.next.active}
+              disabled={operations.next.disabled}
               onClick={() => {}}
               icon={<KeyboardTabIcon fontSize="small" />}
             />
             <OperationButton
               title="进入当前方法"
-              active={data.operations.stepIn.active}
-              disabled={data.operations.stepIn.disabled}
+              active={operations.stepIn.active}
+              disabled={operations.stepIn.disabled}
               onClick={() => {}}
               icon={<DownloadIcon fontSize="small" />}
             />
             <OperationButton
               title="跳出当前方法"
-              active={data.operations.stepOut.active}
-              disabled={data.operations.stepOut.disabled}
+              active={operations.stepOut.active}
+              disabled={operations.stepOut.disabled}
               onClick={() => {}}
               icon={<UploadIcon fontSize="small" />}
             />
             <OperationButton
               title="停用所有规则"
-              active={data.operations.disableAll.active}
-              disabled={data.operations.disableAll.disabled}
+              active={operations.disableAll.active}
+              disabled={operations.disableAll.disabled}
               onClick={(ignoreAll: boolean) => {
-                const cb = () => {
-                  setData({
-                    ...data,
-                    operations: {
-                      ...data.operations,
-                      disableAll: { disabled: false, active: ignoreAll },
-                    },
-                  });
-                };
                 if (ignoreAll) {
-                  markIgnoreBreakpoints()
-                    .then(() => {
-                      cb();
-                    })
-                    .catch(errHandler);
+                  markIgnoreBreakpoints().then(refresh).catch(errHandler);
                 } else {
-                  unmarkIgnoreBreakpoints()
-                    .then(() => {
-                      cb();
-                    })
-                    .catch(errHandler);
+                  unmarkIgnoreBreakpoints().then(refresh).catch(errHandler);
                 }
               }}
               icon={<LabelOffIcon fontSize="small" />}
             />
             <OperationButton
               title="中断所有规则"
-              active={data.operations.breakAll.active}
+              active={operations.breakAll.active}
               disabled={
-                data.operations.disableAll.active ||
-                data.operations.breakAll.disabled
+                operations.disableAll.active || operations.breakAll.disabled
               }
               onClick={(breakAll: boolean) => {
-                const cb = () => {
-                  setData({
-                    ...data,
-                    operations: {
-                      ...data.operations,
-                      breakAll: { disabled: false, active: breakAll },
-                    },
-                  });
-                };
                 if (breakAll) {
-                  markBreakAllRule()
-                    .then(() => {
-                      cb();
-                    })
-                    .catch(errHandler);
+                  markBreakAllRule().then(refresh).catch(errHandler);
                 } else {
-                  unmarkBreakAllRule()
-                    .then(() => {
-                      cb();
-                    })
-                    .catch(errHandler);
+                  unmarkBreakAllRule().then(refresh).catch(errHandler);
                 }
               }}
               icon={<DoneAllIcon fontSize="small" />}
@@ -368,7 +301,8 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                                   sx={{ width: "50px", padding: "0px" }}
                                 >
                                   <Checkbox
-                                    disabled={data.operations.disableAll.active}
+                                    size="small"
+                                    disabled={operations.disableAll.active}
                                     checked={breakpoint.enable}
                                     onChange={(evt, checked) => {
                                       updateBreakpoint({
@@ -376,7 +310,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                                         location: breakpoint.location,
                                       })
                                         .then(() => {
-                                          refreshBreakpoints();
+                                          refresh();
                                         })
                                         .catch(errHandler);
                                     }}

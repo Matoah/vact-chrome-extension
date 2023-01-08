@@ -1,44 +1,30 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import { useNavigate } from 'react-router-dom';
-import {
-  animated,
-  useSpring,
-} from 'react-spring';
-import {
-  Element,
-  xml2js,
-} from 'xml-js';
+import { useNavigate } from "react-router-dom";
+import { animated, useSpring } from "react-spring";
+import { Element, xml2js } from "xml-js";
 
-import PestControlIcon from '@mui/icons-material/PestControl';
-import TreeItem, {
-  treeItemClasses,
-  TreeItemProps,
-} from '@mui/lab/TreeItem';
-import TreeView from '@mui/lab/TreeView';
-import { Tooltip } from '@mui/material';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Collapse from '@mui/material/Collapse';
-import {
-  alpha,
-  styled,
-} from '@mui/material/styles';
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
-import { TransitionProps } from '@mui/material/transitions';
-import Typography, { TypographyProps } from '@mui/material/Typography';
+import PestControlIcon from "@mui/icons-material/PestControl";
+import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
+import TreeView from "@mui/lab/TreeView";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton, { IconButtonProps } from "@mui/material/IconButton";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Collapse from "@mui/material/Collapse";
+import { alpha, styled } from "@mui/material/styles";
+import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
+import { TransitionProps } from "@mui/material/transitions";
+import Typography, { TypographyProps } from "@mui/material/Typography";
 
-import { getFrontendMethod } from '../utils/RPCUtils';
-import { uuid } from '../utils/StringUtils';
-import { Breakpoint } from '../utils/Types';
+import { getFrontendMethod } from "../utils/RPCUtils";
+import { uuid } from "../utils/StringUtils";
+import { Breakpoint, Operations } from "../utils/Types";
 
 interface FrontendMethodConfigTreeProps {
   value?: { componentCode: string; windowCode?: string; methodCode: string };
   breakpoints?: Breakpoint[];
+  operations: Operations;
   onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
 }
 
@@ -57,6 +43,7 @@ type StyledTreeItemProps = TreeItemProps & {
   labelDesc?: string;
   scope?: { componentCode: string; windowCode?: string; methodCode: string };
   breakpoints?: Breakpoint[];
+  disabledAllBreakpoint: boolean;
   onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
   debug?: boolean | { debug: boolean; condition: string };
 };
@@ -104,9 +91,10 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
 function DebugIcon(props: {
   type: "rule" | "if" | "else" | "foreach";
   value: boolean;
+  disabled: boolean;
   onToggle: (debuged: boolean) => void;
 }) {
-  const { value, onToggle, type } = props;
+  const { value, onToggle, disabled, type } = props;
   const attrs: TypographyProps = {
     variant: "caption",
     color: "inherit",
@@ -114,6 +102,9 @@ function DebugIcon(props: {
     sx: {
       width: "50px",
     },
+  };
+  const btnAttrs: IconButtonProps = {
+    disabled,
     onClick: () => {
       if (type == "rule") {
         onToggle(!value);
@@ -123,14 +114,14 @@ function DebugIcon(props: {
   if (type != "rule") {
     return <Typography {...attrs}></Typography>;
   } else {
-    return value ? (
-      <StyledTypography {...attrs}>
-        <PestControlIcon fontSize="small" sx={{ cursor: "pointer" }} />
-      </StyledTypography>
-    ) : (
-      <Typography {...attrs}>
-        <PestControlIcon fontSize="small" sx={{ cursor: "pointer" }} />
-      </Typography>
+    return (
+      <IconButton {...btnAttrs}>
+        <PestControlIcon
+          fontSize="small"
+          sx={{ cursor: "pointer" }}
+          color={value ? (disabled ? "disabled" : "primary") : "inherit"}
+        />
+      </IconButton>
     );
   }
 }
@@ -199,6 +190,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     labelDesc,
     debug,
     type,
+    disabledAllBreakpoint,
     scope,
     onBreakpointChanged,
     ...other
@@ -234,6 +226,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
           </Tooltip>
           <DebugIcon
             type={type}
+            disabled={disabledAllBreakpoint}
             value={isDebuged(nodeId, scope, breakpoints)}
             onToggle={(debuged: boolean) => {
               if (onBreakpointChanged && scope) {
@@ -476,7 +469,7 @@ const getAllNodeIds = function (tree: TreeNode[]): string[] {
 };
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
-  const { value, breakpoints, onBreakpointChanged } = props;
+  const { value, breakpoints, onBreakpointChanged, operations } = props;
   const [data, setData] = useState<{
     current: null | string;
     tree: TreeNode[];
@@ -490,7 +483,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       expanded: [],
     };
   });
-  const renderTreeChildren = (node: TreeNode) => (
+  const renderTreeChildren = (node: TreeNode, operations: Operations) => (
     <StyledTreeItem
       key={node.id}
       nodeId={node.id}
@@ -498,12 +491,13 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       labelText={node.label}
       labelDesc={node.desc}
       breakpoints={breakpoints}
+      disabledAllBreakpoint={operations.disableAll.active}
       scope={value}
       onBreakpointChanged={onBreakpointChanged}
       sx={{ textAlign: "left" }}
     >
       {Array.isArray(node.children)
-        ? node.children.map((node) => renderTreeChildren(node))
+        ? node.children.map((node) => renderTreeChildren(node, operations))
         : null}
     </StyledTreeItem>
   );
@@ -557,7 +551,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
             defaultExpandIcon={<PlusSquare />}
             defaultEndIcon={<div style={{ width: 24 }} />}
           >
-            {data.tree.map((node) => renderTreeChildren(node))}
+            {data.tree.map((node) => renderTreeChildren(node, operations))}
           </TreeView>
         </Card>
       </Box>

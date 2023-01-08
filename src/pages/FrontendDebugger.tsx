@@ -1,23 +1,21 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import Box from '@mui/material/Box';
+import Box from "@mui/material/Box";
 
-import FrontendDebugAttrPanel from '../components/FrontendDebugAttrPanel';
-import FrontendMethodConfigTree from '../components/FrontendMethodConfigTree';
-import FrontendMethodTree from '../components/FrontendMethodTree';
-import Navigator from '../components/Navigator';
+import FrontendDebugAttrPanel from "../components/FrontendDebugAttrPanel";
+import FrontendMethodConfigTree from "../components/FrontendMethodConfigTree";
+import FrontendMethodTree from "../components/FrontendMethodTree";
+import Navigator from "../components/Navigator";
 import {
   addBreakpoint,
   getBreakpoints,
   removeBreakpoint,
-} from '../utils/RPCUtils';
-import { Breakpoint } from '../utils/Types';
+  isIgnoreBreakpoints,
+  isBreakAllRule,
+} from "../utils/RPCUtils";
+import { Breakpoint, Operations } from "../utils/Types";
 
 function FrontendDebugger() {
   const nav = useNavigate();
@@ -40,26 +38,48 @@ function FrontendDebugger() {
       methodCode?: string;
       label: string;
     };
+    operations: Operations;
     breakpoints?: Breakpoint[];
   }>(() => {
     return {
       currentMethod: undefined,
       filter: undefined,
+      operations: {
+        pause: { disabled: true, active: false },
+        next: { disabled: true, active: false },
+        stepIn: { disabled: true, active: false },
+        stepOut: { disabled: true, active: false },
+        disableAll: { disabled: false, active: false },
+        breakAll: { disabled: false, active: false },
+      },
       breakpoints: [],
     };
   });
-  const refreshBreakpoints = () => {
+  const refresh = () => {
     getBreakpoints()
       .then((breakpoints) => {
-        setData({
-          ...data,
-          breakpoints,
-        });
+        isIgnoreBreakpoints()
+          .then((ignoreAll: boolean) => {
+            isBreakAllRule()
+              .then((breakAll: boolean) => {
+                setData({
+                  ...data,
+                  breakpoints,
+                  operations: {
+                    ...data.operations,
+                    disableAll: { disabled: false, active: ignoreAll },
+                    breakAll: { disabled: false, active: breakAll },
+                  },
+                });
+              })
+              .catch(errHandler);
+          })
+          .catch(errHandler);
       })
       .catch(errHandler);
   };
   useEffect(() => {
-    refreshBreakpoints();
+    refresh();
   }, []);
   return (
     <Fragment>
@@ -102,6 +122,7 @@ function FrontendDebugger() {
           <FrontendMethodConfigTree
             value={data.currentMethod}
             breakpoints={data.breakpoints}
+            operations={data.operations}
             onBreakpointChanged={(debuged: boolean, breakpoint: Breakpoint) => {
               if (debuged) {
                 addBreakpoint(breakpoint)
@@ -132,7 +153,8 @@ function FrontendDebugger() {
         <Box sx={{ width: "300px", height: "100%" }}>
           <FrontendDebugAttrPanel
             breakpoints={data.breakpoints}
-            refreshBreakpoints={refreshBreakpoints}
+            operations={data.operations}
+            refresh={refresh}
             onBreakpointLocation={(breakpoint: Breakpoint) => {
               setData({
                 ...data,
