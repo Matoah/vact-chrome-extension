@@ -1,18 +1,12 @@
 //@ts-nocheck
-import * as dataManager from "./DataManager";
-import TimePoint from "./TimePoint";
+import * as dataManager from './DataManager';
+import TimePoint from './TimePoint';
+import {
+  getEventManager,
+  getScopeManager,
+} from './Utils';
 
 let sb;
-
-function getScopeManager() {
-  return sb.getService("v_act_vjs_framework_extension_platform_interface_scope")
-    .ScopeManager;
-}
-
-function getEventManager() {
-  return sb.getService("v_act_vjs_framework_extension_platform_interface_event")
-    .EventManager;
-}
 
 /**
  * 获取路由上下文的时间点
@@ -20,7 +14,7 @@ function getEventManager() {
 function _getRouteTimePoint(routeContext, type) {
   const info = {};
   let scopeId = routeContext.getScopeId();
-  const scopeManager = getScopeManager();
+  const scopeManager = getScopeManager(sb);
   if (!scopeId) scopeId = scopeManager.getCurrentScopeId();
   info.scopeId = scopeId;
   info.parentScopeId = scopeManager.getParentScopeId(scopeId);
@@ -51,7 +45,7 @@ function _getRouteTimePoint(routeContext, type) {
 }
 
 function _getRuleTimePoint(ruleContext, type) {
-  const scopeManager = getScopeManager();
+  const scopeManager = getScopeManager(sb);
   var rr = ruleContext.getRouteContext();
   if (rr.isVirtual) {
     //虚拟路由里面的规则不作显示
@@ -82,7 +76,7 @@ function _getRuleTimePoint(ruleContext, type) {
  * 获取窗体相关的时间点
  * */
 function _getWindowTimePoint(scopeId, type, uuid) {
-  const scopeManager = getScopeManager();
+  const scopeManager = getScopeManager(sb);
   var scope = scopeManager.getScope(scopeId);
   var componentCode = scope.getComponentCode();
   var winCode = scope.getWindowCode();
@@ -98,7 +92,7 @@ function _getWindowTimePoint(scopeId, type, uuid) {
  * 获取构件相关的时间点
  * */
 function _getComponentTimePoint(scopeId, type, uuid) {
-  const scopeManager = getScopeManager();
+  const scopeManager = getScopeManager(sb);
   var scope = scopeManager.getScope(scopeId);
   var componentCode = scope.getComponentCode();
   return new TimePoint({
@@ -353,7 +347,7 @@ export function doClear() {
 
 export function register(sandbox) {
   sb = sandbox;
-  const eventManager = getEventManager();
+  const eventManager = getEventManager(sb);
   eventManager.register({
     event: eventManager.Events.BeforeRouteExe,
     handler: beforeRouteExe,

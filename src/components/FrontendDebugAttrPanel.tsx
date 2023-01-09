@@ -1,50 +1,62 @@
-import { Fragment, ReactNode, useEffect, useState } from "react";
+import {
+  Fragment,
+  ReactNode,
+  useState,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import DownloadIcon from "@mui/icons-material/Download";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import KeyboardTabIcon from "@mui/icons-material/KeyboardTab";
-import LabelOffIcon from "@mui/icons-material/LabelOff";
-import PauseIcon from "@mui/icons-material/Pause";
-import UploadIcon from "@mui/icons-material/Upload";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import { styled } from "@mui/material/styles";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableRow from "@mui/material/TableRow";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FastForwardIcon from '@mui/icons-material/FastForward';
+import LabelOffIcon from '@mui/icons-material/LabelOff';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import UploadIcon from '@mui/icons-material/Upload';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { styled } from '@mui/material/styles';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import { isEqual } from "../utils/BreakpointUtils";
+import { isEqual } from '../utils/BreakpointUtils';
 import {
   clearBreakpoint,
-  isBreakAllRule,
-  isIgnoreBreakpoints,
   markBreakAllRule,
   markIgnoreBreakpoints,
   removeBreakpoint,
   unmarkBreakAllRule,
   unmarkIgnoreBreakpoints,
   updateBreakpoint,
-} from "../utils/RPCUtils";
-import { Breakpoint, Operations } from "../utils/Types";
+} from '../utils/RPCUtils';
+import {
+  Breakpoint,
+  Operations,
+} from '../utils/Types';
 
 interface FrontendDebugAttrPanelProps {
+  value?: {
+    componentCode: string;
+    methodCode: string;
+    ruleCode: string;
+    windowCode?: string;
+  };
   breakpoints?: Breakpoint[];
   operations: Operations;
   onBreakpointLocation?: (breakpoint: Breakpoint) => void;
+  handleOperation: (params: { operation: string }) => void;
   refresh: () => void;
 }
 
@@ -92,7 +104,14 @@ const breakpointToKey = function (breakpoint: Breakpoint) {
 };
 
 function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
-  const { breakpoints, refresh, onBreakpointLocation, operations } = props;
+  const {
+    breakpoints,
+    refresh,
+    onBreakpointLocation,
+    operations,
+    value,
+    handleOperation,
+  } = props;
   const [contextMenu, setContextMenu] = useState<{
     mousePosition: { mouseX: number; mouseY: number } | null;
     breakpoint?: Breakpoint;
@@ -177,31 +196,39 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
         <Card sx={{ flex: 1, ml: 1, display: "flex", flexDirection: "column" }}>
           <StyledBox sx={{ width: "100%" }}>
             <OperationButton
-              title="暂停"
-              active={operations.pause.active}
-              disabled={operations.pause.disabled}
-              onClick={() => {}}
-              icon={<PauseIcon fontSize="small" />}
+              title="执行到下一个断点(F8)"
+              active={operations.play.active}
+              disabled={!value || operations.play.disabled}
+              onClick={() => {
+                handleOperation({ operation: "nextBreakpoint" });
+              }}
+              icon={<FastForwardIcon fontSize="small" />}
             />
             <OperationButton
-              title="执行到下一个规则"
+              title="执行到下一个规则(F10)"
               active={operations.next.active}
-              disabled={operations.next.disabled}
-              onClick={() => {}}
-              icon={<KeyboardTabIcon fontSize="small" />}
+              disabled={!value || operations.next.disabled}
+              onClick={() => {
+                handleOperation({ operation: "nextRule" });
+              }}
+              icon={<SkipNextIcon fontSize="small" />}
             />
             <OperationButton
-              title="进入当前方法"
+              title="进入当前方法(F11)"
               active={operations.stepIn.active}
               disabled={operations.stepIn.disabled}
-              onClick={() => {}}
+              onClick={() => {
+                handleOperation({ operation: "stepIn" });
+              }}
               icon={<DownloadIcon fontSize="small" />}
             />
             <OperationButton
-              title="跳出当前方法"
+              title="跳出当前方法(Shift+F11)"
               active={operations.stepOut.active}
               disabled={operations.stepOut.disabled}
-              onClick={() => {}}
+              onClick={() => {
+                handleOperation({ operation: "stepOut" });
+              }}
               icon={<UploadIcon fontSize="small" />}
             />
             <OperationButton

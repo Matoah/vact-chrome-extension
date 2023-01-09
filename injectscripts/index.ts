@@ -3,38 +3,17 @@ import {
   genViewTimePoint,
 } from './DataManager';
 import { register } from './EventObserver';
-
-interface Breakpoint {
-  enable: boolean;
-  location: {
-    componentCode: string;
-    windowCode?: string;
-    methodCode: string;
-    ruleCode: string;
-  };
-}
-
-const indexOf = function (breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
-  for (let index = 0; index < breakpoints.length; index++) {
-    const bp = breakpoints[index];
-    if (
-      bp.location.componentCode == breakpoint.location.componentCode &&
-      bp.location.methodCode == breakpoint.location.methodCode &&
-      bp.location.ruleCode == breakpoint.location.ruleCode
-    ) {
-      if (
-        typeof bp.location.windowCode == typeof breakpoint.location.windowCode
-      ) {
-        return index;
-      }
-    }
-  }
-  return -1;
-};
+import RuleDebugger from './RuleDebugger';
+import { Breakpoint } from './Types';
+import { indexOf } from './Utils';
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
-vact_devtools.storage = { vjsUrls: [], sandbox: null };
+vact_devtools.storage = {
+  vjsUrls: [],
+  sandbox: null,
+  ruleDebugger: new RuleDebugger(),
+};
 const _getVjsUrl = function (id) {
   let item = vact_devtools.storage.vjsUrls.find((item) => item.id == id);
   let url = null;
@@ -101,6 +80,7 @@ vact_devtools.methods = {
   vjsInited: function (sandbox) {
     vact_devtools.storage.sandbox = sandbox;
     register(sandbox);
+    vact_devtools.storage.ruleDebugger.setSandbox(sandbox).mount();
   },
   isMonitored: function () {
     const res = window.localStorage.getItem("vact_devtools_isMonitored");
@@ -312,6 +292,13 @@ vact_devtools.methods = {
     return (
       window.localStorage.getItem("vact_devtools_ignorebreakpoints") == "true"
     );
+  },
+  setChromeExtensionId: function (extensionId: string) {
+    vact_devtools.storage.extensionId = extensionId;
+    vact_devtools.storage.ruleDebugger.setExtensionId(extensionId);
+  },
+  callExtension: function () {
+    vact_devtools.storage.ruleDebugger.sendMessage();
   },
 };
 //@ts-ignore

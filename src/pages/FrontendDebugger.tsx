@@ -1,24 +1,50 @@
-import { Fragment, useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 
-import Box from "@mui/material/Box";
+import Box from '@mui/material/Box';
 
-import FrontendDebugAttrPanel from "../components/FrontendDebugAttrPanel";
-import FrontendMethodConfigTree from "../components/FrontendMethodConfigTree";
-import FrontendMethodTree from "../components/FrontendMethodTree";
-import Navigator from "../components/Navigator";
+import FrontendDebugAttrPanel from '../components/FrontendDebugAttrPanel';
+import FrontendMethodConfigTree from '../components/FrontendMethodConfigTree';
+import FrontendMethodTree from '../components/FrontendMethodTree';
+import Navigator from '../components/Navigator';
 import {
   addBreakpoint,
   getBreakpoints,
-  removeBreakpoint,
-  isIgnoreBreakpoints,
   isBreakAllRule,
-} from "../utils/RPCUtils";
-import { Breakpoint, Operations } from "../utils/Types";
+  isIgnoreBreakpoints,
+  removeBreakpoint,
+} from '../utils/RPCUtils';
+import {
+  Breakpoint,
+  Operations,
+} from '../utils/Types';
 
 function FrontendDebugger() {
   const nav = useNavigate();
+  const params = useLocation();
+  //@ts-ignore
+  let debugRule:
+    | undefined
+    | {
+        componentCode: string;
+        methodCode: string;
+        ruleCode: string;
+        windowCode?: string;
+      } = undefined;
+  let handleOperation = () => {};
+  if (params && params.state) {
+    debugRule = params.state.data;
+    //@ts-ignore
+    handleOperation = window[params.state.callbackId];
+  }
   const errHandler = (e: any) => {
     console.error(e);
     nav("/500");
@@ -48,12 +74,18 @@ function FrontendDebugger() {
     breakpoints?: Breakpoint[];
   }>(() => {
     return {
-      currentMethod: undefined,
-      currentRule: undefined,
+      currentMethod: debugRule ? debugRule : undefined,
+      currentRule: debugRule ? debugRule : undefined,
       filter: undefined,
       operations: {
-        pause: { disabled: true, active: false },
-        next: { disabled: true, active: false },
+        play: {
+          disabled: debugRule ? false : true,
+          active: debugRule ? true : false,
+        },
+        next: {
+          disabled: debugRule ? false : true,
+          active: debugRule ? true : false,
+        },
         stepIn: { disabled: true, active: false },
         stepOut: { disabled: true, active: false },
         disableAll: { disabled: false, active: false },
@@ -88,6 +120,25 @@ function FrontendDebugger() {
   useEffect(() => {
     refresh();
   }, []);
+  useEffect(() => {
+    setData({
+      ...data,
+      currentMethod: debugRule ? debugRule : undefined,
+      currentRule: debugRule ? debugRule : undefined,
+      filter: undefined,
+      operations: {
+        ...data.operations,
+        play: {
+          disabled: debugRule ? false : true,
+          active: debugRule ? true : false,
+        },
+        next: {
+          disabled: debugRule ? false : true,
+          active: debugRule ? true : false,
+        },
+      },
+    });
+  }, [params && params.state ? params.state.callbackId : null]);
   return (
     <Fragment>
       <Box sx={{ display: "flex", height: "100%", width: "100%" }}>
@@ -131,6 +182,12 @@ function FrontendDebugger() {
             currentMethod={data.currentMethod}
             breakpoints={data.breakpoints}
             operations={data.operations}
+            onSelectRuleChanged={(rule) => {
+              setData({
+                ...data,
+                currentRule: rule,
+              });
+            }}
             onBreakpointChanged={(debuged: boolean, breakpoint: Breakpoint) => {
               if (debuged) {
                 addBreakpoint(breakpoint)
@@ -160,9 +217,11 @@ function FrontendDebugger() {
         </Box>
         <Box sx={{ width: "300px", height: "100%" }}>
           <FrontendDebugAttrPanel
+            value={debugRule}
             breakpoints={data.breakpoints}
             operations={data.operations}
             refresh={refresh}
+            handleOperation={handleOperation}
             onBreakpointLocation={(breakpoint: Breakpoint) => {
               setData({
                 ...data,

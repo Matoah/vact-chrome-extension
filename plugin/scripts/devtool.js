@@ -9,11 +9,17 @@ function uuid() {
   return S4() + S4() + S4() + S4() + S4() + S4() + S4() + S4();
 }
 
-chrome.tabs.query({ active: true }, function (tabs) {
-  if (tabs.length > 0) {
-    tabId = tabs[0].id;
+chrome.devtools.inspectedWindow.eval(
+  `(function(id){
+    console.log("extensionId:"+id);
+  window.vact_devtools.methods.setChromeExtensionId(id);
+})("${chrome.runtime.id}")`,
+  function (res, e) {
+    if (e) {
+      console.error(e);
+    }
   }
-});
+);
 
 chrome.devtools.panels.create(
   "VAct",
@@ -61,6 +67,26 @@ chrome.devtools.panels.create(
           );
         });
       };
+      chrome.runtime.onMessageExternal.addListener(function (
+        request,
+        sender,
+        sendResponse
+      ) {
+        if (request && request.type == "vact") {
+          const action = request.action;
+          if (
+            panelWindow &&
+            panelWindow.vact_devtools &&
+            panelWindow.vact_devtools.actions &&
+            panelWindow.vact_devtools.actions[action]
+          ) {
+            const handler = panelWindow.vact_devtools.actions[action];
+            handler(request.data, (res) => {
+              sendResponse(res);
+            });
+          }
+        }
+      });
       panelWindow.vact_devtools = vact_devtools;
     });
   }

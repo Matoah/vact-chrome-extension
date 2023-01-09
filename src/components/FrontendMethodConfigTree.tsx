@@ -1,25 +1,44 @@
-import { Fragment, useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
-import { animated, useSpring } from "react-spring";
-import { Element, xml2js } from "xml-js";
+import { useNavigate } from 'react-router-dom';
+import {
+  animated,
+  useSpring,
+} from 'react-spring';
+import {
+  Element,
+  xml2js,
+} from 'xml-js';
 
-import PestControlIcon from "@mui/icons-material/PestControl";
-import TreeItem, { treeItemClasses, TreeItemProps } from "@mui/lab/TreeItem";
-import TreeView from "@mui/lab/TreeView";
-import Tooltip from "@mui/material/Tooltip";
-import IconButton, { IconButtonProps } from "@mui/material/IconButton";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Collapse from "@mui/material/Collapse";
-import { alpha, styled } from "@mui/material/styles";
-import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
-import { TransitionProps } from "@mui/material/transitions";
-import Typography, { TypographyProps } from "@mui/material/Typography";
+import PestControlIcon from '@mui/icons-material/PestControl';
+import TreeItem, {
+  treeItemClasses,
+  TreeItemProps,
+} from '@mui/lab/TreeItem';
+import TreeView from '@mui/lab/TreeView';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Collapse from '@mui/material/Collapse';
+import IconButton, { IconButtonProps } from '@mui/material/IconButton';
+import {
+  alpha,
+  styled,
+} from '@mui/material/styles';
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import Tooltip from '@mui/material/Tooltip';
+import { TransitionProps } from '@mui/material/transitions';
+import Typography, { TypographyProps } from '@mui/material/Typography';
 
-import { getFrontendMethod } from "../utils/RPCUtils";
-import { uuid } from "../utils/StringUtils";
-import { Breakpoint, Operations } from "../utils/Types";
+import { getFrontendMethod } from '../utils/RPCUtils';
+import { uuid } from '../utils/StringUtils';
+import {
+  Breakpoint,
+  Operations,
+} from '../utils/Types';
 
 interface FrontendMethodConfigTreeValue {
   componentCode: string;
@@ -38,6 +57,12 @@ interface FrontendMethodConfigTreeProps {
   breakpoints?: Breakpoint[];
   operations: Operations;
   onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
+  onSelectRuleChanged?: (node: {
+    componentCode: string;
+    methodCode: string;
+    ruleCode: string;
+    windowCode?: string;
+  }) => void;
 }
 
 declare module "react" {
@@ -523,8 +548,14 @@ const getAllNodeIds = function (tree: TreeNode[]): string[] {
 };
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
-  const { value, breakpoints, onBreakpointChanged, operations, currentMethod } =
-    props;
+  const {
+    value,
+    breakpoints,
+    onBreakpointChanged,
+    onSelectRuleChanged,
+    operations,
+    currentMethod,
+  } = props;
   const [data, setData] = useState<{
     current: null | string;
     tree: TreeNode[];
@@ -615,6 +646,25 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
             defaultCollapseIcon={<MinusSquare />}
             defaultExpandIcon={<PlusSquare />}
             defaultEndIcon={<div style={{ width: 24 }} />}
+            onNodeSelect={(evt: any, nodeId: any) => {
+              if (onSelectRuleChanged) {
+                const list = nodeId.split("_$_");
+                if (list.length == 5) {
+                  onSelectRuleChanged({
+                    componentCode: list[1],
+                    windowCode: list[2],
+                    methodCode: list[3],
+                    ruleCode: list[4],
+                  });
+                } else if (list.length == 4) {
+                  onSelectRuleChanged({
+                    componentCode: list[1],
+                    methodCode: list[2],
+                    ruleCode: list[3],
+                  });
+                }
+              }
+            }}
           >
             {data.tree.map((node) => renderTreeChildren(node, operations))}
           </TreeView>

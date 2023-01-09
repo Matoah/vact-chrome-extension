@@ -1,4 +1,5 @@
 import TimePoint from './TimePoint';
+import { Breakpoint } from './Types';
 
 function getRuleTipDom(data, time: TimePoint) {
   const funcCode = time.getFunCode();
@@ -137,4 +138,34 @@ export function getTipDom(data, time: TimePoint) {
     return getRPCTipDom(data, time);
   }
   return "";
+}
+
+export function getScopeManager(sandbox) {
+  return sandbox.getService(
+    "v_act_vjs_framework_extension_platform_interface_scope"
+  ).ScopeManager;
+}
+
+export function getEventManager(sandbox) {
+  return sandbox.getService(
+    "v_act_vjs_framework_extension_platform_interface_event"
+  ).EventManager;
+}
+
+export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
+  for (let index = 0; index < breakpoints.length; index++) {
+    const bp = breakpoints[index];
+    if (
+      bp.location.componentCode == breakpoint.location.componentCode &&
+      bp.location.methodCode == breakpoint.location.methodCode &&
+      bp.location.ruleCode == breakpoint.location.ruleCode
+    ) {
+      if (
+        typeof bp.location.windowCode == typeof breakpoint.location.windowCode
+      ) {
+        return index;
+      }
+    }
+  }
+  return -1;
 }
