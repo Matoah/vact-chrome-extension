@@ -126,9 +126,6 @@ function TransitionComponent(props: TransitionProps) {
     </animated.div>
   );
 }
-const StyledTypography = styled(Typography)(({ theme }) => ({
-  color: theme.palette.primary.main,
-}));
 
 function DebugIcon(props: {
   type: "rule" | "if" | "else" | "foreach";
@@ -168,16 +165,20 @@ function DebugIcon(props: {
   }
 }
 
-function isDebuged(nodeId: string, breakpoints?: Breakpoint[]) {
+function getBreakpointByNodeId(nodeId: string, breakpoints?: Breakpoint[]) {
   if (breakpoints) {
-    return !!breakpoints.find((breakpoint) => {
+    return breakpoints.find((breakpoint) => {
       return (
         nodeId ==
         ruleInstanceToId(breakpoint.location.ruleCode, breakpoint.location)
       );
     });
   }
-  return false;
+  return null;
+}
+
+function isDebuged(nodeId: string, breakpoints?: Breakpoint[]) {
+  return !!getBreakpointByNodeId(nodeId, breakpoints);
 }
 
 const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
@@ -227,6 +228,11 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     ...other
   } = props;
   const nodeId = props.nodeId;
+  let disabled = disabledAllBreakpoint;
+  if (!disabled) {
+    const breakpoint = getBreakpointByNodeId(nodeId, breakpoints);
+    disabled = breakpoint ? !breakpoint.enable : false;
+  }
   return (
     <StyledTreeItemRoot
       TransitionComponent={TransitionComponent}
@@ -257,7 +263,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
           </Tooltip>
           <DebugIcon
             type={type}
-            disabled={disabledAllBreakpoint}
+            disabled={disabled}
             value={isDebuged(nodeId, breakpoints)}
             onToggle={(debuged: boolean) => {
               if (onBreakpointChanged && currentMethod && ruleCode) {

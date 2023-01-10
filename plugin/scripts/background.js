@@ -1,4 +1,4 @@
-const vact_devtool_ports = [];
+/*const vact_devtool_ports = [];
 
 function uuid() {
   let S4 = function () {
@@ -21,11 +21,6 @@ function registerPort(port) {
   return true;
 }
 
-chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-  console.log("Received %o from %o, frame", msg, sender.tab, sender.frameId);
-  sendResponse("Gotcha!");
-});
-
 chrome.runtime.onConnect.addListener(function (port) {
   if (registerPort(port)) {
     port.onMessage.addListener(function (msg) {
@@ -44,52 +39,6 @@ chrome.runtime.onConnect.addListener(function (port) {
           }
         }
       );
-      /*const promise = chrome.scripting.executeScript({
-        target: { tabId, allFrames: true },
-        function: function () {
-          return new Promise((resolve, reject) => {
-            console.log("1111111111111111111");
-            debugger;
-            console.log("window.vact_devtools:" + window.vact_devtools);
-            if (window.vact_devtools && window.vact_devtools.methods) {
-              const methods = win.vact_devtools.methods;
-              const handler = methods[method];
-              if (handler) {
-                handler(params.params)
-                  .then((data) => {
-                    resolve(data);
-                  })
-                  .catch((e) => {
-                    reject(e);
-                  });
-              } else {
-                reject(`不存在${method}方法，无法执行！`);
-              }
-            } else {
-              reject(`当前页面非VAct页面`);
-            }
-          });
-        },
-      });
-      promise
-        .then((data) => {
-          notifyDevtools(
-            JSON.stringify({
-              id,
-              success: true,
-              data: data,
-            })
-          );
-        })
-        .catch((e) => {
-          notifyDevtools(
-            JSON.stringify({
-              id,
-              success: false,
-              msg: e.message,
-            })
-          );
-        });*/
     });
   }
 });
@@ -97,4 +46,8 @@ function notifyDevtools(msg) {
   vact_devtool_ports.forEach(function (port) {
     port.postMessage(msg);
   });
-}
+}*/
+
+chrome.runtime.onSuspend.addListener(function () {
+  console.log("onSuspend:" + new Date());
+});

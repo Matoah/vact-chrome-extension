@@ -8,18 +8,74 @@ class RuleDebugger {
   extensionId;
   sandbox;
   port;
+  modal;
   nextRule = false;
-  setExtensionId(extensionId: string) {
-    this.extensionId = extensionId;
+  setExtensionId(extensionId: string | null) {
+    if (extensionId) {
+      this.extensionId = extensionId;
+    }
     return this;
   }
   setSandbox(sandbox: any) {
     this.sandbox = sandbox;
     return this;
   }
+  _initModal() {
+    if (!this.modal) {
+      const modal = document.createElement("div");
+      const styles = {
+        left: "0px",
+        top: "0px",
+        width: "100%",
+        height: "100%",
+        position: "fixed",
+        display: "none",
+        backgroundColor: "black",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: "999999999",
+        opacity: "0.5",
+      };
+      Object.assign(modal.style, styles);
+      this.modal = modal;
+      this.modal.innerHTML = `<span style="color:white;font-size:18px;">调试中,请在VAct插件中进行操作...</span>`;
+      document.body.appendChild(modal);
+    }
+  }
+  _showModal() {
+    this._initModal();
+    this.modal.style.display = "flex";
+  }
+  _hideModal() {
+    if (this.modal) {
+      this.modal.style.display = "none";
+    }
+  }
   _isBusinessRule(ruleContext) {
     var ruleInstance = ruleContext.getRuleCfg();
-    return ruleInstance.hasOwnProperty("transactionType");
+    let result = ruleInstance.hasOwnProperty("transactionType");
+    if (result) {
+      //判断是否为事件调用规则，如果是则不需要断点，如：按钮点击事件中绑定方法A，按钮点击时，会先执行【执行方法规则】，该规则再执行方法A，此时该执行方法无需断点
+      const info = this._getRuleDefineFromRuleContext(ruleContext);
+      if (info) {
+        const routeContext = ruleContext.getRouteContext();
+        const scopeId = routeContext.getScopeId();
+        const scope = getScopeManager(this.sandbox).getScope(scopeId);
+        if (scope && scope.getWindowCode) {
+          //@ts-ignore
+          const logic = window.vact_devtools.methods.getFrontendMethod({
+            componentCode: info.componentCode,
+            windowCode: info.windowCode,
+            methodCode: info.methodCode,
+          });
+          const instance = logic.ruleInstances?.ruleInstance;
+          if (instance) {
+            return instance.$.instanceCode != info.ruleCode;
+          }
+        }
+      }
+    }
+    return result;
   }
   _getRuleDefineFromRuleContext(ruleContext) {
     const routeContext = ruleContext.getRouteContext();
@@ -59,8 +115,10 @@ class RuleDebugger {
             this._isDebugger(ruleContext)
           ) {
             return new Promise((resolve, reject) => {
+              this._showModal();
               this.sendMessage(this._getRuleDefineFromRuleContext(ruleContext))
                 .then((res: null | { operation: string }) => {
+                  this._hideModal();
                   if (res) {
                     if (res.operation == "nextRule") {
                       this.nextRule = true;
@@ -71,7 +129,10 @@ class RuleDebugger {
                   }
                   resolve(res);
                 })
-                .catch(reject);
+                .catch((e) => {
+                  this._hideModal();
+                  reject(e);
+                });
             });
           }
         },

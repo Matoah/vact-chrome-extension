@@ -9,10 +9,14 @@ import { indexOf } from './Utils';
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
+const extensionId = window.localStorage.getItem("vact_devtools_extensionId");
+const ruleDebugger = new RuleDebugger();
+ruleDebugger.setExtensionId(extensionId);
 vact_devtools.storage = {
   vjsUrls: [],
   sandbox: null,
-  ruleDebugger: new RuleDebugger(),
+  extensionId,
+  ruleDebugger,
 };
 const _getVjsUrl = function (id) {
   let item = vact_devtools.storage.vjsUrls.find((item) => item.id == id);
@@ -295,10 +299,8 @@ vact_devtools.methods = {
   },
   setChromeExtensionId: function (extensionId: string) {
     vact_devtools.storage.extensionId = extensionId;
+    window.localStorage.setItem("vact_devtools_extensionId", extensionId);
     vact_devtools.storage.ruleDebugger.setExtensionId(extensionId);
-  },
-  callExtension: function () {
-    vact_devtools.storage.ruleDebugger.sendMessage();
   },
 };
 //@ts-ignore

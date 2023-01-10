@@ -39,11 +39,27 @@ function FrontendDebugger() {
         ruleCode: string;
         windowCode?: string;
       } = undefined;
-  let handleOperation = () => {};
+  let handleOperation = (args: { operation: string }) => {};
   if (params && params.state) {
     debugRule = params.state.data;
     //@ts-ignore
-    handleOperation = window[params.state.callbackId];
+    const handler = window[params.state.callbackId];
+    handleOperation = (args: { operation: string }) => {
+      const { operation } = args;
+      if (
+        ["nextBreakpoint", "nextRule", "stepIn", "stepOut"].indexOf(
+          operation
+        ) != -1
+      ) {
+        setData({
+          ...data,
+          debugRule: undefined,
+          currentRule: undefined,
+        });
+      }
+      //@ts-ignore
+      handler(params);
+    };
   }
   const errHandler = (e: any) => {
     console.error(e);
@@ -63,6 +79,12 @@ function FrontendDebugger() {
       windowCode?: string;
       ruleCode: string;
     };
+    debugRule?: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+      ruleCode: string;
+    };
     filter?: {
       code: string;
       componentCode: string;
@@ -76,6 +98,7 @@ function FrontendDebugger() {
     return {
       currentMethod: debugRule ? debugRule : undefined,
       currentRule: debugRule ? debugRule : undefined,
+      debugRule: debugRule,
       filter: undefined,
       operations: {
         play: {
@@ -139,6 +162,14 @@ function FrontendDebugger() {
       },
     });
   }, [params && params.state ? params.state.callbackId : null]);
+  useEffect(() => {
+    setData({
+      ...data,
+      currentMethod: debugRule,
+      currentRule: debugRule,
+      debugRule,
+    });
+  }, [debugRule]);
   return (
     <Fragment>
       <Box sx={{ display: "flex", height: "100%", width: "100%" }}>
@@ -217,7 +248,7 @@ function FrontendDebugger() {
         </Box>
         <Box sx={{ width: "300px", height: "100%" }}>
           <FrontendDebugAttrPanel
-            value={debugRule}
+            value={data.debugRule}
             breakpoints={data.breakpoints}
             operations={data.operations}
             refresh={refresh}
