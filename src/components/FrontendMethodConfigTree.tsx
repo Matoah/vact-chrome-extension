@@ -1,21 +1,14 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
-import {
-  useDispatch,
-  useSelector,
-} from '../store';
-import { getFrontendMethod } from '../utils/RPCUtils';
+import { useDispatch, useSelector } from "../store";
+import { getFrontendMethod } from "../utils/RPCUtils";
 import {
   getAllNodeIds,
   getBreakpointByNodeId,
@@ -23,15 +16,17 @@ import {
   ruleInstanceToId,
   toTree,
   TreeNode,
-} from '../utils/RuleConfigTreeUtils';
+} from "../utils/RuleConfigTreeUtils";
+import { Breakpoint, Operations } from "../utils/Types";
+import CustomTreeView from "./CustomTreeView";
+import DebugIcon from "./DebugIcon";
+import MinusSquare from "./MinusSquare";
+import PlusSquare from "./PlusSquare";
 import {
-  Breakpoint,
-  Operations,
-} from '../utils/Types';
-import CustomTreeView from './CustomTreeView';
-import DebugIcon from './DebugIcon';
-import MinusSquare from './MinusSquare';
-import PlusSquare from './PlusSquare';
+  addBreakpoint,
+  removeBreakpoint,
+  setRule,
+} from "../slices/fontendDebugger";
 
 interface FrontendMethodConfigTreeValue {
   componentCode: string;
@@ -53,10 +48,9 @@ interface FrontendMethodConfigTreeProps {
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
   const dispatch = useDispatch();
-  const { method, rule, breakpoints } = useSelector(
+  const { method, rule, breakpoints, operations } = useSelector(
     (state) => state.frontendDebugger
   );
-  const { onBreakpointChanged, onSelectRuleChanged, operations } = props;
 
   const [data, setData] = useState<{
     current: null | string;
@@ -95,13 +89,6 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
       ? `${method.componentCode}_$_${method.methodCode}_$_${method.windowCode}`
       : method,
   ]);
-  useEffect(() => {
-    if (rule && method) {
-      document
-        .getElementById(ruleInstanceToId(rule.code, method))
-        ?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [rule]);
   return (
     <Fragment>
       <Box
@@ -129,7 +116,8 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
             defaultEndIcon={<div style={{ width: 24 }} />}
             labelTemplate={(pros, node) => {
               const nodeId = node.nodeId;
-              let disabled = operations.disableAll.active;
+              let disabled = operations.find((op) => op.code == "disableAll")
+                ?.status.active;
               if (!disabled) {
                 const breakpoint = getBreakpointByNodeId(nodeId, breakpoints);
                 disabled = breakpoint ? !breakpoint.enable : false;
@@ -165,13 +153,18 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
                   <DebugIcon
                     type={node.type}
                     disabled={disabled}
-                    value={isDebuged(node.nodeId, breakpoints)}
+                    value={isDebuged(node.id, breakpoints)}
                     onToggle={(debuged: boolean) => {
-                      if (onBreakpointChanged && method && ruleCode) {
-                        onBreakpointChanged(debuged, {
+                      if (method && ruleCode) {
+                        const breakpoint = {
                           enable: true,
                           location: { ...method, ruleCode },
-                        });
+                        };
+                        if (debuged) {
+                          dispatch(addBreakpoint(breakpoint));
+                        } else {
+                          dispatch(removeBreakpoint(breakpoint));
+                        }
                       }
                     }}
                   ></DebugIcon>
@@ -179,22 +172,21 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
               );
             }}
             onNodeSelect={(evt: any, nodeId: any) => {
-              if (onSelectRuleChanged) {
-                const list = nodeId.split("_$_");
-                if (list.length == 5) {
-                  onSelectRuleChanged({
+              const list = nodeId.split("_$_");
+              if (list.length == 5) {
+                setRule({
+                  method: {
                     componentCode: list[1],
                     windowCode: list[2],
                     methodCode: list[3],
-                    ruleCode: list[4],
-                  });
-                } else if (list.length == 4) {
-                  onSelectRuleChanged({
-                    componentCode: list[1],
-                    methodCode: list[2],
-                    ruleCode: list[3],
-                  });
-                }
+                  },
+                  code: list[4],
+                });
+              } else if (list.length == 4) {
+                setRule({
+                  method: { componentCode: list[1], methodCode: list[2] },
+                  code: list[3],
+                });
               }
             }}
           ></CustomTreeView>

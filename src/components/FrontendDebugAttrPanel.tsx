@@ -1,50 +1,51 @@
+import { Fragment, useState, createElement } from "react";
+
+import { useNavigate } from "react-router-dom";
+
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { styled } from "@mui/material/styles";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import { useDispatch, useSelector } from "../store";
 import {
-  Fragment,
-  ReactNode,
-  useState,
-} from 'react';
-
-import { useNavigate } from 'react-router-dom';
-
-import DoneAllIcon from '@mui/icons-material/DoneAll';
-import DownloadIcon from '@mui/icons-material/Download';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FastForwardIcon from '@mui/icons-material/FastForward';
-import LabelOffIcon from '@mui/icons-material/LabelOff';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import UploadIcon from '@mui/icons-material/Upload';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-
-import { isEqual } from '../utils/BreakpointUtils';
-import {
-  clearBreakpoint,
-  markBreakAllRule,
-  markIgnoreBreakpoints,
-  removeBreakpoint,
-  unmarkBreakAllRule,
-  unmarkIgnoreBreakpoints,
   updateBreakpoint,
-} from '../utils/RPCUtils';
-import {
-  Breakpoint,
-  Operations,
-} from '../utils/Types';
+  updateOperation,
+  removeBreakpoint,
+  setMethod,
+  setRule,
+} from "../slices/fontendDebugger";
+import OperationButton from "./OperationButton";
+
+import { isEqual } from "../utils/BreakpointUtils";
+import { clearBreakpoint, markIgnoreBreakpoints } from "../utils/RPCUtils";
+import { Breakpoint, Operations } from "../utils/Types";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DownloadIcon from "@mui/icons-material/Download";
+import FastForwardIcon from "@mui/icons-material/FastForward";
+import LabelOffIcon from "@mui/icons-material/LabelOff";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
+import UploadIcon from "@mui/icons-material/Upload";
+
+const operationIcons = {
+  DoneAll: DoneAllIcon,
+  Download: DownloadIcon,
+  FastForward: FastForwardIcon,
+  LabelOff: LabelOffIcon,
+  SkipNext: SkipNextIcon,
+  Upload: UploadIcon,
+};
 
 interface FrontendDebugAttrPanelProps {
   value?: {
@@ -65,36 +66,6 @@ const StyledBox = styled(Box)(({ theme }) => ({
   //borderBottom: `1px solid ${alpha(theme.palette.text.primary, 0.4)}`,
 }));
 
-const StyledButton = styled(IconButton)(({ theme }) => ({
-  color: theme.palette.primary.main,
-}));
-
-function OperationButton(props: {
-  active: boolean;
-  title: string;
-  disabled: boolean;
-  icon: ReactNode;
-  onClick?: (active: boolean) => void;
-}) {
-  const { active, title, icon, disabled, onClick } = props;
-  const chickHandler = () => {
-    if (onClick) {
-      onClick(!active);
-    }
-  };
-  return active && !disabled ? (
-    <Tooltip title={title}>
-      <StyledButton disabled={disabled} onClick={chickHandler}>
-        {icon}
-      </StyledButton>
-    </Tooltip>
-  ) : (
-    <IconButton disabled={disabled} onClick={chickHandler}>
-      {icon}
-    </IconButton>
-  );
-}
-
 const breakpointToKey = function (breakpoint: Breakpoint) {
   const { location } = breakpoint;
   const { componentCode, windowCode, methodCode, ruleCode } = location;
@@ -104,14 +75,10 @@ const breakpointToKey = function (breakpoint: Breakpoint) {
 };
 
 function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
-  const {
-    breakpoints,
-    refresh,
-    onBreakpointLocation,
-    operations,
-    value,
-    handleOperation,
-  } = props;
+  const { refresh } = props;
+  const dispatch = useDispatch();
+  const state = useSelector((state) => state.frontendDebugger);
+  const { operations, breakpoints, debug } = state;
   const [contextMenu, setContextMenu] = useState<{
     mousePosition: { mouseX: number; mouseY: number } | null;
     breakpoint?: Breakpoint;
@@ -143,6 +110,14 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       breakpoint,
     });
   };
+  const handleOperationClick = (operation: string, active: boolean) => {
+    if (operation == "disableAll") {
+      const op = operations.find((o) => o.code == "disableAll");
+      if (op) {
+        dispatch(updateOperation({ ...op, status: { ...op.status, active } }));
+      }
+    }
+  };
   const handleContextMenuClose = (
     type?:
       | "remove"
@@ -158,14 +133,16 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       };
       const breakpoint = contextMenu.breakpoint;
       if (type == "remove") {
-        removeBreakpoint(breakpoint).then(callback).catch(errHandler);
+        removeBreakpoint(breakpoint);
       } else if (type == "position") {
-        if (onBreakpointLocation) {
-          onBreakpointLocation(contextMenu.breakpoint);
-        }
+        setMethod(breakpoint.location);
+        setRule({
+          method: breakpoint.location,
+          code: breakpoint.location.ruleCode,
+        });
       } else if (type == "disable") {
         breakpoint.enable = false;
-        updateBreakpoint(breakpoint).then(callback).catch(errHandler);
+        updateBreakpoint(breakpoint);
       } else if (type == "disableAll") {
         markIgnoreBreakpoints().then(callback).catch(errHandler);
       } else if (type == "clear") {
@@ -178,7 +155,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           }
         });
         if (removed.length > 0) {
-          removeBreakpoint(removed).then(callback).catch(errHandler);
+          removeBreakpoint(removed);
         }
       }
     }
@@ -195,70 +172,39 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       >
         <Card sx={{ flex: 1, ml: 1, display: "flex", flexDirection: "column" }}>
           <StyledBox sx={{ width: "100%" }}>
-            <OperationButton
-              title="执行到下一个断点(F8)"
-              active={operations.play.active}
-              disabled={!value || operations.play.disabled}
-              onClick={() => {
-                handleOperation({ operation: "nextBreakpoint" });
-              }}
-              icon={<FastForwardIcon fontSize="small" />}
-            />
-            <OperationButton
-              title="执行到下一个规则(F10)"
-              active={operations.next.active}
-              disabled={!value || operations.next.disabled}
-              onClick={() => {
-                handleOperation({ operation: "nextRule" });
-              }}
-              icon={<SkipNextIcon fontSize="small" />}
-            />
-            <OperationButton
-              title="进入当前方法(F11)"
-              active={operations.stepIn.active}
-              disabled={operations.stepIn.disabled}
-              onClick={() => {
-                handleOperation({ operation: "stepIn" });
-              }}
-              icon={<DownloadIcon fontSize="small" />}
-            />
-            <OperationButton
-              title="跳出当前方法(Ctrl+F11)"
-              active={operations.stepOut.active}
-              disabled={operations.stepOut.disabled}
-              onClick={() => {
-                handleOperation({ operation: "stepOut" });
-              }}
-              icon={<UploadIcon fontSize="small" />}
-            />
-            <OperationButton
-              title="停用所有规则(Ctrl+F8)"
-              active={operations.disableAll.active}
-              disabled={operations.disableAll.disabled}
-              onClick={(ignoreAll: boolean) => {
-                if (ignoreAll) {
-                  markIgnoreBreakpoints().then(refresh).catch(errHandler);
-                } else {
-                  unmarkIgnoreBreakpoints().then(refresh).catch(errHandler);
-                }
-              }}
-              icon={<LabelOffIcon fontSize="small" />}
-            />
-            <OperationButton
-              title="中断所有规则"
-              active={operations.breakAll.active}
-              disabled={
-                operations.disableAll.active || operations.breakAll.disabled
+            {operations.map((operation) => {
+              let disabled = operation.status.disabled;
+              if (typeof disabled == "string") {
+                const handler = new Function(
+                  "operation",
+                  "operations",
+                  "state",
+                  disabled
+                );
+                disabled = handler(operation, operations, state);
               }
-              onClick={(breakAll: boolean) => {
-                if (breakAll) {
-                  markBreakAllRule().then(refresh).catch(errHandler);
-                } else {
-                  unmarkBreakAllRule().then(refresh).catch(errHandler);
-                }
-              }}
-              icon={<DoneAllIcon fontSize="small" />}
-            />
+              //@ts-ignore
+              const iconDef = operationIcons[operation.icon];
+              return (
+                <OperationButton
+                  key={operation.code}
+                  title={operation.title}
+                  active={operation.status.active}
+                  disabled={disabled}
+                  onClick={() => {
+                    handleOperationClick(
+                      operation.code,
+                      !operation.status.active
+                    );
+                  }}
+                  icon={
+                    iconDef
+                      ? createElement(iconDef, { fontSize: "small" })
+                      : null
+                  }
+                />
+              );
+            })}
           </StyledBox>
           <Box sx={{ flex: 1, pt: 1, overflow: "auto" }}>
             <Accordion
@@ -315,9 +261,11 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                               <TableRow
                                 key={breakpointToKey(breakpoint)}
                                 onDoubleClick={() => {
-                                  if (onBreakpointLocation) {
-                                    onBreakpointLocation(breakpoint);
-                                  }
+                                  setMethod(breakpoint.location);
+                                  setRule({
+                                    method: breakpoint.location,
+                                    code: breakpoint.location.ruleCode,
+                                  });
                                 }}
                                 onContextMenu={(evt) => {
                                   handleContextMenu(evt, breakpoint);
@@ -329,17 +277,19 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                                 >
                                   <Checkbox
                                     size="small"
-                                    disabled={operations.disableAll.active}
+                                    disabled={
+                                      operations.find(
+                                        (op) => op.code == "disableAll"
+                                      )?.status.active
+                                    }
                                     checked={breakpoint.enable}
                                     onChange={(evt, checked) => {
-                                      updateBreakpoint({
-                                        enable: checked,
-                                        location: breakpoint.location,
-                                      })
-                                        .then(() => {
-                                          refresh();
+                                      dispatch(
+                                        updateBreakpoint({
+                                          enable: checked,
+                                          location: breakpoint.location,
                                         })
-                                        .catch(errHandler);
+                                      );
                                     }}
                                   ></Checkbox>
                                 </TableCell>

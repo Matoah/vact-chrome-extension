@@ -1,37 +1,80 @@
-import type { PayloadAction } from '@reduxjs/toolkit';
-import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
-import { AppThunk } from '../store';
-import { getBreakpoints as getRPCBreakpoints } from '../utils/RPCUtils';
+import { AppThunk } from "../store";
+import {
+  getBreakpoints as getRPCBreakpoints,
+  addBreakpoint as addRPCBreakpoint,
+  removeBreakpoint as removeRPCBreakpoint,
+  updateBreakpoint as updateRPCBreakopoint,
+} from "../utils/RPCUtils";
 import {
   Breakpoint,
   Method,
+  Operation,
   Rule,
-} from '../utils/Types';
-
-interface FrontendDebuggerState {
-  //断点集合
-  breakpoints: Breakpoint[];
-  //方法树
-  //methodTree: MethodTreeNode[];
-  //方法树展开节点
-  //methodTreeExpand: string[];
-  //方法规则配置树
-  //ruleConfigTree: RuleConfigTreeNode[];
-  //搜索候选项（过滤方法树）
-  //searchItems: MethodTreeSearchItem[];
-  //搜索值
-  //search?: MethodTreeSearchItem;
-  //当前方法
-  method?: Method;
-  //当前规则
-  rule?: Rule;
-  //当前调试规则
-  debug?: Rule;
-}
+  FrontendDebuggerState,
+} from "../utils/Types";
 
 const initialState: FrontendDebuggerState = {
   breakpoints: [],
+  operations: [
+    {
+      code: "play",
+      title: "执行到下一个断点(F8)",
+      icon: "FastForward",
+      status: {
+        disabled: `return !state.debug || true;`,
+        active: false,
+      },
+    },
+    {
+      code: "next",
+      title: "执行到下一个规则(F10)",
+      icon: "SkipNext",
+      status: {
+        disabled: `return !state.debug || true;`,
+        active: false,
+      },
+    },
+    {
+      code: "stepIn",
+      title: "进入当前方法(F11)",
+      icon: "Download",
+      status: {
+        disabled: true,
+        active: false,
+      },
+    },
+    {
+      code: "stepOut",
+      title: "跳出当前方法(Ctrl+F11)",
+      icon: "Upload",
+      status: {
+        disabled: true,
+        active: false,
+      },
+    },
+    {
+      code: "disableAll",
+      title: "停用所有规则(Ctrl+F8)",
+      icon: "LabelOff",
+      status: { disabled: false, active: false },
+    },
+    {
+      code: "breakAll",
+      title: "中断所有规则",
+      icon: "DoneAll",
+      status: {
+        disabled: `const op = operations.find((p) => p.code == "disableAll");
+          if (op) {
+            return op.status.active;
+          }
+          return false;`,
+        active: false,
+      },
+    },
+  ],
   //methodTree: [],
   //methodTreeExpand: [],
   //ruleConfigTree: [],
@@ -70,6 +113,25 @@ const slice = createSlice({
       const { debug } = action.payload;
       state.debug = debug;
     },
+    updateOperation(
+      state: FrontendDebuggerState,
+      action: PayloadAction<{ operation: Operation }>
+    ) {
+      const { operation } = action.payload;
+      const operations = state.operations.concat([]);
+      let needUpdate = false;
+      for (let i = 0; i < operations.length; i++) {
+        const element = operations[i];
+        if (element.code == operation.code) {
+          operations[i] = operation;
+          needUpdate = true;
+          break;
+        }
+      }
+      if (needUpdate) {
+        state.operations = operations;
+      }
+    },
   },
 });
 
@@ -94,6 +156,36 @@ export const setDebug =
   (debug?: Rule): AppThunk =>
   async (dispatch) => {
     dispatch(slice.actions.setDebug({ debug }));
+  };
+
+export const addBreakpoint =
+  (breakpoint: Breakpoint): AppThunk =>
+  async (dispatch) => {
+    await addRPCBreakpoint(breakpoint);
+    const breakpoints = await getRPCBreakpoints();
+    dispatch(slice.actions.getBreakpoints({ breakpoints }));
+  };
+
+export const removeBreakpoint =
+  (breakpoint: Breakpoint | Breakpoint[]): AppThunk =>
+  async (dispatch) => {
+    await removeRPCBreakpoint(breakpoint);
+    const breakpoints = await getRPCBreakpoints();
+    dispatch(slice.actions.getBreakpoints({ breakpoints }));
+  };
+
+export const updateBreakpoint =
+  (breakpoint: Breakpoint): AppThunk =>
+  async (dispatch) => {
+    await updateRPCBreakopoint(breakpoint);
+    const breakpoints = await getRPCBreakpoints();
+    dispatch(slice.actions.getBreakpoints({ breakpoints }));
+  };
+
+export const updateOperation =
+  (operation: Operation): AppThunk =>
+  async (dispatch) => {
+    dispatch(slice.actions.updateOperation({ operation }));
   };
 
 export default slice;

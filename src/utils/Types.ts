@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 interface Breakpoint {
   enable: boolean;
@@ -10,15 +10,42 @@ interface Breakpoint {
   };
 }
 
-interface Operation {
-  code: string;
-  icon: ReactNode;
-  title: string;
-}
-
 interface Operations {
   [operation: string]: {
     disabled: boolean;
+    active: boolean;
+  };
+}
+
+interface FrontendDebuggerState {
+  //断点集合
+  breakpoints: Breakpoint[];
+  //方法树
+  //methodTree: MethodTreeNode[];
+  //方法树展开节点
+  //methodTreeExpand: string[];
+  //方法规则配置树
+  //ruleConfigTree: RuleConfigTreeNode[];
+  //搜索候选项（过滤方法树）
+  //searchItems: MethodTreeSearchItem[];
+  //搜索值
+  //search?: MethodTreeSearchItem;
+  //操作动作
+  operations: Operation[];
+  //当前方法
+  method?: Method;
+  //当前规则
+  rule?: Rule;
+  //当前调试规则
+  debug?: Rule;
+}
+
+interface Operation {
+  code: string;
+  title: string;
+  icon: string;
+  status: {
+    disabled: string | boolean;
     active: boolean;
   };
 }
@@ -102,4 +129,5 @@ export {
   type Rule,
   type RuleConfigTreeNode,
   type RuleInstance,
+  type FrontendDebuggerState,
 };
