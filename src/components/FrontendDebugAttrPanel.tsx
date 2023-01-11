@@ -181,7 +181,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                   "state",
                   disabled
                 );
-                disabled = handler(operation, operations, state);
+                disabled = !!handler(operation, operations, state);
               }
               //@ts-ignore
               const iconDef = operationIcons[operation.icon];
