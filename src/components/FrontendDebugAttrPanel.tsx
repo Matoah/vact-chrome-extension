@@ -223,7 +223,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
               icon={<DownloadIcon fontSize="small" />}
             />
             <OperationButton
-              title="跳出当前方法(Shift+F11)"
+              title="跳出当前方法(Ctrl+F11)"
               active={operations.stepOut.active}
               disabled={operations.stepOut.disabled}
               onClick={() => {
@@ -232,7 +232,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
               icon={<UploadIcon fontSize="small" />}
             />
             <OperationButton
-              title="停用所有规则"
+              title="停用所有规则(Ctrl+F8)"
               active={operations.disableAll.active}
               disabled={operations.disableAll.disabled}
               onClick={(ignoreAll: boolean) => {

@@ -21,6 +21,10 @@ chrome.devtools.inspectedWindow.eval(
   }
 );
 
+chrome.runtime.connect({
+  name: "VAct-devtool-page",
+});
+
 chrome.devtools.panels.create(
   "VAct",
   "/images/logo.png",

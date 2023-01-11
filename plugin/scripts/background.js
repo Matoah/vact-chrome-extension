@@ -48,6 +48,13 @@ function notifyDevtools(msg) {
   });
 }*/
 
-chrome.runtime.onSuspend.addListener(function () {
-  console.log("onSuspend:" + new Date());
+chrome.runtime.onConnect.addListener(function (port) {
+  if (port.name == "VAct-devtool-page") {
+    console.log("onConnect" + new Date());
+    port.onDisconnect.addListener(function (port) {
+      chrome.devtools.inspectedWindow.eval(
+        `(function(){console.log('onDisconnect')})()`
+      );
+    });
+  }
 });
