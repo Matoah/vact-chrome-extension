@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 interface Breakpoint {
   enable: boolean;
   location: {
@@ -28,8 +30,12 @@ interface FrontendDebuggerState {
   //searchItems: MethodTreeSearchItem[];
   //搜索值
   //search?: MethodTreeSearchItem;
+  //禁用所有断点
+  disableAll: boolean;
+  //中断所有规则
+  breakAll: boolean;
   //操作动作
-  operations: Operation[];
+  //operations: Operation[];
   //当前方法
   method?: Method;
   //当前规则
@@ -43,8 +49,15 @@ interface FrontendDebuggerState {
 interface Operation {
   code: string;
   title: string;
-  icon: string;
-  disabled: string | boolean;
+  icon: ReactNode;
+  disabled:
+    | ((
+        operation: Operation,
+        operations: Operation[],
+        state: FrontendDebuggerState
+      ) => boolean)
+    | boolean;
+  click: (state: FrontendDebuggerState, active: boolean) => void;
   active: boolean;
 }
 

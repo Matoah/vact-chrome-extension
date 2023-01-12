@@ -1,93 +1,40 @@
-import {
-  createElement,
-  Fragment,
-  useState,
-} from 'react';
+import { createElement, Fragment, useState } from "react";
 
-import DoneAllIcon from '@mui/icons-material/DoneAll';
-import DownloadIcon from '@mui/icons-material/Download';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FastForwardIcon from '@mui/icons-material/FastForward';
-import LabelOffIcon from '@mui/icons-material/LabelOff';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import UploadIcon from '@mui/icons-material/Upload';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DownloadIcon from "@mui/icons-material/Download";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FastForwardIcon from "@mui/icons-material/FastForward";
+import LabelOffIcon from "@mui/icons-material/LabelOff";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
+import UploadIcon from "@mui/icons-material/Upload";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { styled } from "@mui/material/styles";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 
 import {
   removeBreakpoint,
+  setBreakAll,
+  setDisableAll,
   setMethod,
   setRule,
   updateBreakpoint,
-  updateOperation,
-} from '../slices/fontendDebugger';
-import {
-  useDispatch,
-  useSelector,
-} from '../store';
-import { isEqual } from '../utils/BreakpointUtils';
-import {
-  Breakpoint,
-  FrontendDebuggerState,
-  Operation,
-} from '../utils/Types';
-import OperationButton from './OperationButton';
-
-const operationIcons = {
-  DoneAll: DoneAllIcon,
-  Download: DownloadIcon,
-  FastForward: FastForwardIcon,
-  LabelOff: LabelOffIcon,
-  SkipNext: SkipNextIcon,
-  Upload: UploadIcon,
-};
-
-const operationDisableHandlers: {
-  [code: string]: (
-    operation: Operation,
-    operations: Operation[],
-    state: FrontendDebuggerState
-  ) => boolean;
-} = {
-  play: function (
-    operation: Operation,
-    operations: Operation[],
-    state: FrontendDebuggerState
-  ) {
-    return !state.debug || true;
-  },
-  next: function (
-    operation: Operation,
-    operations: Operation[],
-    state: FrontendDebuggerState
-  ) {
-    return !state.debug || true;
-  },
-  breakAll: function (
-    operation: Operation,
-    operations: Operation[],
-    state: FrontendDebuggerState
-  ) {
-    const op = operations.find((p) => p.code == "disableAll");
-    if (op) {
-      return op.active;
-    }
-    return false;
-  },
-};
+} from "../slices/fontendDebugger";
+import { useDispatch, useSelector } from "../store";
+import { isEqual } from "../utils/BreakpointUtils";
+import { Breakpoint, FrontendDebuggerState, Operation } from "../utils/Types";
+import OperationButton from "./OperationButton";
 
 interface ContextMenuItem {
   code: string;
@@ -108,6 +55,24 @@ const breakpointToKey = function (breakpoint: Breakpoint) {
   return windowCode
     ? `window_breakpoint_$_${componentCode}_$_${windowCode}_$_${methodCode}_$_${ruleCode}`
     : `component_breakpoint_$_${componentCode}_$_${methodCode}_$_${ruleCode}`;
+};
+
+const updateOperation = function (
+  operation: { code: string; [name: string]: any },
+  operations: Operation[]
+): Operation[] {
+  const result: Operation[] = [];
+  operations.forEach((op) => {
+    if (op.code == operation.code) {
+      result.push({
+        ...op,
+        ...operation,
+      });
+    } else {
+      result.push(op);
+    }
+  });
+  return result;
 };
 
 const filterMenus = function (
@@ -149,11 +114,128 @@ const filterMenus = function (
 function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
   const dispatch = useDispatch();
   const state = useSelector((state) => state.frontendDebugger);
-  const { operations, breakpoints, debug } = state;
+  const { breakAll, disableAll, breakpoints, debug } = state;
   const [contextMenu, setContextMenu] = useState<{
     mousePosition: { mouseX: number; mouseY: number } | null;
     breakpoint?: Breakpoint;
   }>({ mousePosition: null, breakpoint: undefined });
+  const [data, setData] = useState<{
+    operations: Operation[];
+    expand: { monitor: boolean; breakpoint: boolean };
+  }>({
+    operations: [
+      {
+        code: "play",
+        title: "执行到下一个断点(F8)",
+        icon: <FastForwardIcon fontSize="small" />,
+        disabled: function (
+          operation: Operation,
+          operations: Operation[],
+          state: FrontendDebuggerState
+        ) {
+          return !state.debug || true;
+        },
+        click: (state: FrontendDebuggerState, active: boolean) => {
+          const { debugCallbackId } = state;
+          //@ts-ignore
+          if (debugCallbackId && window[debugCallbackId]) {
+            //@ts-ignore
+            const handler = window[debugCallbackId];
+            handler({ operation: "nextBreakpoint" });
+          }
+        },
+        active: false,
+      },
+      {
+        code: "next",
+        title: "执行到下一个规则(F10)",
+        icon: <SkipNextIcon fontSize="small" />,
+        disabled: function (
+          operation: Operation,
+          operations: Operation[],
+          state: FrontendDebuggerState
+        ) {
+          return !state.debug || true;
+        },
+        click: (state: FrontendDebuggerState, active: boolean) => {
+          const { debugCallbackId } = state;
+          //@ts-ignore
+          if (debugCallbackId && window[debugCallbackId]) {
+            //@ts-ignore
+            const handler = window[debugCallbackId];
+            handler({ operation: "nextRule" });
+          }
+        },
+        active: false,
+      },
+      {
+        code: "stepIn",
+        title: "进入当前方法(F11)",
+        icon: <DownloadIcon fontSize="small" />,
+        disabled: true,
+        active: false,
+        click: (state: FrontendDebuggerState, active: boolean) => {
+          const { debugCallbackId } = state;
+          //@ts-ignore
+          if (debugCallbackId && window[debugCallbackId]) {
+            //@ts-ignore
+            const handler = window[debugCallbackId];
+            handler({ operation: "stepIn" });
+          }
+        },
+      },
+      {
+        code: "stepOut",
+        title: "跳出当前方法(Ctrl+F11)",
+        icon: <UploadIcon fontSize="small" />,
+        disabled: true,
+        active: false,
+        click: (state: FrontendDebuggerState, active: boolean) => {
+          const { debugCallbackId } = state;
+          //@ts-ignore
+          if (debugCallbackId && window[debugCallbackId]) {
+            //@ts-ignore
+            const handler = window[debugCallbackId];
+            handler({ operation: "stepOut" });
+          }
+        },
+      },
+      {
+        code: "disableAll",
+        title: "停用所有规则(Ctrl+F8)",
+        icon: <LabelOffIcon fontSize="small" />,
+        disabled: false,
+        active: false,
+        click: (state: FrontendDebuggerState, active: boolean) => {
+          setDisableAll(active);
+        },
+      },
+      {
+        code: "breakAll",
+        title: "中断所有规则",
+        icon: <DoneAllIcon fontSize="small" />,
+        disabled: function (
+          operation: Operation,
+          operations: Operation[],
+          state: FrontendDebuggerState
+        ) {
+          const op = operations.find((p) => p.code == "disableAll");
+          if (op) {
+            return op.active;
+          }
+          return false;
+        },
+        active: false,
+        click: (state: FrontendDebuggerState, active: boolean) => {
+          setBreakAll(active);
+        },
+      },
+    ],
+    expand: {
+      monitor: true,
+      breakpoint: true,
+    },
+  });
   const contextMenuItems = [
     {
       code: "remove",
@@ -216,30 +298,28 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       code: "disableAll",
       title: "禁用所有断点",
       click: () => {
-        const op = operations.find((op) => op.code == "disableAll");
-        if (op) {
-          dispatch(
-            updateOperation({
-              ...op,
-              active: true,
-            })
-          );
-        }
+        dispatch(setDisableAll(true));
+        setData({
+          ...data,
+          operations: updateOperation(
+            { code: "disableAll", active: true },
+            data.operations
+          ),
+        });
       },
     },
     {
       code: "enableAll",
       title: "启用所有断点",
       click: () => {
-        const op = operations.find((op) => op.code == "disableAll");
-        if (op) {
-          dispatch(
-            updateOperation({
-              ...op,
-              active: false,
-            })
-          );
-        }
+        dispatch(setDisableAll(false));
+        setData({
+          ...data,
+          operations: updateOperation(
+            { code: "disableAll", active: false },
+            data.operations
+          ),
+        });
       },
     },
     {
@@ -268,12 +348,6 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       },
     },
   ];
-  const [data, setData] = useState({
-    expand: {
-      monitor: true,
-      breakpoint: true,
-    },
-  });
   const handleContextMenu = (
     event: React.MouseEvent,
     breakpoint: Breakpoint
@@ -290,25 +364,12 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       breakpoint,
     });
   };
-  const handleOperationClick = (operation: string, active: boolean) => {
-    if (operation == "disableAll") {
-      const op = operations.find((o) => o.code == "disableAll");
-      if (op) {
-        dispatch(updateOperation({ ...op, active }));
-      }
-    } else if (operation == "breakAll") {
-      const op = operations.find((o) => o.code == "breakAll");
-      if (op) {
-        dispatch(updateOperation({ ...op, active }));
-      }
-    }
-  };
   const handleContextMenuClose = () => {
     setContextMenu({ mousePosition: null, breakpoint: undefined });
   };
   const menus = filterMenus(
     contextMenuItems,
-    operations,
+    data.operations,
     breakpoints,
     contextMenu.breakpoint
   );
@@ -323,14 +384,11 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       >
         <Card sx={{ flex: 1, ml: 1, display: "flex", flexDirection: "column" }}>
           <StyledBox sx={{ width: "100%" }}>
-            {operations.map((operation) => {
+            {data.operations.map((operation) => {
               let disabled = operation.disabled;
-              if (typeof disabled == "string") {
-                const handler = operationDisableHandlers[disabled];
-                disabled = !!handler(operation, operations, state);
+              if (typeof disabled == "function") {
+                disabled = disabled(operation, data.operations, state);
               }
-              //@ts-ignore
-              const iconDef = operationIcons[operation.icon];
               return (
                 <OperationButton
                   key={operation.code}
@@ -338,13 +396,9 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                   active={operation.active}
                   disabled={disabled}
                   onClick={() => {
-                    handleOperationClick(operation.code, !operation.active);
+                    operation.click(state, !operation.active);
                   }}
-                  icon={
-                    iconDef
-                      ? createElement(iconDef, { fontSize: "small" })
-                      : null
-                  }
+                  icon={operation.icon}
                 />
               );
             })}
@@ -422,11 +476,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                                 >
                                   <Checkbox
                                     size="small"
-                                    disabled={
-                                      operations.find(
-                                        (op) => op.code == "disableAll"
-                                      )?.active
-                                    }
+                                    disabled={disableAll}
                                     checked={breakpoint.enable}
                                     onChange={(evt, checked) => {
                                       dispatch(
