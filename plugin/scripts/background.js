@@ -46,7 +46,7 @@ function notifyDevtools(msg) {
   vact_devtool_ports.forEach(function (port) {
     port.postMessage(msg);
   });
-}*/
+}
 
 chrome.runtime.onConnect.addListener(function (port) {
   if (port.name == "VAct-devtool-page") {
@@ -57,4 +57,4 @@ chrome.runtime.onConnect.addListener(function (port) {
       );
     });
   }
-});
+});*/

@@ -302,6 +302,9 @@ vact_devtools.methods = {
     window.localStorage.setItem("vact_devtools_extensionId", extensionId);
     vact_devtools.storage.ruleDebugger.setExtensionId(extensionId);
   },
+  print: function (params: { msg: string }) {
+    console.log(params.msg);
+  },
 };
 //@ts-ignore
 window.vact_devtools = vact_devtools;

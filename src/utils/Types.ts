@@ -1,5 +1,3 @@
-import { ReactNode } from "react";
-
 interface Breakpoint {
   enable: boolean;
   location: {
@@ -38,16 +36,16 @@ interface FrontendDebuggerState {
   rule?: Rule;
   //当前调试规则
   debug?: Rule;
+  //调试回调id
+  debugCallbackId?: string;
 }
 
 interface Operation {
   code: string;
   title: string;
   icon: string;
-  status: {
-    disabled: string | boolean;
-    active: boolean;
-  };
+  disabled: string | boolean;
+  active: boolean;
 }
 
 interface Method {
@@ -119,6 +117,7 @@ interface Logic {
 
 export {
   type Breakpoint,
+  type FrontendDebuggerState,
   type Logic,
   type Method,
   type MethodInfo,
@@ -129,5 +128,4 @@ export {
   type Rule,
   type RuleConfigTreeNode,
   type RuleInstance,
-  type FrontendDebuggerState,
 };

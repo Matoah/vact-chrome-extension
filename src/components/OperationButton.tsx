@@ -1,7 +1,8 @@
-import IconButton from "@mui/material/IconButton";
-import { styled } from "@mui/material/styles";
-import { ReactNode } from "react";
-import Tooltip from "@mui/material/Tooltip";
+import { ReactNode } from 'react';
+
+import IconButton from '@mui/material/IconButton';
+import { styled } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
 
 const StyledButton = styled(IconButton)(({ theme }) => ({
   color: theme.palette.primary.main,

@@ -1,14 +1,26 @@
-import { Fragment, useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import { useDispatch, useSelector } from "../store";
-import { getFrontendMethod } from "../utils/RPCUtils";
+import {
+  addBreakpoint,
+  removeBreakpoint,
+  setRule,
+} from '../slices/fontendDebugger';
+import {
+  useDispatch,
+  useSelector,
+} from '../store';
+import { getFrontendMethod } from '../utils/RPCUtils';
 import {
   getAllNodeIds,
   getBreakpointByNodeId,
@@ -16,35 +28,13 @@ import {
   ruleInstanceToId,
   toTree,
   TreeNode,
-} from "../utils/RuleConfigTreeUtils";
-import { Breakpoint, Operations } from "../utils/Types";
-import CustomTreeView from "./CustomTreeView";
-import DebugIcon from "./DebugIcon";
-import MinusSquare from "./MinusSquare";
-import PlusSquare from "./PlusSquare";
-import {
-  addBreakpoint,
-  removeBreakpoint,
-  setRule,
-} from "../slices/fontendDebugger";
+} from '../utils/RuleConfigTreeUtils';
+import CustomTreeView from './CustomTreeView';
+import DebugIcon from './DebugIcon';
+import MinusSquare from './MinusSquare';
+import PlusSquare from './PlusSquare';
 
-interface FrontendMethodConfigTreeValue {
-  componentCode: string;
-  windowCode?: string;
-  methodCode: string;
-  ruleCode: string;
-}
-
-interface FrontendMethodConfigTreeProps {
-  operations: Operations;
-  onBreakpointChanged?: (debuged: boolean, breakpoint: Breakpoint) => void;
-  onSelectRuleChanged?: (node: {
-    componentCode: string;
-    methodCode: string;
-    ruleCode: string;
-    windowCode?: string;
-  }) => void;
-}
+interface FrontendMethodConfigTreeProps {}
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
   const dispatch = useDispatch();
@@ -115,9 +105,10 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
             defaultExpandIcon={<PlusSquare />}
             defaultEndIcon={<div style={{ width: 24 }} />}
             labelTemplate={(pros, node) => {
-              const nodeId = node.nodeId;
-              let disabled = operations.find((op) => op.code == "disableAll")
-                ?.status.active;
+              const nodeId = node.id;
+              let disabled = operations.find(
+                (op) => op.code == "disableAll"
+              )?.active;
               if (!disabled) {
                 const breakpoint = getBreakpointByNodeId(nodeId, breakpoints);
                 disabled = breakpoint ? !breakpoint.enable : false;
@@ -174,19 +165,23 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
             onNodeSelect={(evt: any, nodeId: any) => {
               const list = nodeId.split("_$_");
               if (list.length == 5) {
-                setRule({
-                  method: {
-                    componentCode: list[1],
-                    windowCode: list[2],
-                    methodCode: list[3],
-                  },
-                  code: list[4],
-                });
+                dispatch(
+                  setRule({
+                    method: {
+                      componentCode: list[1],
+                      windowCode: list[2],
+                      methodCode: list[3],
+                    },
+                    code: list[4],
+                  })
+                );
               } else if (list.length == 4) {
-                setRule({
-                  method: { componentCode: list[1], methodCode: list[2] },
-                  code: list[3],
-                });
+                dispatch(
+                  setRule({
+                    method: { componentCode: list[1], methodCode: list[2] },
+                    code: list[3],
+                  })
+                );
               }
             }}
           ></CustomTreeView>

@@ -339,3 +339,16 @@ export function isIgnoreBreakpoints() {
     }
   });
 }
+
+export function printToWebPageConsole(msg: string) {
+  return new Promise<boolean>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("print", { msg });
+      promise.then(resolve).catch(reject);
+    } else {
+      console.log(msg);
+    }
+  });
+}

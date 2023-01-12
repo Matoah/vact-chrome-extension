@@ -141,7 +141,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
       if (!windowNode) {
         windowNode = {
           id: toWindowId({ componentCode, windowCode }),
-          label: windowName || "",
+          label: windowName || windowCode,
           type: "window",
         };
         componentWindows.push(windowNode);
@@ -149,7 +149,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
       const windowMethods = windowNode.children || [];
       windowMethods.push({
         id: toWindowMethodId({ componentCode, windowCode, methodCode }),
-        label: methodName,
+        label: methodName || methodCode,
         type: "method",
       });
       windowNode.children = windowMethods;
@@ -172,7 +172,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
       const componentMethods = componentMethodNode.children || [];
       componentMethods.push({
         id: toComponentMethodId(data),
-        label: methodName,
+        label: methodName || methodCode,
         type: "method",
       });
       componentMethodNode.children = componentMethods;
