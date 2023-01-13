@@ -38,7 +38,7 @@ interface FrontendMethodConfigTreeProps {}
 
 function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
   const dispatch = useDispatch();
-  const { method, rule, breakpoints, operations } = useSelector(
+  const { method, rule, breakpoints, disableAll } = useSelector(
     (state) => state.frontendDebugger
   );
 
@@ -106,9 +106,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
             defaultEndIcon={<div style={{ width: 24 }} />}
             labelTemplate={(pros, node) => {
               const nodeId = node.id;
-              let disabled = operations.find(
-                (op) => op.code == "disableAll"
-              )?.active;
+              let disabled = disableAll;
               if (!disabled) {
                 const breakpoint = getBreakpointByNodeId(nodeId, breakpoints);
                 disabled = breakpoint ? !breakpoint.enable : false;

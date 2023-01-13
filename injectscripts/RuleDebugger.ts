@@ -10,6 +10,7 @@ class RuleDebugger {
   port;
   modal;
   nextRule = false;
+  ruleContext;
   setExtensionId(extensionId: string | null) {
     if (extensionId) {
       this.extensionId = extensionId;
@@ -115,10 +116,12 @@ class RuleDebugger {
             this._isDebugger(ruleContext)
           ) {
             return new Promise((resolve, reject) => {
+              this.ruleContext = ruleContext;
               this._showModal();
               this.sendMessage(this._getRuleDefineFromRuleContext(ruleContext))
                 .then((res: null | { operation: string }) => {
                   this._hideModal();
+                  this.ruleContext = null;
                   if (res) {
                     if (res.operation == "nextRule") {
                       this.nextRule = true;
@@ -130,6 +133,7 @@ class RuleDebugger {
                   resolve(res);
                 })
                 .catch((e) => {
+                  this.ruleContext = null;
                   this._hideModal();
                   reject(e);
                 });
@@ -171,6 +175,9 @@ class RuleDebugger {
       }
     }
     return false;
+  }
+  getRuleContext() {
+    return this.ruleContext;
   }
   sendMessage(params) {
     return new Promise<null | { operation: string }>((resolve, reject) => {

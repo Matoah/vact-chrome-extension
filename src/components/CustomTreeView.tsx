@@ -15,6 +15,15 @@ import {
 
 import TransitionComponent from './TransitionComponent';
 
+const isInViewPort = function (element: any) {
+  const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+  const viewHeight =
+    window.innerHeight || document.documentElement.clientHeight;
+  const { top, right, bottom, left } = element.getBoundingClientRect();
+
+  return top >= 0 && left >= 0 && right <= viewWidth && bottom <= viewHeight;
+};
+
 const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
   color: theme.palette.text.secondary,
   [`& .${treeItemClasses.content}`]: {
@@ -92,9 +101,10 @@ function CustomTreeView(pros: CustomTreeViewProps) {
   );
   useEffect(() => {
     if (selected && selected.length > 0) {
-      document
-        .getElementById(selected[0])
-        ?.scrollIntoView({ behavior: "smooth" });
+      const dom = document.getElementById(selected[0]);
+      if (dom && !isInViewPort(dom)) {
+        dom.scrollIntoView({ behavior: "smooth" });
+      }
     }
   }, [selected]);
   return (

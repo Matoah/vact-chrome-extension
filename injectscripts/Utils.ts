@@ -152,6 +152,12 @@ export function getEventManager(sandbox) {
   ).EventManager;
 }
 
+export function getWindowParam(sandbox) {
+  return sandbox.getService(
+    "v_act_vjs_framework_extension_platform_data_storage_runtime_param"
+  ).WindowParam;
+}
+
 export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
   for (let index = 0; index < breakpoints.length; index++) {
     const bp = breakpoints[index];
@@ -169,3 +175,11 @@ export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
   }
   return -1;
 }
+export const isEmptyObject = function (obj: {}) {
+  let res = true;
+  for (let attr in obj) {
+    res = false;
+    break;
+  }
+  return res;
+};

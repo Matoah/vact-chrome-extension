@@ -5,9 +5,11 @@ import {
   getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
   getMonitorMockDatas,
+  getRulesetDebugInfo as getMockRulesetDebugInfo,
   getVjsContent as getMockVjsContent,
   getVjsUrl as getMockVjsUrl,
   getVjsUrlList,
+  getWindowDebugInfo as getMockWindowDebugInfo,
   isBreakAllRule as isMockBreakAllRule,
   isIgnoreBreakpoints as isMockIgnoreBreakpoints,
   markBreakAllRule as markMockBreakAllRule,
@@ -349,6 +351,38 @@ export function printToWebPageConsole(msg: string) {
       promise.then(resolve).catch(reject);
     } else {
       console.log(msg);
+    }
+  });
+}
+
+export function getRulesetDebugInfo() {
+  return new Promise<{}>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "getRulesetDebugInfo",
+        {}
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockRulesetDebugInfo());
+    }
+  });
+}
+
+export function getWindowDebugInfo() {
+  return new Promise<{}>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "getWindowDebugInfo",
+        {}
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockWindowDebugInfo());
     }
   });
 }

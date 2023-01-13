@@ -1,40 +1,52 @@
-import { createElement, Fragment, useState } from "react";
+import {
+  Fragment,
+  useState,
+} from 'react';
 
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import DownloadIcon from "@mui/icons-material/Download";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FastForwardIcon from "@mui/icons-material/FastForward";
-import LabelOffIcon from "@mui/icons-material/LabelOff";
-import SkipNextIcon from "@mui/icons-material/SkipNext";
-import UploadIcon from "@mui/icons-material/Upload";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Checkbox from "@mui/material/Checkbox";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import { styled } from "@mui/material/styles";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FastForwardIcon from '@mui/icons-material/FastForward';
+import LabelOffIcon from '@mui/icons-material/LabelOff';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import UploadIcon from '@mui/icons-material/Upload';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Checkbox from '@mui/material/Checkbox';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { styled } from '@mui/material/styles';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 
 import {
   removeBreakpoint,
   setBreakAll,
+  setDebugInfo,
   setDisableAll,
   setMethod,
   setRule,
   updateBreakpoint,
-} from "../slices/fontendDebugger";
-import { useDispatch, useSelector } from "../store";
-import { isEqual } from "../utils/BreakpointUtils";
-import { Breakpoint, FrontendDebuggerState, Operation } from "../utils/Types";
-import OperationButton from "./OperationButton";
+} from '../slices/fontendDebugger';
+import {
+  useDispatch,
+  useSelector,
+} from '../store';
+import { isEqual } from '../utils/BreakpointUtils';
+import {
+  Breakpoint,
+  FrontendDebuggerState,
+  Operation,
+} from '../utils/Types';
+import DebugDataTree from './DebugDataTree';
+import OperationButton from './OperationButton';
 
 interface ContextMenuItem {
   code: string;
@@ -77,7 +89,7 @@ const updateOperation = function (
 
 const filterMenus = function (
   menus: ContextMenuItem[],
-  operations: Operation[],
+  state: FrontendDebuggerState,
   breakpoints: Breakpoint[],
   breakpoint?: Breakpoint
 ) {
@@ -88,8 +100,7 @@ const filterMenus = function (
     } else {
       codes.push("enable");
     }
-    const op = operations.find((op) => op.code == "disableAll");
-    if (op?.active) {
+    if (state.disableAll) {
       codes.push("enableAll");
     } else {
       codes.push("disableAll");
@@ -120,122 +131,116 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
     breakpoint?: Breakpoint;
   }>({ mousePosition: null, breakpoint: undefined });
   const [data, setData] = useState<{
-    operations: Operation[];
+    operationStatus: { [code: string]: boolean };
     expand: { monitor: boolean; breakpoint: boolean };
   }>({
-    operations: [
-      {
-        code: "play",
-        title: "执行到下一个断点(F8)",
-        icon: <FastForwardIcon fontSize="small" />,
-        disabled: function (
-          operation: Operation,
-          operations: Operation[],
-          state: FrontendDebuggerState
-        ) {
-          return !state.debug || true;
-        },
-        click: (state: FrontendDebuggerState, active: boolean) => {
-          const { debugCallbackId } = state;
-          //@ts-ignore
-          if (debugCallbackId && window[debugCallbackId]) {
-            //@ts-ignore
-            const handler = window[debugCallbackId];
-            handler({ operation: "nextBreakpoint" });
-          }
-        },
-        active: false,
-      },
-      {
-        code: "next",
-        title: "执行到下一个规则(F10)",
-        icon: <SkipNextIcon fontSize="small" />,
-        disabled: function (
-          operation: Operation,
-          operations: Operation[],
-          state: FrontendDebuggerState
-        ) {
-          return !state.debug || true;
-        },
-        click: (state: FrontendDebuggerState, active: boolean) => {
-          const { debugCallbackId } = state;
-          //@ts-ignore
-          if (debugCallbackId && window[debugCallbackId]) {
-            //@ts-ignore
-            const handler = window[debugCallbackId];
-            handler({ operation: "nextRule" });
-          }
-        },
-        active: false,
-      },
-      {
-        code: "stepIn",
-        title: "进入当前方法(F11)",
-        icon: <DownloadIcon fontSize="small" />,
-        disabled: true,
-        active: false,
-        click: (state: FrontendDebuggerState, active: boolean) => {
-          const { debugCallbackId } = state;
-          //@ts-ignore
-          if (debugCallbackId && window[debugCallbackId]) {
-            //@ts-ignore
-            const handler = window[debugCallbackId];
-            handler({ operation: "stepIn" });
-          }
-        },
-      },
-      {
-        code: "stepOut",
-        title: "跳出当前方法(Ctrl+F11)",
-        icon: <UploadIcon fontSize="small" />,
-        disabled: true,
-        active: false,
-        click: (state: FrontendDebuggerState, active: boolean) => {
-          const { debugCallbackId } = state;
-          //@ts-ignore
-          if (debugCallbackId && window[debugCallbackId]) {
-            //@ts-ignore
-            const handler = window[debugCallbackId];
-            handler({ operation: "stepOut" });
-          }
-        },
-      },
-      {
-        code: "disableAll",
-        title: "停用所有规则(Ctrl+F8)",
-        icon: <LabelOffIcon fontSize="small" />,
-        disabled: false,
-        active: false,
-        click: (state: FrontendDebuggerState, active: boolean) => {
-          setDisableAll(active);
-        },
-      },
-      {
-        code: "breakAll",
-        title: "中断所有规则",
-        icon: <DoneAllIcon fontSize="small" />,
-        disabled: function (
-          operation: Operation,
-          operations: Operation[],
-          state: FrontendDebuggerState
-        ) {
-          const op = operations.find((p) => p.code == "disableAll");
-          if (op) {
-            return op.active;
-          }
-          return false;
-        },
-        active: false,
-        click: (state: FrontendDebuggerState, active: boolean) => {
-          setBreakAll(active);
-        },
-      },
-    ],
+    operationStatus: {
+      play: false,
+      next: false,
+      stepIn: false,
+      stepOut: false,
+    },
     expand: {
       monitor: true,
       breakpoint: true,
     },
   });
+  const operations: Operation[] = [
+    {
+      code: "play",
+      title: "执行到下一个断点(F8)",
+      icon: <FastForwardIcon fontSize="small" />,
+      disabled: function (state: FrontendDebuggerState) {
+        if (state.debug) {
+          return false;
+        }
+        return true;
+      },
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        const { debugCallbackId } = state;
+        //@ts-ignore
+        if (debugCallbackId && window[debugCallbackId]) {
+          //@ts-ignore
+          const handler = window[debugCallbackId];
+          dispatch(setDebugInfo());
+          handler({ operation: "nextBreakpoint" });
+        }
+      },
+    },
+    {
+      code: "next",
+      title: "执行到下一个规则(F10)",
+      icon: <SkipNextIcon fontSize="small" />,
+      disabled: function (state: FrontendDebuggerState) {
+        if (state.debug) {
+          return false;
+        }
+        return true;
+      },
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        const { debugCallbackId } = state;
+        //@ts-ignore
+        if (debugCallbackId && window[debugCallbackId]) {
+          //@ts-ignore
+          const handler = window[debugCallbackId];
+          dispatch(setDebugInfo());
+          handler({ operation: "nextRule" });
+        }
+      },
+    },
+    {
+      code: "stepIn",
+      title: "进入当前方法(F11)",
+      icon: <DownloadIcon fontSize="small" />,
+      disabled: true,
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        const { debugCallbackId } = state;
+        //@ts-ignore
+        if (debugCallbackId && window[debugCallbackId]) {
+          //@ts-ignore
+          const handler = window[debugCallbackId];
+          dispatch(setDebugInfo());
+          handler({ operation: "stepIn" });
+        }
+      },
+    },
+    {
+      code: "stepOut",
+      title: "跳出当前方法(Ctrl+F11)",
+      icon: <UploadIcon fontSize="small" />,
+      disabled: true,
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        const { debugCallbackId } = state;
+        //@ts-ignore
+        if (debugCallbackId && window[debugCallbackId]) {
+          //@ts-ignore
+          const handler = window[debugCallbackId];
+          dispatch(setDebugInfo());
+          handler({ operation: "stepOut" });
+        }
+      },
+    },
+    {
+      code: "disableAll",
+      title: "停用所有规则(Ctrl+F8)",
+      icon: <LabelOffIcon fontSize="small" />,
+      disabled: false,
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        dispatch(setDisableAll(active));
+      },
+    },
+    {
+      code: "breakAll",
+      title: "中断所有规则",
+      icon: <DoneAllIcon fontSize="small" />,
+      disabled: function (state: FrontendDebuggerState) {
+        return state.disableAll;
+      },
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        dispatch(setBreakAll(active));
+      },
+    },
+  ];
   const contextMenuItems = [
     {
       code: "remove",
@@ -299,13 +304,6 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       title: "禁用所有断点",
       click: () => {
         dispatch(setDisableAll(true));
-        setData({
-          ...data,
-          operations: updateOperation(
-            { code: "disableAll", active: true },
-            data.operations
-          ),
-        });
       },
     },
     {
@@ -313,13 +311,6 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       title: "启用所有断点",
       click: () => {
         dispatch(setDisableAll(false));
-        setData({
-          ...data,
-          operations: updateOperation(
-            { code: "disableAll", active: false },
-            data.operations
-          ),
-        });
       },
     },
     {
@@ -369,7 +360,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
   };
   const menus = filterMenus(
     contextMenuItems,
-    data.operations,
+    state,
     breakpoints,
     contextMenu.breakpoint
   );
@@ -384,19 +375,26 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       >
         <Card sx={{ flex: 1, ml: 1, display: "flex", flexDirection: "column" }}>
           <StyledBox sx={{ width: "100%" }}>
-            {data.operations.map((operation) => {
+            {operations.map((operation) => {
+              const code = operation.code;
               let disabled = operation.disabled;
               if (typeof disabled == "function") {
-                disabled = disabled(operation, data.operations, state);
+                disabled = disabled(state);
               }
+              let active =
+                "disableAll" == code
+                  ? disableAll
+                  : code == "breakAll"
+                  ? breakAll
+                  : data.operationStatus[code];
               return (
                 <OperationButton
-                  key={operation.code}
+                  key={code}
                   title={operation.title}
-                  active={operation.active}
+                  active={active}
                   disabled={disabled}
                   onClick={() => {
-                    operation.click(state, !operation.active);
+                    operation.click(state, !active);
                   }}
                   icon={operation.icon}
                 />
@@ -423,10 +421,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                 <Typography variant="body2">监视</Typography>
               </AccordionSummary>
               <AccordionDetails sx={{ padding: "0px" }}>
-                <Typography>
-                  Nulla facilisi. Phasellus sollicitudin nulla et quam mattis
-                  feugiat. Aliquam eget maximus est, id dignissim quam.
-                </Typography>
+                <DebugDataTree />
               </AccordionDetails>
             </Accordion>
             <Accordion

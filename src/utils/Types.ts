@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
 interface Breakpoint {
   enable: boolean;
@@ -50,15 +50,8 @@ interface Operation {
   code: string;
   title: string;
   icon: ReactNode;
-  disabled:
-    | ((
-        operation: Operation,
-        operations: Operation[],
-        state: FrontendDebuggerState
-      ) => boolean)
-    | boolean;
+  disabled: ((state: FrontendDebuggerState) => boolean) | boolean;
   click: (state: FrontendDebuggerState, active: boolean) => void;
-  active: boolean;
 }
 
 interface Method {

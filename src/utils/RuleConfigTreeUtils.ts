@@ -53,6 +53,17 @@ const dispatcher = {
       throw Error("未识别节点！节点名称：" + name);
     }
   },
+  Root: function (
+    element: Element,
+    map: { [ruleCode: string]: RuleInstance },
+    currentMethod: {
+      componentCode: string;
+      methodCode: string;
+      windowCode?: string;
+    }
+  ) {
+    return null;
+  },
   if: function (
     element: Element,
     map: { [ruleCode: string]: RuleInstance },
@@ -84,7 +95,10 @@ const dispatcher = {
       } else if (name == "sequence") {
         const elements = ele.elements;
         elements?.forEach((ele) => {
-          children.push(dispatcher.dispatch(ele, map, currentMethod));
+          const node = dispatcher.dispatch(ele, map, currentMethod);
+          if (node) {
+            children.push(node);
+          }
         });
       }
     });
@@ -112,7 +126,10 @@ const dispatcher = {
       if (name == "sequence") {
         const elements = ele.elements;
         elements?.forEach((ele) => {
-          children.push(dispatcher.dispatch(ele, map, currentMethod));
+          const node = dispatcher.dispatch(ele, map, currentMethod);
+          if (node) {
+            children.push(node);
+          }
         });
       }
     });
@@ -182,7 +199,10 @@ const dispatcher = {
       } else if (name == "sequence") {
         const elements = ele.elements;
         elements?.forEach((ele) => {
-          children.push(dispatcher.dispatch(ele, map, currentMethod));
+          const node = dispatcher.dispatch(ele, map, currentMethod);
+          if (node) {
+            children.push(node);
+          }
         });
       }
     });
@@ -255,7 +275,10 @@ export function toTree(
       });
       const elements = json.elements[0].elements;
       elements?.forEach((ele: Element) => {
-        tree.push(dispatcher.dispatch(ele, map, currentMethod));
+        const node = dispatcher.dispatch(ele, map, currentMethod);
+        if (node) {
+          tree.push(node);
+        }
       });
     }
   }

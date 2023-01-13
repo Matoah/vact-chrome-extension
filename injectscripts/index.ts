@@ -5,7 +5,12 @@ import {
 import { register } from './EventObserver';
 import RuleDebugger from './RuleDebugger';
 import { Breakpoint } from './Types';
-import { indexOf } from './Utils';
+import {
+  getScopeManager,
+  getWindowParam,
+  indexOf,
+  isEmptyObject,
+} from './Utils';
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
@@ -304,6 +309,89 @@ vact_devtools.methods = {
   },
   print: function (params: { msg: string }) {
     console.log(params.msg);
+  },
+  //获取构件实例列表
+  getComponentInstances: function () {
+    const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
+  },
+  //获取方法调试信息
+  getRulesetDebugInfo: function () {
+    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+    const result = {};
+    if (ruleContext) {
+      const routeContext = ruleContext.getRouteContext();
+      const toJson = (obj: {}, methodName: string) => {
+        const inputObj = {};
+        for (let code in obj) {
+          const type = routeContext[methodName](code);
+          let val = obj[code];
+          if (type == "entity") {
+            val = val._get ? val._get() : val;
+            const json = val.serialize();
+            inputObj[code] = json.data.values;
+          } else {
+            inputObj[code] = val;
+          }
+        }
+        return inputObj;
+      };
+      const inputs = routeContext.getInputParams();
+      if (inputs && !isEmptyObject(inputs)) {
+        result["输入"] = toJson(inputs, "getInputParamType");
+      }
+      const variants = routeContext.getVariables();
+      if (variants && !isEmptyObject(variants)) {
+        result["变量"] = toJson(variants, "getVariableType");
+      }
+      const outputs = routeContext.getOutPutParams();
+      if (outputs && !isEmptyObject(outputs)) {
+        result["输出"] = toJson(variants, "getOutPutParamType");
+      }
+    }
+    return result;
+  },
+  getWindowDebugInfo: function () {
+    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+    const result = {};
+    if (ruleContext) {
+      const routeContext = ruleContext.getRouteContext();
+      const scopeId = routeContext.getScopeId();
+      const windowParam = getWindowParam(vact_devtools.storage.sandbox);
+      const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
+      const toJson = (obj: {}) => {
+        const inputObj = {};
+        for (let code in obj) {
+          let val = obj[code];
+          if (val) {
+            if (typeof val._get == "function") {
+              val = val._get();
+            }
+            if (typeof val.serialize == "function") {
+              val = val.serialize();
+              val = val.data.values;
+            }
+          }
+          inputObj[code] = val;
+        }
+        return inputObj;
+      };
+      try {
+        scopeManager.openScope(scopeId);
+        const inputs = windowParam.getInputs();
+        if (inputs && !isEmptyObject(inputs)) {
+          result["输入"] = toJson(inputs);
+        }
+        const outputs = windowParam.getOutputs();
+        if (outputs && !isEmptyObject(outputs)) {
+          result["输出"] = toJson(outputs);
+        }
+        const windowScope = scopeManager.getScope(scopeId);
+        result["控件"] = windowScope.get("windowWidgetMetadata");
+      } finally {
+        scopeManager.closeScope();
+      }
+    }
+    return result;
   },
 };
 //@ts-ignore

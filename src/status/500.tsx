@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -20,6 +22,7 @@ const MainContent = styled(Box)(
 );
 
 function Status500() {
+  const nav = useNavigate();
   return (
     <>
       <MainContent>
@@ -61,10 +64,12 @@ function Status500() {
                   系统内部出现未知异常，
                 </Typography>
                 <Button
-                  href="/"
                   variant="contained"
                   sx={{
                     ml: 1,
+                  }}
+                  onClick={() => {
+                    nav("/");
                   }}
                 >
                   返回主页
