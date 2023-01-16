@@ -86,9 +86,10 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
           display: "flex",
           width: "100%",
           height: "100%",
+          pl: 1,
         }}
       >
-        <Card sx={{ flex: 1, ml: 1, overflow: "auto" }}>
+        <Card sx={{ flex: 1, overflow: "auto" }}>
           <CustomTreeView
             tree={data.tree}
             expanded={data.expanded}

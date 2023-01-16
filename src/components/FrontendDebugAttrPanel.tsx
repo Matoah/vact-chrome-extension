@@ -371,9 +371,10 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           display: "flex",
           width: "100%",
           height: "100%",
+          pl: 1,
         }}
       >
-        <Card sx={{ flex: 1, ml: 1, display: "flex", flexDirection: "column" }}>
+        <Card sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <StyledBox sx={{ width: "100%" }}>
             {operations.map((operation) => {
               const code = operation.code;

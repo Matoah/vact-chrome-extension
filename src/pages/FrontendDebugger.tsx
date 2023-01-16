@@ -11,6 +11,7 @@ import FrontendDebugAttrPanel from '../components/FrontendDebugAttrPanel';
 import FrontendMethodConfigTree from '../components/FrontendMethodConfigTree';
 import FrontendMethodTree from '../components/FrontendMethodTree';
 import Navigator from '../components/Navigator';
+import { SplitPane } from '../components/splitpanel';
 import {
   initState,
   setDebugInfo,
@@ -46,16 +47,43 @@ function FrontendDebugger() {
   }, [dispatch]);
   return (
     <Fragment>
-      <Box sx={{ display: "flex", height: "100%", width: "100%" }}>
-        <Box sx={{ width: "300px", height: "100%" }}>
-          <FrontendMethodTree></FrontendMethodTree>
-        </Box>
-        <Box sx={{ flexGrow: 1, height: "100%" }}>
-          <FrontendMethodConfigTree></FrontendMethodConfigTree>
-        </Box>
-        <Box sx={{ width: "300px", height: "100%" }}>
-          <FrontendDebugAttrPanel />
-        </Box>
+      <Box
+        sx={{
+          display: "flex",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        <SplitPane
+          split="vertical"
+          initialSizes={[1, 3, 1]}
+          resizerOptions={{
+            css: {
+              width: "1px",
+              background: "rgba(0, 0, 0, 0.1)",
+            },
+            hoverCss: {
+              width: "3px",
+              background: "1px solid rgba(102, 194, 255, 0.5)",
+            },
+            grabberSize: "1rem",
+          }}
+          collapse={true}
+        >
+          <Box
+            sx={{
+              height: "100%",
+            }}
+          >
+            <FrontendMethodTree></FrontendMethodTree>
+          </Box>
+          <Box sx={{ flexGrow: 1, height: "100%" }}>
+            <FrontendMethodConfigTree></FrontendMethodConfigTree>
+          </Box>
+          <Box sx={{ height: "100%" }}>
+            <FrontendDebugAttrPanel />
+          </Box>
+        </SplitPane>
       </Box>
       <Navigator />
     </Fragment>

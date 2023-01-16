@@ -6,6 +6,7 @@ import { register } from './EventObserver';
 import RuleDebugger from './RuleDebugger';
 import { Breakpoint } from './Types';
 import {
+  getDatasourceManager,
   getScopeManager,
   getWindowParam,
   indexOf,
@@ -358,20 +359,25 @@ vact_devtools.methods = {
       const scopeId = routeContext.getScopeId();
       const windowParam = getWindowParam(vact_devtools.storage.sandbox);
       const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
+      const datasourceManager = getDatasourceManager(
+        vact_devtools.storage.sandbox
+      );
+      const toVal = (val: any) => {
+        if (val) {
+          if (typeof val._get == "function") {
+            val = val._get();
+          }
+          if (typeof val.serialize == "function") {
+            val = val.serialize();
+            val = val.datas.values;
+          }
+        }
+        return val;
+      };
       const toJson = (obj: {}) => {
         const inputObj = {};
         for (let code in obj) {
-          let val = obj[code];
-          if (val) {
-            if (typeof val._get == "function") {
-              val = val._get();
-            }
-            if (typeof val.serialize == "function") {
-              val = val.serialize();
-              val = val.data.values;
-            }
-          }
-          inputObj[code] = val;
+          inputObj[code] = toVal(obj[code]);
         }
         return inputObj;
       };
@@ -387,6 +393,20 @@ vact_devtools.methods = {
         }
         const windowScope = scopeManager.getScope(scopeId);
         result["控件"] = windowScope.get("windowWidgetMetadata");
+        const datasources = datasourceManager.getAll();
+        if (datasources && datasources.length > 0) {
+          const dsMap = {};
+          for (let i = 0; i < datasources.length; i++) {
+            const ds = datasources[i];
+            const metadata = ds.getMetadata();
+            dsMap[
+              metadata.getDatasourceName
+                ? metadata.getDatasourceName()
+                : metadata.getCode()
+            ] = toVal(ds);
+          }
+          result["实体"] = dsMap;
+        }
       } finally {
         scopeManager.closeScope();
       }

@@ -158,6 +158,12 @@ export function getWindowParam(sandbox) {
   ).WindowParam;
 }
 
+export function getDatasourceManager(sandbox) {
+  return sandbox.getService(
+    "v_act_vjs_framework_extension_platform_data_manager_runtime_datasource"
+  ).WindowDatasource;
+}
+
 export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
   for (let index = 0; index < breakpoints.length; index++) {
     const bp = breakpoints[index];
