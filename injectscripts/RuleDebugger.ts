@@ -2,6 +2,7 @@ import {
   getEventManager,
   getScopeManager,
   indexOf,
+  isDevtoolOpened,
 } from './Utils';
 
 class RuleDebugger {
@@ -148,7 +149,7 @@ class RuleDebugger {
   _isDebugger(ruleContext) {
     //@ts-ignore
     const methods = window.vact_devtools.methods;
-    if (this.extensionId) {
+    if (this.extensionId && isDevtoolOpened()) {
       if (this.nextRule) {
         return true;
       } else if (methods.isIgnoreBreakpoints()) {

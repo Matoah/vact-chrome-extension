@@ -189,3 +189,41 @@ export const isEmptyObject = function (obj: {}) {
   }
   return res;
 };
+
+const devtools = {
+  isOpen: false,
+  orientation: undefined,
+};
+
+const threshold = 170;
+
+const emitEvent = (isOpen, orientation) => {
+  globalThis.dispatchEvent(
+    new globalThis.CustomEvent("devtoolschange", {
+      detail: {
+        isOpen,
+        orientation,
+      },
+    })
+  );
+};
+
+export const isDevtoolOpened = function () {
+  const widthThreshold =
+    globalThis.outerWidth - globalThis.innerWidth > threshold;
+  const heightThreshold =
+    globalThis.outerHeight - globalThis.innerHeight > threshold;
+
+  if (
+    !(heightThreshold && widthThreshold) &&
+    ((globalThis.Firebug &&
+      globalThis.Firebug.chrome &&
+      globalThis.Firebug.chrome.isInitialized) ||
+      widthThreshold ||
+      heightThreshold)
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+};
