@@ -1638,3 +1638,18 @@ export function getWindowDebugInfo() {
     控件: { propertys: { code: "code1" } },
   };
 }
+
+export function getRuleDebugInfo() {
+  return {
+    filter: null,
+    invokeTarget: {
+      sourceType: "client-ruleSet",
+      invokeType: "local",
+      componentCode: "vbase_prd_mgr",
+      windowCode: "PrdSelectedPortalWinMgr",
+      ruleSetCode: "JGToolbarMenu1_OnClick",
+    },
+    invokeParams: null,
+    returnMapping: null,
+  };
+}

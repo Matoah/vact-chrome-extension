@@ -5,6 +5,7 @@ import {
   getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
   getMonitorMockDatas,
+  getRuleDebugInfo as getMockRuleDebugInfo,
   getRulesetDebugInfo as getMockRulesetDebugInfo,
   getVjsContent as getMockVjsContent,
   getVjsUrl as getMockVjsUrl,
@@ -383,6 +384,19 @@ export function getWindowDebugInfo() {
       promise.then(resolve).catch(reject);
     } else {
       resolve(getMockWindowDebugInfo());
+    }
+  });
+}
+
+export function getRuleDebugInfo() {
+  return new Promise<{}>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getRuleDebugInfo", {});
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockRuleDebugInfo());
     }
   });
 }

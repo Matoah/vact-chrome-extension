@@ -14,6 +14,7 @@ import {
   isObject,
 } from '../utils/ObjectUtils';
 import {
+  getRuleDebugInfo,
   getRulesetDebugInfo,
   getWindowDebugInfo,
 } from '../utils/RPCUtils';
@@ -93,6 +94,24 @@ const objectToTree = function (
   return tree;
 };
 
+const getRuleTree = async function (debug: Rule, expanded: string[]) {
+  const id = "debug_$_data_$_rule";
+  let children = undefined;
+  if (expanded.indexOf(id) != -1) {
+    const ruleDebug = await getRuleDebugInfo();
+    children = objectToTree(id, ruleDebug);
+  }
+  return [
+    {
+      id,
+      label: "规则",
+      type: "ruleset",
+      isFolder: true,
+      children,
+    },
+  ];
+};
+
 const getRuleSetTree = async function (debug: Rule, expanded: string[]) {
   const id = "debug_$_data_$_ruleset";
   let children = undefined;
@@ -153,7 +172,9 @@ const toTree = async function (expanded: string[], debug?: Rule) {
   if (debug) {
     const method = debug.method;
     const windowCode = method.windowCode;
-    let tree: TreeNode[] = await getRuleSetTree(debug, expanded);
+    let tree: TreeNode[] = await getRuleTree(debug, expanded);
+    const rulesetTree = await getRuleSetTree(debug, expanded);
+    tree = tree.concat(rulesetTree);
     if (windowCode) {
       const windowTree = await getWindowTree(debug, expanded);
       tree = tree.concat(windowTree);

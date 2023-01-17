@@ -1,12 +1,12 @@
-import { Fragment } from "react";
+import { Fragment } from 'react';
 
-import InsertChartIcon from "@mui/icons-material/InsertChart";
-import LanIcon from "@mui/icons-material/Lan";
-import PieChartIcon from "@mui/icons-material/PieChart";
-import Grid from "@mui/material/Grid";
+import InsertChartIcon from '@mui/icons-material/InsertChart';
+import LanIcon from '@mui/icons-material/Lan';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import Grid from '@mui/material/Grid';
 
-import FunctionCard from "../components/FunctionCard";
-import Navigator from "../components/Navigator";
+import FunctionCard from '../components/FunctionCard';
+import Navigator from '../components/Navigator';
 
 interface Data {
   title: string;
@@ -21,19 +21,19 @@ function getDatas(): Data[] {
     {
       title: "VJS大小分析",
       avatarIcon: <PieChartIcon sx={{ width: "68px", height: "68px" }} />,
-      desc: "分析前端性能，包括js脚本大小分析，方法执行耗时，js加载耗时...",
+      desc: "搜集前端vjs请求，分析vjs请求结果，以图形化展示返回结果中vjs脚本大小",
       to: "/vjsSizeUrlList",
     },
     {
       title: "VJS依赖分析",
       avatarIcon: <LanIcon sx={{ width: "68px", height: "68px" }} />,
-      desc: "根据vjs请求返回结果，分析vjs间的依赖关系，以便解决vjs脚本量太大等问题...",
+      desc: "搜集前端vjs请求，分析vjs间的依赖关系，解决vjs脚本量太大等问题...",
       to: "/vjsDepUrlList",
     },
     {
       title: "执行耗时分析",
       avatarIcon: <InsertChartIcon sx={{ width: "68px", height: "68px" }} />,
-      desc: "分析前端性能，包括js脚本大小分析，方法执行耗时，js加载耗时...",
+      desc: "实时记录前端脚本执行耗时，包括窗体、构件加载时间，方法、规则执行耗时...",
       to: "/frontendMonitor",
     },
   ];

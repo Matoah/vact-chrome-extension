@@ -17,14 +17,12 @@ import {
   setDebugInfo,
 } from '../slices/fontendDebugger';
 import { useDispatch } from '../store';
-import { printToWebPageConsole } from '../utils/RPCUtils';
 
 function FrontendDebugger() {
   const params = useLocation();
   const dispatch = useDispatch();
   useEffect(() => {
     if (params && params.state && params.state.callbackId) {
-      printToWebPageConsole(`FrontendDebugger:` + JSON.stringify(params.state));
       const data = params.state.data;
       const method = {
         componentCode: data.componentCode,

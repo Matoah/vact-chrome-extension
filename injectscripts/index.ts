@@ -315,6 +315,15 @@ vact_devtools.methods = {
   getComponentInstances: function () {
     const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
   },
+  getRuleDebugInfo: function () {
+    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+    if (ruleContext) {
+      const ruleCfg = ruleContext.getRuleCfg();
+      const ruleParams = ruleCfg.inParams;
+      return JSON.parse(ruleParams);
+    }
+    return {};
+  },
   //获取方法调试信息
   getRulesetDebugInfo: function () {
     const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();

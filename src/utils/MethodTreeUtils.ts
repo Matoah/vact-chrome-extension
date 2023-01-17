@@ -147,35 +147,46 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
         componentWindows.push(windowNode);
       }
       const windowMethods = windowNode.children || [];
-      windowMethods.push({
-        id: toWindowMethodId({ componentCode, windowCode, methodCode }),
-        label: methodName || methodCode,
-        type: "method",
-      });
+      const windowMethodNode = windowMethods.find(
+        (node) =>
+          node.id == toWindowMethodId({ componentCode, windowCode, methodCode })
+      );
+      if (!windowMethodNode) {
+        windowMethods.push({
+          id: toWindowMethodId({ componentCode, windowCode, methodCode }),
+          label: methodName || methodCode,
+          type: "method",
+        });
+      }
       windowNode.children = windowMethods;
       componentWindowNode.children = componentWindows;
       componentNode.children = children;
     } else {
       //构件方法
       const children = componentNode.children || [];
-      let componentMethodNode = children.find(
+      let componentMethodsNode = children.find(
         (node) => node.id == `${componentCode}_$_component_@_methods`
       );
-      if (!componentMethodNode) {
-        componentMethodNode = {
+      if (!componentMethodsNode) {
+        componentMethodsNode = {
           id: `${componentCode}_$_component_@_methods`,
           label: "构件方法",
           type: "catalog",
         };
-        children.push(componentMethodNode);
+        children.push(componentMethodsNode);
       }
-      const componentMethods = componentMethodNode.children || [];
-      componentMethods.push({
-        id: toComponentMethodId(data),
-        label: methodName || methodCode,
-        type: "method",
-      });
-      componentMethodNode.children = componentMethods;
+      const componentMethods = componentMethodsNode.children || [];
+      const componentMethodNode = componentMethods.find(
+        (node) => node.id == toComponentMethodId(data)
+      );
+      if (!componentMethodNode) {
+        componentMethods.push({
+          id: toComponentMethodId(data),
+          label: methodName || methodCode,
+          type: "method",
+        });
+      }
+      componentMethodsNode.children = componentMethods;
       componentNode.children = children;
     }
   });

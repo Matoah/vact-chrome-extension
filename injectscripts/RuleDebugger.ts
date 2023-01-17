@@ -70,9 +70,13 @@ class RuleDebugger {
             windowCode: info.windowCode,
             methodCode: info.methodCode,
           });
-          const instance = logic.ruleInstances?.ruleInstance;
-          if (instance) {
-            return instance.$.instanceCode != info.ruleCode;
+          if (logic) {
+            const instance = logic.ruleInstances?.ruleInstance;
+            if (instance) {
+              return instance.$.instanceCode != info.ruleCode;
+            }
+          } else {
+            return false;
           }
         }
       }
@@ -136,7 +140,8 @@ class RuleDebugger {
                 .catch((e) => {
                   this.ruleContext = null;
                   this._hideModal();
-                  reject(e);
+                  console.error("通信失败！" + e.message);
+                  resolve(null);
                 });
             });
           }
@@ -189,7 +194,12 @@ class RuleDebugger {
             this.extensionId,
             { data: params, action: "ruleDebug", type: "vact" },
             function (response: { operation: string }) {
-              resolve(response);
+              //@ts-ignore
+              if (chrome.runtime.lastError) {
+                resolve(null);
+              } else {
+                resolve(response);
+              }
             }
           );
         } catch (e) {

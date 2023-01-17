@@ -11,7 +11,6 @@ function uuid() {
 
 chrome.devtools.inspectedWindow.eval(
   `(function(id){
-    console.log("extensionId:"+id);
   window.vact_devtools.methods.setChromeExtensionId(id);
 })("${chrome.runtime.id}")`,
   function (res, e) {
