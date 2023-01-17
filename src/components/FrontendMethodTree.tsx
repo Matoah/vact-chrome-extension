@@ -159,7 +159,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
             }}
             tree={data.methodTree}
             labelTemplate={(props, node) => {
-              const { label, nodeId } = props;
+              const { nodeId } = props;
               const highlight = data.search
                 ? toMethodTreeNodeId(data.search) == nodeId
                 : false;
@@ -196,10 +196,10 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
                           wordBreak: "break-all",
                         }}
                       >
-                        {label}
+                        {node.label}
                       </Typography>
                     ) : (
-                      label
+                      node.label
                     )}
                   </Typography>
                 </Box>

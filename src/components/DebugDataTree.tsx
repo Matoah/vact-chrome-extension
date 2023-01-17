@@ -99,7 +99,9 @@ const getRuleTree = async function (debug: Rule, expanded: string[]) {
   let children = undefined;
   if (expanded.indexOf(id) != -1) {
     const ruleDebug = await getRuleDebugInfo();
-    children = objectToTree(id, ruleDebug);
+    if (ruleDebug) {
+      children = objectToTree(id, ruleDebug);
+    }
   }
   return [
     {
@@ -117,7 +119,9 @@ const getRuleSetTree = async function (debug: Rule, expanded: string[]) {
   let children = undefined;
   if (expanded.indexOf(id) != -1) {
     const rulesetDebug = await getRulesetDebugInfo();
-    children = objectToTree(id, rulesetDebug);
+    if (rulesetDebug) {
+      children = objectToTree(id, rulesetDebug);
+    }
   }
   return [
     {
@@ -135,7 +139,9 @@ const getWindowTree = async function (debug: Rule, expanded: string[]) {
   let children = undefined;
   if (expanded.indexOf(id) != -1) {
     const windowDebug = await getWindowDebugInfo();
-    children = objectToTree(id, windowDebug);
+    if (windowDebug) {
+      children = objectToTree(id, windowDebug);
+    }
   }
   return [
     {

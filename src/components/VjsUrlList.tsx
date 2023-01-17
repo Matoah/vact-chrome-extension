@@ -1,26 +1,28 @@
-import { ChangeEvent, Fragment, useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import { Link as RouterLink } from "react-router-dom";
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import SearchIcon from '@mui/icons-material/Search';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import AnalyticsIcon from "@mui/icons-material/Analytics";
-import SearchIcon from "@mui/icons-material/Search";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
-
-import Navigator from "../components/Navigator";
-import { getVjsUrls } from "../utils/RPCUtils";
+import Navigator from '../components/Navigator';
+import { getVjsUrls } from '../utils/RPCUtils';
 
 interface VjsUrlListProps {
   tip: string;
@@ -110,37 +112,27 @@ function VjsUrlList(pros: VjsUrlListProps) {
   }
   return (
     <Fragment>
-      <Card
-        sx={{
-          p: 2,
-          mb: 3,
+      <TextField
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
         }}
-      >
-        <Grid alignItems="center" container spacing={3}>
-          <Grid item xs={12} lg={12} md={12}>
-            <TextField
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                m: 0,
-              }}
-              onInput={(event: ChangeEvent<HTMLInputElement>) => {
-                setSearch(event.target.value);
-              }}
-              placeholder="输入关键字过滤vjs链接 ..."
-              value={search}
-              fullWidth
-              variant="outlined"
-            />
-          </Grid>
-        </Grid>
-      </Card>
-      <Card>
+        sx={{
+          m: 0,
+        }}
+        onInput={(event: ChangeEvent<HTMLInputElement>) => {
+          setSearch(event.target.value);
+        }}
+        placeholder="输入关键字过滤vjs链接 ..."
+        value={search}
+        fullWidth
+        variant="outlined"
+      />
+
+      <Card sx={{ mt: 1 }}>
         <TableContainer>
           <Table>
             <TableHead>

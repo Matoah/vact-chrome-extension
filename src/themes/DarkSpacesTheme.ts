@@ -1,4 +1,8 @@
-import { alpha, createTheme, darken } from "@mui/material/styles";
+import {
+  alpha,
+  createTheme,
+  darken,
+} from '@mui/material/styles';
 
 // import i18n from 'src/i18n/i18n';
 
@@ -466,8 +470,11 @@ export const DarkSpacesTheme = createTheme({
           "& .MuiInputAdornment-positionEnd.MuiInputAdornment-outlined": {
             paddingRight: 6,
           },
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: alpha(colors.primary.light, 0.2),
+          },
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: colors.alpha.black[50],
+            borderColor: colors.primary.main,
           },
           "&.Mui-focused:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: colors.primary.main,

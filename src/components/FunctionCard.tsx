@@ -34,6 +34,7 @@ function FunctionCard(props: FunctionCardProps) {
         <Paper
           sx={{
             p: 3,
+            width: 500,
             cursor: "pointer",
             textAlign: "center",
             transition: `${theme.transitions.create([
@@ -102,7 +103,16 @@ function FunctionCard(props: FunctionCardProps) {
           <Typography gutterBottom variant="h3">
             {title}
           </Typography>
-          <Typography variant="subtitle2">{desc}</Typography>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {desc}
+          </Typography>
         </Paper>
       </Zoom>
     </Grid>

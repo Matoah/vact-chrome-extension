@@ -357,7 +357,7 @@ export function printToWebPageConsole(msg: string) {
 }
 
 export function getRulesetDebugInfo() {
-  return new Promise<{}>((resolve, reject) => {
+  return new Promise<{} | null>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
@@ -373,7 +373,7 @@ export function getRulesetDebugInfo() {
 }
 
 export function getWindowDebugInfo() {
-  return new Promise<{}>((resolve, reject) => {
+  return new Promise<{} | null>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
@@ -389,7 +389,7 @@ export function getWindowDebugInfo() {
 }
 
 export function getRuleDebugInfo() {
-  return new Promise<{}>((resolve, reject) => {
+  return new Promise<{} | null>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
