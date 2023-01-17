@@ -97,9 +97,12 @@ export function toMethodTreeSearchItems(
   });
   return items;
 }
+const sortHandler = function (n1: MethodTreeNode, n2: MethodTreeNode) {
+  return n1.label.localeCompare(n2.label);
+};
 
 export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
-  const tree: MethodTreeNode[] = [];
+  let tree: MethodTreeNode[] = [];
   const map: { [id: string]: MethodTreeNode } = {};
   datas.forEach((data) => {
     const {
@@ -119,6 +122,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
       };
       map[componentCode] = componentNode;
       tree.push(componentNode);
+      tree = tree.sort(sortHandler);
     }
     if (windowCode) {
       //窗体方法
@@ -134,7 +138,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
         };
         children.push(componentWindowNode);
       }
-      const componentWindows = componentWindowNode.children || [];
+      let componentWindows = componentWindowNode.children || [];
       let windowNode = componentWindows.find(
         (node) => node.id == toWindowId({ componentCode, windowCode })
       );
@@ -145,8 +149,9 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
           type: "window",
         };
         componentWindows.push(windowNode);
+        componentWindows = componentWindows.sort(sortHandler);
       }
-      const windowMethods = windowNode.children || [];
+      let windowMethods = windowNode.children || [];
       const windowMethodNode = windowMethods.find(
         (node) =>
           node.id == toWindowMethodId({ componentCode, windowCode, methodCode })
@@ -157,6 +162,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
           label: methodName || methodCode,
           type: "method",
         });
+        windowMethods = windowMethods.sort(sortHandler);
       }
       windowNode.children = windowMethods;
       componentWindowNode.children = componentWindows;
@@ -175,7 +181,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
         };
         children.push(componentMethodsNode);
       }
-      const componentMethods = componentMethodsNode.children || [];
+      let componentMethods = componentMethodsNode.children || [];
       const componentMethodNode = componentMethods.find(
         (node) => node.id == toComponentMethodId(data)
       );
@@ -185,6 +191,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
           label: methodName || methodCode,
           type: "method",
         });
+        componentMethods = componentMethods.sort(sortHandler);
       }
       componentMethodsNode.children = componentMethods;
       componentNode.children = children;

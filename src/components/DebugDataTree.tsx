@@ -166,14 +166,6 @@ const getComponentTree = async function (debug: Rule, expanded: string[]) {
   ];
 };
 
-const handlers = {
-  componentList: function () {},
-  windowInput: function () {},
-  windowOutput: function () {},
-  windowWidget: function () {},
-  ruleset: function () {},
-};
-
 const toTree = async function (expanded: string[], debug?: Rule) {
   if (debug) {
     const method = debug.method;
