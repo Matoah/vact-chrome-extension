@@ -10,3 +10,7 @@ export const isEmptyObject = function (obj: {}) {
 export const isObject = function (val: any) {
   return typeof val == "object" && val !== null;
 };
+
+export const isError = function (val: any) {
+  return isObject(val) && val.__$vactType == "error";
+};

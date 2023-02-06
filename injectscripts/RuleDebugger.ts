@@ -3,7 +3,7 @@ import {
   getScopeManager,
   indexOf,
   isDevtoolOpened,
-} from "./Utils";
+} from './Utils';
 
 class RuleDebugger {
   extensionId;
@@ -71,9 +71,13 @@ class RuleDebugger {
             methodCode: info.methodCode,
           });
           if (logic) {
-            const instance = logic.ruleInstances?.ruleInstance;
-            if (instance && instance.$) {
-              return instance.$.instanceCode != info.ruleCode;
+            const routeScript = logic.ruleSets?.ruleSet?.ruleRoute?._ || "";
+            const reg = /<evaluateRule\s+code=['"](.+?)['"]\s+\/>/g;
+            let match: RegExpExecArray | null = null;
+            while ((match = reg.exec(routeScript)) !== null) {
+              if (match[1] == info.ruleCode) {
+                return true;
+              }
             }
           } else {
             return false;
@@ -81,7 +85,7 @@ class RuleDebugger {
         }
       }
     }
-    return result;
+    return false;
   }
   _getRuleDefineFromRuleContext(ruleContext) {
     const routeContext = ruleContext.getRouteContext();

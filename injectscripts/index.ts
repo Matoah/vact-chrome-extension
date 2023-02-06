@@ -1,7 +1,10 @@
-import { clear, genViewTimePoint } from "./DataManager";
-import { register } from "./EventObserver";
-import RuleDebugger from "./RuleDebugger";
-import { Breakpoint } from "./Types";
+import {
+  clear,
+  genViewTimePoint,
+} from './DataManager';
+import { register } from './EventObserver';
+import RuleDebugger from './RuleDebugger';
+import { Breakpoint } from './Types';
 import {
   getComponentParam,
   getDatasourceManager,
@@ -9,14 +12,27 @@ import {
   getWindowParam,
   indexOf,
   isEmptyObject,
-} from "./Utils";
+} from './Utils';
+
+const handleErr = function (e) {
+  return {
+    __$vactType: "error",
+    message: e.message,
+  };
+};
 
 const toJson = (obj: {}) => {
-  const inputObj = {};
-  for (let code in obj) {
-    inputObj[code] = toVal(obj[code]);
+  try {
+    const inputObj = {};
+    for (let code in obj) {
+      inputObj[code] = toVal(obj[code]);
+    }
+    //进行序列化尝试，防止通信时数据序列化失败造成功能异常
+    JSON.stringify(inputObj);
+    return inputObj;
+  } catch (e) {
+    return handleErr(e);
   }
-  return inputObj;
 };
 
 const toVal = (val: any) => {
@@ -405,7 +421,7 @@ vact_devtools.methods = {
           result["输出"] = toJson(outputs);
         }
         const windowScope = scopeManager.getScope(scopeId);
-        result["控件"] = windowScope.get("windowWidgetMetadata");
+        result["控件"] = toJson(windowScope.get("windowWidgetMetadata"));
         const datasources = datasourceManager.getAll();
         if (datasources && datasources.length > 0) {
           const dsMap = {};
@@ -418,7 +434,7 @@ vact_devtools.methods = {
                 : metadata.getCode()
             ] = toVal(ds);
           }
-          result["实体"] = dsMap;
+          result["实体"] = toJson(dsMap);
         }
       } finally {
         scopeManager.closeScope();
