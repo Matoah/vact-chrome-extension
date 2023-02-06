@@ -1,17 +1,56 @@
+import { clear, genViewTimePoint } from "./DataManager";
+import { register } from "./EventObserver";
+import RuleDebugger from "./RuleDebugger";
+import { Breakpoint } from "./Types";
 import {
-  clear,
-  genViewTimePoint,
-} from './DataManager';
-import { register } from './EventObserver';
-import RuleDebugger from './RuleDebugger';
-import { Breakpoint } from './Types';
-import {
+  getComponentParam,
   getDatasourceManager,
   getScopeManager,
   getWindowParam,
   indexOf,
   isEmptyObject,
-} from './Utils';
+} from "./Utils";
+
+const toJson = (obj: {}) => {
+  const inputObj = {};
+  for (let code in obj) {
+    inputObj[code] = toVal(obj[code]);
+  }
+  return inputObj;
+};
+
+const toVal = (val: any) => {
+  if (val) {
+    if (typeof val._get == "function") {
+      val = val._get();
+    }
+    if (typeof val.serialize == "function") {
+      val = val.serialize();
+      val = val.datas.values;
+    }
+  }
+  return val;
+};
+
+const getLogicDefines = function (
+  logics: any
+): Array<{ methodCode: string; methodName: string }> {
+  if (typeof logics != "string") {
+    try {
+      const defines: Array<{ methodCode: string; methodName: string }> = [];
+      logics = Array.isArray(logics.logic) ? logics.logic : [logics.logic];
+      logics.forEach((logic) => {
+        const ruleSet = logic.ruleSets.ruleSet.$;
+        defines.push({
+          methodCode: ruleSet.code,
+          methodName: ruleSet.name,
+        });
+      });
+      return defines;
+    } catch (e) {}
+  }
+  return [];
+};
 
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
@@ -119,56 +158,55 @@ vact_devtools.methods = {
     }> = [];
     if (vact_devtools.storage.sandbox) {
       try {
-        const winParam = vact_devtools.storage.sandbox.getService(
-          "v_act_vjs_framework_extension_platform_data_storage_schema_param"
-        ).WindowParam;
-        const defines = winParam.getWindowDefines();
-        defines.forEach(function ({ componentCode, windowCode }) {
+        const routeSchema = vact_devtools.storage.sandbox.getService(
+          "v_act_vjs_framework_extension_platform_data_storage_schema_route"
+        );
+        const componentCodes = routeSchema.ComponentRoute.getComponents();
+        componentCodes.forEach(function (componentCode) {
           const componentMetadata = vact_devtools.storage.sandbox
             .getService(
               `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
             )
             .default.returnComponentSchema();
+          const componentName = componentMetadata.$.name;
+          const componentLogics = componentMetadata.logics;
+          const logicDefines = getLogicDefines(componentLogics);
+          logicDefines.forEach(function ({ methodCode, methodName }) {
+            result.push({
+              componentCode,
+              componentName,
+              methodCode,
+              methodName,
+            });
+          });
+        });
+        const winDefines = routeSchema.WindowRoute.getWindows();
+        winDefines.forEach(function ({ componentCode, windowCode }) {
           const windowMetadata = vact_devtools.storage.sandbox
             .getService(
               `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
             )
             .getWindowDefine()
             .getWindowMetadata();
+          const componentMetadata = vact_devtools.storage.sandbox
+            .getService(
+              `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
+            )
+            .default.returnComponentSchema();
           const componentName = componentMetadata.$.name;
-          let componentLogics = componentMetadata.logics;
-          if (typeof componentLogics != "string") {
-            componentLogics = Array.isArray(componentLogics.logic)
-              ? componentLogics.logic
-              : [componentLogics.logic];
-            componentLogics.forEach((logic) => {
-              const ruleSet = logic.ruleSets.ruleSet.$;
-              result.push({
-                componentCode,
-                componentName,
-                methodCode: ruleSet.code,
-                methodName: ruleSet.name,
-              });
+          const windowName = windowMetadata.$.name;
+          const windowLogics = windowMetadata.logics;
+          const logicDefines = getLogicDefines(windowLogics);
+          logicDefines.forEach(function ({ methodCode, methodName }) {
+            result.push({
+              componentCode,
+              componentName,
+              windowCode,
+              windowName,
+              methodCode,
+              methodName,
             });
-          }
-          let windowLogics = windowMetadata.logics;
-          if (typeof windowLogics != "string") {
-            const windowName = windowMetadata.$.name;
-            windowLogics = Array.isArray(windowLogics.logic)
-              ? windowLogics.logic
-              : [windowLogics.logic];
-            windowLogics.forEach((logic) => {
-              const ruleSet = logic.ruleSets.ruleSet.$;
-              result.push({
-                componentCode,
-                componentName,
-                windowCode,
-                windowName,
-                methodCode: ruleSet.code,
-                methodName: ruleSet.name,
-              });
-            });
-          }
+          });
         });
       } catch (e) {
         return result;
@@ -330,32 +368,17 @@ vact_devtools.methods = {
     const result = {};
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
-      const toJson = (obj: {}, methodName: string) => {
-        const inputObj = {};
-        for (let code in obj) {
-          const type = routeContext[methodName](code);
-          let val = obj[code];
-          if (type == "entity") {
-            val = val._get ? val._get() : val;
-            const json = val.serialize();
-            inputObj[code] = json.data.values;
-          } else {
-            inputObj[code] = val;
-          }
-        }
-        return inputObj;
-      };
       const inputs = routeContext.getInputParams();
       if (inputs && !isEmptyObject(inputs)) {
-        result["输入"] = toJson(inputs, "getInputParamType");
+        result["输入"] = toJson(inputs);
       }
       const variants = routeContext.getVariables();
       if (variants && !isEmptyObject(variants)) {
-        result["变量"] = toJson(variants, "getVariableType");
+        result["变量"] = toJson(variants);
       }
       const outputs = routeContext.getOutPutParams();
       if (outputs && !isEmptyObject(outputs)) {
-        result["输出"] = toJson(variants, "getOutPutParamType");
+        result["输出"] = toJson(variants);
       }
     }
     return result;
@@ -371,25 +394,6 @@ vact_devtools.methods = {
       const datasourceManager = getDatasourceManager(
         vact_devtools.storage.sandbox
       );
-      const toVal = (val: any) => {
-        if (val) {
-          if (typeof val._get == "function") {
-            val = val._get();
-          }
-          if (typeof val.serialize == "function") {
-            val = val.serialize();
-            val = val.datas.values;
-          }
-        }
-        return val;
-      };
-      const toJson = (obj: {}) => {
-        const inputObj = {};
-        for (let code in obj) {
-          inputObj[code] = toVal(obj[code]);
-        }
-        return inputObj;
-      };
       try {
         scopeManager.openScope(scopeId);
         const inputs = windowParam.getInputs();
@@ -415,6 +419,32 @@ vact_devtools.methods = {
             ] = toVal(ds);
           }
           result["实体"] = dsMap;
+        }
+      } finally {
+        scopeManager.closeScope();
+      }
+    }
+    return result;
+  },
+  getComponentDebugInfo: function () {
+    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+    const result = {};
+    if (ruleContext) {
+      const routeContext = ruleContext.getRouteContext();
+      const scopeId = routeContext.getScopeId();
+      const componentParam = getComponentParam(vact_devtools.storage.sandbox);
+      const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
+      const scope = scopeManager.getScope(scopeId);
+      const componentCode = scope.getComponentCode();
+      try {
+        scopeManager.openScope(scopeId);
+        const vars = componentParam.getVariants(componentCode);
+        if (vars && !isEmptyObject(vars)) {
+          result["变量"] = toJson(vars);
+        }
+        const options = componentParam.getOptions(componentCode);
+        if (options && !isEmptyObject(options)) {
+          result["常量"] = toJson(options);
         }
       } finally {
         scopeManager.closeScope();

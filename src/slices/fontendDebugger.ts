@@ -18,7 +18,6 @@ import {
   Breakpoint,
   FrontendDebuggerState,
   Method,
-  Operation,
   Rule,
 } from "../utils/Types";
 
@@ -49,6 +48,7 @@ const slice = createSlice({
     ) {
       const { method } = action.payload;
       state.method = method;
+      state.rule = undefined;
     },
     setRule(
       state: FrontendDebuggerState,

@@ -1,4 +1,4 @@
-import { Breakpoint } from './Types';
+import { Breakpoint } from "./Types";
 
 export function getVjsContent() {
   return "";
@@ -124,5 +124,9 @@ export function getWindowDebugInfo() {
 }
 
 export function getRuleDebugInfo() {
+  return null;
+}
+
+export function getComponentDebugInfo() {
   return null;
 }

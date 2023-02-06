@@ -1,12 +1,5 @@
-import {
-  notEmpty,
-  uuid,
-} from '../utils/StringUtils';
-import {
-  MethodInfo,
-  MethodTreeNode,
-  MethodTreeSearchItem,
-} from './Types';
+import { notEmpty, uuid } from "../utils/StringUtils";
+import { MethodInfo, MethodTreeNode, MethodTreeSearchItem } from "./Types";
 
 function toWindowMethodId(data: {
   componentCode: string;
@@ -118,6 +111,7 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
       componentNode = {
         id: componentCode,
         label: componentName,
+        componentCode,
         type: "component",
       };
       map[componentCode] = componentNode;
@@ -146,6 +140,8 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
         windowNode = {
           id: toWindowId({ componentCode, windowCode }),
           label: windowName || windowCode,
+          componentCode,
+          windowCode,
           type: "window",
         };
         componentWindows.push(windowNode);
@@ -160,6 +156,9 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
         windowMethods.push({
           id: toWindowMethodId({ componentCode, windowCode, methodCode }),
           label: methodName || methodCode,
+          componentCode,
+          windowCode,
+          methodCode,
           type: "method",
         });
         windowMethods = windowMethods.sort(sortHandler);
@@ -189,6 +188,8 @@ export function toMethodTree(datas: Array<MethodInfo>): MethodTreeNode[] {
         componentMethods.push({
           id: toComponentMethodId(data),
           label: methodName || methodCode,
+          componentCode,
+          methodCode,
           type: "method",
         });
         componentMethods = componentMethods.sort(sortHandler);

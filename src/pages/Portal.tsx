@@ -1,16 +1,13 @@
-import {
-  Fragment,
-  useEffect,
-} from 'react';
+import { Fragment, useEffect } from "react";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import PestControlIcon from '@mui/icons-material/PestControl';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import Grid from '@mui/material/Grid';
+import PestControlIcon from "@mui/icons-material/PestControl";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import Grid from "@mui/material/Grid";
 
-import FunctionCard from '../components/FunctionCard';
-import { uuid } from '../utils/StringUtils';
+import FunctionCard from "../components/FunctionCard";
+import { uuid } from "../utils/StringUtils";
 
 interface Data {
   title: string;
@@ -42,31 +39,36 @@ function Portal() {
   const nav = useNavigate();
   useEffect(() => {
     //@ts-ignore
-    const vact_devtools = window.vact_devtools || {};
-    vact_devtools.actions = {
-      ruleDebug: function (
-        params: {
-          componentCode: string;
-          methodCode: string;
-          ruleCode: string;
-          windowCode?: string;
-        },
-        callback: (res: any) => void
-      ) {
-        const callbackId = `callback_${uuid()}`;
-        //@ts-ignore
-        window[callbackId] = (rs: any) => {
-          //@ts-ignore
-          delete window[callbackId];
-          callback(rs);
-        };
-        nav("/frontendDebugger", {
-          state: { data: params, callbackId },
-        });
+    const actions = window.vact_devtools.actions;
+    actions.ruleDebug = function (
+      params: {
+        componentCode: string;
+        methodCode: string;
+        ruleCode: string;
+        windowCode?: string;
       },
+      callback: (res: any) => void
+    ) {
+      const callbackId = `callback_${uuid()}`;
+      //@ts-ignore
+      window[callbackId] = (rs: any) => {
+        //@ts-ignore
+        delete window[callbackId];
+        callback(rs);
+      };
+      nav("/frontendDebugger", {
+        state: { data: params, callbackId },
+      });
     };
-    //@ts-ignore
-    window.vact_devtools = vact_devtools;
+    actions.refreshTreeMethod = function (
+      params: null,
+      callback: (res: any) => void
+    ) {
+      if (actions._refreshTreeMethod) {
+        actions._refreshTreeMethod();
+      }
+      callback({});
+    };
   }, []);
   return (
     <Grid

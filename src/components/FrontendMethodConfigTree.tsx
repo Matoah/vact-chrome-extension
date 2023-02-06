@@ -1,26 +1,19 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from "react";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
 import {
   addBreakpoint,
   removeBreakpoint,
   setRule,
-} from '../slices/fontendDebugger';
-import {
-  useDispatch,
-  useSelector,
-} from '../store';
-import { getFrontendMethod } from '../utils/RPCUtils';
+} from "../slices/fontendDebugger";
+import { useDispatch, useSelector } from "../store";
+import { getFrontendMethod } from "../utils/RPCUtils";
 import {
   getAllNodeIds,
   getBreakpointByNodeId,
@@ -28,11 +21,11 @@ import {
   ruleInstanceToId,
   toTree,
   TreeNode,
-} from '../utils/RuleConfigTreeUtils';
-import CustomTreeView from './CustomTreeView';
-import DebugIcon from './DebugIcon';
-import MinusSquare from './MinusSquare';
-import PlusSquare from './PlusSquare';
+} from "../utils/RuleConfigTreeUtils";
+import CustomTreeView from "./CustomTreeView";
+import DebugIcon from "./DebugIcon";
+import MinusSquare from "./MinusSquare";
+import PlusSquare from "./PlusSquare";
 
 interface FrontendMethodConfigTreeProps {}
 
@@ -86,7 +79,6 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
           display: "flex",
           width: "100%",
           height: "100%",
-          pl: 1,
         }}
       >
         <Card sx={{ flex: 1, overflow: "auto" }}>

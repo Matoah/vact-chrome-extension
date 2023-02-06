@@ -1,7 +1,7 @@
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
-import { CollapseButton } from '../../../CollapseButton';
-import { CollapseOptions } from '../../index';
+import { CollapseButton } from "../../../CollapseButton";
+import { CollapseOptions } from "../../index";
 
 const getDefault = (props: {
   isVertical: boolean;
@@ -18,13 +18,13 @@ const getDefault = (props: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        position: "absolute",
+        left: props.isVertical ? "50%" : "0px",
+        top: props.isVertical ? "0px" : "50%",
+        transform: props.isVertical ? "translateX(-50%)" : "translateY(-50%)",
       }}
     >
-      <MoreVertIcon
-        id="xiedh_test"
-        color="primary"
-        sx={{ marginLeft: "9px" }}
-      />
+      <MoreVertIcon color="primary" />
     </div>
   ),
   overlayCss: { backgroundColor: "rgba(0, 0, 0, 0.4)" },

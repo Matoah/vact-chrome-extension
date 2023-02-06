@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 interface Breakpoint {
   enable: boolean;
@@ -51,6 +51,7 @@ interface Operation {
   title: string;
   icon: ReactNode;
   disabled: ((state: FrontendDebuggerState) => boolean) | boolean;
+  shortcut?: (evt: KeyboardEvent) => boolean;
   click: (state: FrontendDebuggerState, active: boolean) => void;
 }
 
@@ -68,6 +69,9 @@ interface MethodTreeNode {
   id: string;
   type: "component" | "window" | "method" | "catalog";
   label: string;
+  componentCode?: string;
+  windowCode?: string;
+  methodCode?: string;
   children?: MethodTreeNode[];
 }
 

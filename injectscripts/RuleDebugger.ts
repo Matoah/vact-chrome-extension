@@ -3,7 +3,7 @@ import {
   getScopeManager,
   indexOf,
   isDevtoolOpened,
-} from './Utils';
+} from "./Utils";
 
 class RuleDebugger {
   extensionId;
@@ -72,7 +72,7 @@ class RuleDebugger {
           });
           if (logic) {
             const instance = logic.ruleInstances?.ruleInstance;
-            if (instance) {
+            if (instance && instance.$) {
               return instance.$.instanceCode != info.ruleCode;
             }
           } else {
@@ -114,6 +114,24 @@ class RuleDebugger {
     if (this.sandbox) {
       const eventManager = getEventManager(this.sandbox);
       eventManager.register({
+        event: eventManager.Events.AfterWindowLoad,
+        handler: () => {
+          this.callExtension({
+            data: null,
+            action: "refreshTreeMethod",
+          });
+        },
+      });
+      eventManager.register({
+        event: eventManager.Events.AfterComponentLoad,
+        handler: () => {
+          this.callExtension({
+            data: null,
+            action: "refreshTreeMethod",
+          });
+        },
+      });
+      eventManager.register({
         event: eventManager.Events.BeforeRuleExe,
         handler: (ruleContext) => {
           if (
@@ -123,7 +141,10 @@ class RuleDebugger {
             return new Promise((resolve, reject) => {
               this.ruleContext = ruleContext;
               this._showModal();
-              this.sendMessage(this._getRuleDefineFromRuleContext(ruleContext))
+              this.callExtension({
+                data: this._getRuleDefineFromRuleContext(ruleContext),
+                action: "ruleDebug",
+              })
                 .then((res: null | { operation: string }) => {
                   this._hideModal();
                   this.ruleContext = null;
@@ -155,11 +176,11 @@ class RuleDebugger {
     //@ts-ignore
     const methods = window.vact_devtools.methods;
     if (this.extensionId && isDevtoolOpened()) {
-      if (this.nextRule) {
-        return true;
-      } else if (methods.isIgnoreBreakpoints()) {
+      if (methods.isIgnoreBreakpoints()) {
         //忽略所有断点
         return false;
+      } else if (this.nextRule) {
+        return true;
       } else if (methods.isBreakAllRule()) {
         //断点所有规则
         return true;
@@ -184,6 +205,34 @@ class RuleDebugger {
   }
   getRuleContext() {
     return this.ruleContext;
+  }
+  callExtension(params: {
+    data: any;
+    action: "ruleDebug" | "refreshTreeMethod";
+  }) {
+    return new Promise<null | any>((resolve, reject) => {
+      if (this.extensionId && this.sandbox) {
+        try {
+          //@ts-ignore
+          chrome.runtime.sendMessage(
+            this.extensionId,
+            { data: params.data, action: params.action, type: "vact" },
+            function (response: any) {
+              //@ts-ignore
+              if (chrome.runtime.lastError) {
+                resolve(null);
+              } else {
+                resolve(response);
+              }
+            }
+          );
+        } catch (e) {
+          reject(e);
+        }
+      } else {
+        resolve(null);
+      }
+    });
   }
   sendMessage(params) {
     return new Promise<null | { operation: string }>((resolve, reject) => {

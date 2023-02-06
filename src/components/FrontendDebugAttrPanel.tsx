@@ -1,30 +1,28 @@
-import {
-  Fragment,
-  useState,
-} from 'react';
+import { Fragment, useState } from "react";
 
-import DoneAllIcon from '@mui/icons-material/DoneAll';
-import DownloadIcon from '@mui/icons-material/Download';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FastForwardIcon from '@mui/icons-material/FastForward';
-import LabelOffIcon from '@mui/icons-material/LabelOff';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import UploadIcon from '@mui/icons-material/Upload';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DownloadIcon from "@mui/icons-material/Download";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FastForwardIcon from "@mui/icons-material/FastForward";
+import LabelOffIcon from "@mui/icons-material/LabelOff";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
+import UploadIcon from "@mui/icons-material/Upload";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { styled } from "@mui/material/styles";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 
 import {
   removeBreakpoint,
@@ -34,19 +32,12 @@ import {
   setMethod,
   setRule,
   updateBreakpoint,
-} from '../slices/fontendDebugger';
-import {
-  useDispatch,
-  useSelector,
-} from '../store';
-import { isEqual } from '../utils/BreakpointUtils';
-import {
-  Breakpoint,
-  FrontendDebuggerState,
-  Operation,
-} from '../utils/Types';
-import DebugDataTree from './DebugDataTree';
-import OperationButton from './OperationButton';
+} from "../slices/fontendDebugger";
+import { useDispatch, useSelector } from "../store";
+import { isEqual } from "../utils/BreakpointUtils";
+import { Breakpoint, FrontendDebuggerState, Operation } from "../utils/Types";
+import DebugDataTree from "./DebugDataTree";
+import OperationButton from "./OperationButton";
 
 interface ContextMenuItem {
   code: string;
@@ -156,6 +147,9 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
         }
         return true;
       },
+      shortcut: (evt: KeyboardEvent) => {
+        return evt.code == "F8" && !evt.ctrlKey;
+      },
       click: (state: FrontendDebuggerState, active: boolean) => {
         const { debugCallbackId } = state;
         //@ts-ignore
@@ -169,8 +163,11 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
     },
     {
       code: "next",
-      title: "执行到下一个规则(F10)",
+      title: "执行到下一个规则(F9)",
       icon: <SkipNextIcon fontSize="small" />,
+      shortcut: (evt: KeyboardEvent) => {
+        return evt.code == "F9";
+      },
       disabled: function (state: FrontendDebuggerState) {
         if (state.debug) {
           return false;
@@ -193,6 +190,9 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       title: "进入当前方法(F11)",
       icon: <DownloadIcon fontSize="small" />,
       disabled: true,
+      shortcut: (evt: KeyboardEvent) => {
+        return evt.code == "F11" && !evt.ctrlKey;
+      },
       click: (state: FrontendDebuggerState, active: boolean) => {
         const { debugCallbackId } = state;
         //@ts-ignore
@@ -209,6 +209,9 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       title: "跳出当前方法(Ctrl+F11)",
       icon: <UploadIcon fontSize="small" />,
       disabled: true,
+      shortcut: (evt: KeyboardEvent) => {
+        return evt.code == "F11" && evt.ctrlKey;
+      },
       click: (state: FrontendDebuggerState, active: boolean) => {
         const { debugCallbackId } = state;
         //@ts-ignore
@@ -225,6 +228,9 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       title: "停用所有规则(Ctrl+F8)",
       icon: <LabelOffIcon fontSize="small" />,
       disabled: false,
+      shortcut: (evt: KeyboardEvent) => {
+        return evt.code == "F8" && evt.ctrlKey;
+      },
       click: (state: FrontendDebuggerState, active: boolean) => {
         dispatch(setDisableAll(active));
       },
@@ -238,6 +244,25 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       },
       click: (state: FrontendDebuggerState, active: boolean) => {
         dispatch(setBreakAll(active));
+      },
+    },
+    {
+      code: "location",
+      title: "定位到当前断点",
+      icon: <MyLocationIcon fontSize="small" />,
+      disabled: function (state: FrontendDebuggerState) {
+        return (
+          !state.debug ||
+          (state.debug.code === state.rule?.code &&
+            state.debug.method.componentCode ==
+              state.rule?.method.componentCode &&
+            state.debug.method.windowCode === state.rule?.method.windowCode &&
+            state.debug.method.methodCode === state.rule?.method.methodCode)
+        );
+      },
+      click: (state: FrontendDebuggerState, active: boolean) => {
+        dispatch(setMethod(state.debug?.method));
+        dispatch(setRule(state.debug));
       },
     },
   ];
@@ -371,7 +396,6 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           display: "flex",
           width: "100%",
           height: "100%",
-          pl: 1,
         }}
       >
         <Card sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -394,6 +418,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
                   title={operation.title}
                   active={active}
                   disabled={disabled}
+                  shortcut={operation.shortcut}
                   onClick={() => {
                     operation.click(state, !active);
                   }}

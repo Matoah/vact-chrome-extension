@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components';
+import styled, { css } from "styled-components";
 
 type OrientationProps = {
   $isVertical: boolean;
@@ -30,8 +30,9 @@ export const ButtonContainer = styled.div<ButtonContainerProps>`
   align-items: center;
   justify-content: center;
 
-  ${props => `${props.$isVertical ? 'width' : 'height'}: ${props.$grabberSize}`};
-  ${props => (props.$isVertical ? topBottomCss : leftRightCss)}
+  ${(props) =>
+    `${props.$isVertical ? "width" : "height"}: ${props.$grabberSize}`};
+  ${(props) => (props.$isVertical ? topBottomCss : leftRightCss)}
 `;
 
 interface GrabberProps extends OrientationProps {
@@ -39,18 +40,19 @@ interface GrabberProps extends OrientationProps {
   $isLtr: boolean;
 }
 export const ResizeGrabber = styled.div<GrabberProps>`
-  position: absolute;
   z-index: 3;
-  transform: ${props =>
-    props.$isVertical ? `translateX(${props.$isLtr ? '-' : ''}50%)` : 'translateY(-50%)'};
-  cursor: ${props => !props.$isCollapsed && (props.$isVertical ? 'col-resize' : 'row-resize')};
-  ${props => (props.$isVertical ? topBottomCss : leftRightCss)}
+  display: flex;
+  position: relative;
+  ${(props) => (props.$isVertical ? "height:100%;" : "width:100%;")}
+  cursor: ${(props) =>
+    !props.$isCollapsed && (props.$isVertical ? "col-resize" : "row-resize")};
+  ${(props) => (props.$isVertical ? topBottomCss : leftRightCss)}
 `;
 
 export const ResizePresentation = styled.div<OrientationProps>`
   z-index: 2;
   position: absolute;
-  ${props => (props.$isVertical ? topBottomCss : leftRightCss)}
+  ${(props) => (props.$isVertical ? topBottomCss : leftRightCss)}
 `;
 
 export const getSizeWithUnit = (size: string | number): string =>

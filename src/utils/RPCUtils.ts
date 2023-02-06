@@ -2,6 +2,7 @@ import {
   addBreakpoint as addMockBreakpoint,
   clearBreakpoint as clearMockBreakpoint,
   getBreakpoints as getMockBreakpoints,
+  getComponentDebugInfo as getMockComponentDebugInfo,
   getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
   getMonitorMockDatas,
@@ -19,8 +20,8 @@ import {
   unmarkBreakAllRule as unmarkMockBreakAllRule,
   unmarkIgnoreBreakpoints as unmarkMockIgnoreBreakpoints,
   updateBreakpoint as updateMockBreakpoint,
-} from './MockUtils';
-import { Breakpoint } from './Types';
+} from "./MockUtils";
+import { Breakpoint } from "./Types";
 
 export function isMonitored() {
   return new Promise<boolean>((resolve, reject) => {
@@ -384,6 +385,22 @@ export function getWindowDebugInfo() {
       promise.then(resolve).catch(reject);
     } else {
       resolve(getMockWindowDebugInfo());
+    }
+  });
+}
+
+export function getComponentDebugInfo() {
+  return new Promise<{} | null>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "getComponentDebugInfo",
+        {}
+      );
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockComponentDebugInfo());
     }
   });
 }

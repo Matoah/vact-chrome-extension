@@ -1,27 +1,19 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useState } from "react";
 
-import { Fade } from '@mui/material';
+import { Fade } from "@mui/material";
 
-import { useMergeClasses } from '../../hooks/useMergeClasses';
-import {
-  CollapseOptions,
-  ResizerOptions,
-  SplitType,
-} from '../SplitPane';
-import { debounce } from '../SplitPane/helpers';
-import { BeginDragCallback } from '../SplitPane/hooks/effects/useDragState';
+import { useMergeClasses } from "../../hooks/useMergeClasses";
+import { CollapseOptions, ResizerOptions, SplitType } from "../SplitPane";
+import { debounce } from "../SplitPane/helpers";
+import { BeginDragCallback } from "../SplitPane/hooks/effects/useDragState";
 import {
   ButtonContainer,
   ButtonWrapper,
   getSizeWithUnit,
   ResizeGrabber,
   ResizePresentation,
-} from './helpers';
-import { useTransition } from './hooks/useTransition';
+} from "./helpers";
+import { useTransition } from "./hooks/useTransition";
 
 const defaultResizerOptions: Required<ResizerOptions> = {
   grabberSize: "1rem",
@@ -156,13 +148,20 @@ export const Resizer = ({
   ) : null;
 
   return (
-    <div key="grabber.root" style={{ position: "relative" }}>
+    <div
+      key="grabber.root"
+      style={
+        isVertical
+          ? { height: "100%", width: grabberSize, overflow: "hidden" }
+          : { width: "100%", height: grabberSize, overflow: "hidden" }
+      }
+    >
       <ResizeGrabber
         key="grabber"
         $isVertical={isVertical}
         $isCollapsed={isCollapsed}
         $isLtr={isLtr}
-        style={getWidthOrHeight(grabberSize)}
+        //style={getWidthOrHeight(grabberSize)}
         role="presentation"
         className={classes}
         onMouseDown={handleMouseDown}

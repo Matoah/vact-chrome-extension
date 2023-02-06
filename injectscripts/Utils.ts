@@ -1,5 +1,5 @@
-import TimePoint from './TimePoint';
-import { Breakpoint } from './Types';
+import TimePoint from "./TimePoint";
+import { Breakpoint } from "./Types";
 
 function getRuleTipDom(data, time: TimePoint) {
   const funcCode = time.getFunCode();
@@ -156,6 +156,12 @@ export function getWindowParam(sandbox) {
   return sandbox.getService(
     "v_act_vjs_framework_extension_platform_data_storage_runtime_param"
   ).WindowParam;
+}
+
+export function getComponentParam(sandbox) {
+  return sandbox.getService(
+    "v_act_vjs_framework_extension_platform_data_storage_runtime_param"
+  ).ComponentParam;
 }
 
 export function getDatasourceManager(sandbox) {

@@ -26,7 +26,7 @@ chrome.runtime.connect({
 
 chrome.devtools.panels.create(
   "VAct",
-  "/images/logo.png",
+  "/images/logo32.png",
   "/dist/index.html",
   function (extensionPanel) {
     extensionPanel.onShown.addListener(function tmp(panelWindow) {

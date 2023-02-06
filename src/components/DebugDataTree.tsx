@@ -1,25 +1,20 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from "react";
 
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import TreeItem from '@mui/lab/TreeItem';
-import TreeView from '@mui/lab/TreeView';
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import TreeItem from "@mui/lab/TreeItem";
+import TreeView from "@mui/lab/TreeView";
 
-import { useSelector } from '../store';
+import { useSelector } from "../store";
+import { isEmptyObject, isObject } from "../utils/ObjectUtils";
 import {
-  isEmptyObject,
-  isObject,
-} from '../utils/ObjectUtils';
-import {
+  getComponentDebugInfo,
   getRuleDebugInfo,
   getRulesetDebugInfo,
   getWindowDebugInfo,
-} from '../utils/RPCUtils';
-import { uuid } from '../utils/StringUtils';
-import { Rule } from '../utils/Types';
+} from "../utils/RPCUtils";
+import { uuid } from "../utils/StringUtils";
+import { Rule } from "../utils/Types";
 
 interface TreeNode {
   id: string;
@@ -81,7 +76,7 @@ const objectToTree = function (
   if (isEmptyObject(object)) {
     tree.push({
       id: `${prefix}_$_emptyObject`,
-      label: "{}",
+      label: "",
       type: "none",
     });
   } else {
@@ -119,7 +114,7 @@ const getRuleSetTree = async function (debug: Rule, expanded: string[]) {
   let children = undefined;
   if (expanded.indexOf(id) != -1) {
     const rulesetDebug = await getRulesetDebugInfo();
-    if (rulesetDebug) {
+    if (rulesetDebug && !isEmptyObject(rulesetDebug)) {
       children = objectToTree(id, rulesetDebug);
     }
   }
@@ -155,13 +150,21 @@ const getWindowTree = async function (debug: Rule, expanded: string[]) {
 };
 
 const getComponentTree = async function (debug: Rule, expanded: string[]) {
+  const id = "debug_$_data_$_component";
+  let children = undefined;
+  if (expanded.indexOf(id) != -1) {
+    const windowDebug = await getComponentDebugInfo();
+    if (windowDebug) {
+      children = objectToTree(id, windowDebug);
+    }
+  }
   return [
     {
-      id: "debug_$_data_$_component",
+      id,
       label: "构件",
       isFolder: true,
-      type: "componentList",
-      children: [],
+      type: "component",
+      children,
     },
   ];
 };
@@ -172,13 +175,20 @@ const toTree = async function (expanded: string[], debug?: Rule) {
     const windowCode = method.windowCode;
     let tree: TreeNode[] = await getRuleTree(debug, expanded);
     const rulesetTree = await getRuleSetTree(debug, expanded);
-    tree = tree.concat(rulesetTree);
+    if (rulesetTree) {
+      tree = tree.concat(rulesetTree);
+    }
     if (windowCode) {
       const windowTree = await getWindowTree(debug, expanded);
-      tree = tree.concat(windowTree);
+      if (windowTree) {
+        tree = tree.concat(windowTree);
+      }
     }
     const componentTree = await getComponentTree(debug, expanded);
-    return tree.concat(componentTree);
+    if (componentTree) {
+      tree = tree.concat(componentTree);
+    }
+    return tree;
   }
   return [];
 };
