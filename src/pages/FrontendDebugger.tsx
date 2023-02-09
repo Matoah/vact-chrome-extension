@@ -1,16 +1,22 @@
-import { Fragment, useEffect } from "react";
+import {
+  Fragment,
+  useEffect,
+} from 'react';
 
-import { useLocation } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
 
-import Box from "@mui/material/Box";
+import Box from '@mui/material/Box';
 
-import FrontendDebugAttrPanel from "../components/FrontendDebugAttrPanel";
-import FrontendMethodConfigTree from "../components/FrontendMethodConfigTree";
-import FrontendMethodTree from "../components/FrontendMethodTree";
-import Navigator from "../components/Navigator";
-import { SplitPane } from "../components/splitpanel";
-import { initState, setDebugInfo } from "../slices/fontendDebugger";
-import { useDispatch } from "../store";
+import FrontendDebugAttrPanel from '../components/FrontendDebugAttrPanel';
+import FrontendMethodConfigTree from '../components/FrontendMethodConfigTree';
+import FrontendMethodTree from '../components/FrontendMethodTree';
+import Navigator from '../components/Navigator';
+import { SplitPane } from '../components/splitpanel';
+import {
+  initState,
+  setDebugInfo,
+} from '../slices/fontendDebugger';
+import { useDispatch } from '../store';
 
 function FrontendDebugger() {
   const params = useLocation();
@@ -19,15 +25,22 @@ function FrontendDebugger() {
     if (params && params.state && params.state.callbackId) {
       const data = params.state.data;
       const method = {
-        componentCode: data.componentCode,
-        windowCode: data.windowCode,
-        methodCode: data.methodCode,
+        componentCode: data.rule.componentCode,
+        windowCode: data.rule.windowCode,
+        methodCode: data.rule.methodCode,
       };
       const rule = {
         method,
-        code: data.ruleCode,
+        code: data.rule.ruleCode,
       };
-      dispatch(setDebugInfo(method, rule, rule, params.state.callbackId));
+      dispatch(
+        setDebugInfo(
+          method,
+          rule,
+          { type: data.type, rule },
+          params.state.callbackId
+        )
+      );
     }
   }, [
     params && params.state && params.state.callbackId

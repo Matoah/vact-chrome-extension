@@ -1,28 +1,30 @@
-import { Fragment, useState } from "react";
+import {
+  Fragment,
+  useState,
+} from 'react';
 
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import DownloadIcon from "@mui/icons-material/Download";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FastForwardIcon from "@mui/icons-material/FastForward";
-import LabelOffIcon from "@mui/icons-material/LabelOff";
-import MyLocationIcon from "@mui/icons-material/MyLocation";
-import SkipNextIcon from "@mui/icons-material/SkipNext";
-import UploadIcon from "@mui/icons-material/Upload";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Checkbox from "@mui/material/Checkbox";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import { styled } from "@mui/material/styles";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FastForwardIcon from '@mui/icons-material/FastForward';
+import LabelOffIcon from '@mui/icons-material/LabelOff';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import UploadIcon from '@mui/icons-material/Upload';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Checkbox from '@mui/material/Checkbox';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { styled } from '@mui/material/styles';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 
 import {
   removeBreakpoint,
@@ -32,12 +34,19 @@ import {
   setMethod,
   setRule,
   updateBreakpoint,
-} from "../slices/fontendDebugger";
-import { useDispatch, useSelector } from "../store";
-import { isEqual } from "../utils/BreakpointUtils";
-import { Breakpoint, FrontendDebuggerState, Operation } from "../utils/Types";
-import DebugDataTree from "./DebugDataTree";
-import OperationButton from "./OperationButton";
+} from '../slices/fontendDebugger';
+import {
+  useDispatch,
+  useSelector,
+} from '../store';
+import { isEqual } from '../utils/BreakpointUtils';
+import {
+  Breakpoint,
+  FrontendDebuggerState,
+  Operation,
+} from '../utils/Types';
+import DebugDataTree from './DebugDataTree';
+import OperationButton from './OperationButton';
 
 interface ContextMenuItem {
   code: string;
@@ -116,7 +125,7 @@ const filterMenus = function (
 function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
   const dispatch = useDispatch();
   const state = useSelector((state) => state.frontendDebugger);
-  const { breakAll, disableAll, breakpoints, debug } = state;
+  const { breakAll, disableAll, breakpoints } = state;
   const [contextMenu, setContextMenu] = useState<{
     mousePosition: { mouseX: number; mouseY: number } | null;
     breakpoint?: Breakpoint;
@@ -184,7 +193,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           handler({ operation: "nextRule" });
         }
       },
-    },
+    } /*,
     {
       code: "stepIn",
       title: "进入当前方法(F11)",
@@ -203,14 +212,19 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           handler({ operation: "stepIn" });
         }
       },
-    },
+    }*/,
     {
-      code: "stepOut",
-      title: "跳出当前方法(Ctrl+F11)",
+      code: "afterExe",
+      title: "执行完当前规则(Ctrl+F8)",
       icon: <UploadIcon fontSize="small" />,
-      disabled: true,
+      disabled: function (state: FrontendDebuggerState) {
+        if (state.debug && state.debug.type != "afterRuleExe") {
+          return false;
+        }
+        return true;
+      },
       shortcut: (evt: KeyboardEvent) => {
-        return evt.code == "F11" && evt.ctrlKey;
+        return evt.code == "F8" && evt.ctrlKey;
       },
       click: (state: FrontendDebuggerState, active: boolean) => {
         const { debugCallbackId } = state;
@@ -219,7 +233,7 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
           //@ts-ignore
           const handler = window[debugCallbackId];
           dispatch(setDebugInfo());
-          handler({ operation: "stepOut" });
+          handler({ operation: "afterRuleExe", rule: state.debug?.rule });
         }
       },
     },
@@ -253,16 +267,18 @@ function FrontendDebugAttrPanel(props: FrontendDebugAttrPanelProps) {
       disabled: function (state: FrontendDebuggerState) {
         return (
           !state.debug ||
-          (state.debug.code === state.rule?.code &&
-            state.debug.method.componentCode ==
+          (state.debug.rule.code === state.rule?.code &&
+            state.debug.rule.method.componentCode ==
               state.rule?.method.componentCode &&
-            state.debug.method.windowCode === state.rule?.method.windowCode &&
-            state.debug.method.methodCode === state.rule?.method.methodCode)
+            state.debug.rule.method.windowCode ===
+              state.rule?.method.windowCode &&
+            state.debug.rule.method.methodCode ===
+              state.rule?.method.methodCode)
         );
       },
       click: (state: FrontendDebuggerState, active: boolean) => {
-        dispatch(setMethod(state.debug?.method));
-        dispatch(setRule(state.debug));
+        dispatch(setMethod(state.debug?.rule.method));
+        dispatch(setRule(state.debug?.rule));
       },
     },
   ];

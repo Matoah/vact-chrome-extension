@@ -1,7 +1,7 @@
-import type { PayloadAction } from "@reduxjs/toolkit";
-import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
-import { AppThunk } from "../store";
+import { AppThunk } from '../store';
 import {
   addBreakpoint as addRPCBreakpoint,
   getBreakpoints as getRPCBreakpoints,
@@ -13,13 +13,14 @@ import {
   unmarkBreakAllRule,
   unmarkIgnoreBreakpoints,
   updateBreakpoint as updateRPCBreakopoint,
-} from "../utils/RPCUtils";
+} from '../utils/RPCUtils';
 import {
   Breakpoint,
+  Debug,
   FrontendDebuggerState,
   Method,
   Rule,
-} from "../utils/Types";
+} from '../utils/Types';
 
 const initialState: FrontendDebuggerState = {
   breakpoints: [],
@@ -59,7 +60,7 @@ const slice = createSlice({
     },
     setDebug(
       state: FrontendDebuggerState,
-      action: PayloadAction<{ debug?: Rule }>
+      action: PayloadAction<{ debug?: Debug }>
     ) {
       const { debug } = action.payload;
       state.debug = debug;
@@ -83,7 +84,7 @@ const slice = createSlice({
       action: PayloadAction<{
         method?: Method;
         rule?: Rule;
-        debug?: Rule;
+        debug?: Debug;
         debugCallbackId?: string;
       }>
     ) {
@@ -127,7 +128,7 @@ export const setRule =
   };
 
 export const setDebug =
-  (debug?: Rule): AppThunk =>
+  (debug?: Debug): AppThunk =>
   async (dispatch) => {
     dispatch(slice.actions.setDebug({ debug }));
   };
@@ -167,7 +168,7 @@ export const setDebugInfo =
   (
     method?: Method,
     rule?: Rule,
-    debug?: Rule,
+    debug?: Debug,
     debugCallbackId?: string
   ): AppThunk =>
   async (dispatch) => {

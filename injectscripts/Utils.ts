@@ -1,5 +1,5 @@
-import TimePoint from "./TimePoint";
-import { Breakpoint } from "./Types";
+import TimePoint from './TimePoint';
+import { Breakpoint } from './Types';
 
 function getRuleTipDom(data, time: TimePoint) {
   const funcCode = time.getFunCode();
@@ -179,7 +179,8 @@ export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
       bp.location.ruleCode == breakpoint.location.ruleCode
     ) {
       if (
-        typeof bp.location.windowCode == typeof breakpoint.location.windowCode
+        (!bp.location.windowCode && !breakpoint.location.windowCode) ||
+        bp.location.windowCode == breakpoint.location.windowCode
       ) {
         return index;
       }

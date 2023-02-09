@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
 interface Breakpoint {
   enable: boolean;
@@ -41,7 +41,7 @@ interface FrontendDebuggerState {
   //当前规则
   rule?: Rule;
   //当前调试规则
-  debug?: Rule;
+  debug?: Debug;
   //调试回调id
   debugCallbackId?: string;
 }
@@ -63,6 +63,11 @@ interface Method {
 interface Rule {
   method: Method;
   code: string;
+}
+
+interface Debug {
+  type: "beforeRuleExe" | "afterRuleExe";
+  rule: Rule;
 }
 
 interface MethodTreeNode {
@@ -127,6 +132,7 @@ interface Logic {
 
 export {
   type Breakpoint,
+  type Debug,
   type FrontendDebuggerState,
   type Logic,
   type Method,

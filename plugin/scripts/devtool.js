@@ -26,14 +26,13 @@ chrome.runtime.connect({
 
 chrome.devtools.panels.create(
   "VAct",
-  "/images/logo32.png",
+  "",
   "/dist/index.html",
   function (extensionPanel) {
     extensionPanel.onShown.addListener(function tmp(panelWindow) {
       extensionPanel.onShown.removeListener(tmp);
       const vact_devtools = panelWindow.vact_devtools || {};
       vact_devtools.sendRequest = function (method, params) {
-        const id = uuid();
         return new Promise((resolve, reject) => {
           params = params || {};
           chrome.devtools.inspectedWindow.eval(

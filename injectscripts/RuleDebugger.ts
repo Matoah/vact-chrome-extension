@@ -5,12 +5,22 @@ import {
   isDevtoolOpened,
 } from './Utils';
 
+interface Method {
+  componentCode: string;
+  methodCode: string;
+  windowCode?: string;
+}
+interface Rule {
+  method: Method;
+  code: string;
+}
 class RuleDebugger {
   extensionId;
   sandbox;
   port;
   modal;
   nextRule = false;
+  debug: Array<{ type: string; rule?: Rule }> = [];
   ruleContext;
   setExtensionId(extensionId: string | null) {
     if (extensionId) {
@@ -140,35 +150,25 @@ class RuleDebugger {
         handler: (ruleContext) => {
           if (
             this._isBusinessRule(ruleContext) &&
-            this._isDebugger(ruleContext)
+            this._isDebuggerAtBefore(ruleContext)
           ) {
-            return new Promise((resolve, reject) => {
-              this.ruleContext = ruleContext;
-              this._showModal();
-              this.callExtension({
-                data: this._getRuleDefineFromRuleContext(ruleContext),
-                action: "ruleDebug",
-              })
-                .then((res: null | { operation: string }) => {
-                  this._hideModal();
-                  this.ruleContext = null;
-                  if (res) {
-                    if (res.operation == "nextRule") {
-                      this.nextRule = true;
-                    }
-                    resolve(null);
-                  } else {
-                    resolve(null);
-                  }
-                  resolve(res);
-                })
-                .catch((e) => {
-                  this.ruleContext = null;
-                  this._hideModal();
-                  console.error("通信失败！" + e.message);
-                  resolve(null);
-                });
-            });
+            //@ts-ignore
+            if (!window.vact_devtools.methods.isBreakAllRule()) {
+              this._clearDebug();
+            }
+            return this._sendDebug(ruleContext, "breforeRuleExe");
+          }
+        },
+      });
+      eventManager.register({
+        event: eventManager.Events.AfterRuleExe,
+        handler: (ruleContext) => {
+          if (
+            this._isBusinessRule(ruleContext) &&
+            this._isDebuggerAtAfter(ruleContext)
+          ) {
+            this.debug.pop();
+            return this._sendDebug(ruleContext, "afterRuleExe");
           }
         },
       });
@@ -176,30 +176,107 @@ class RuleDebugger {
       throw Error("无法挂载规则调试器！原因：未设置sandbox");
     }
   }
-  _isDebugger(ruleContext) {
+  _sendDebug(ruleContext, type: "breforeRuleExe" | "afterRuleExe") {
+    return new Promise((resolve, reject) => {
+      this.ruleContext = ruleContext;
+      this._showModal();
+      this.callExtension({
+        data: {
+          type,
+          rule: this._getRuleDefineFromRuleContext(ruleContext),
+        },
+        action: "ruleDebug",
+      })
+        .then((res: null | { operation: string; rule?: Rule }) => {
+          this._hideModal();
+          this.ruleContext = null;
+          if (res) {
+            if (res.operation == "nextRule") {
+              this.nextRule = true;
+              this.debug.push({
+                type: "nextRule",
+              });
+            } else if (res.operation == "afterRuleExe") {
+              this.debug.push({
+                type: "afterRuleExe",
+                rule: res.rule,
+              });
+            } else if ((res.operation = "nextBreakpoint")) {
+              this.debug.push({
+                type: "nextBreakpoint",
+              });
+            }
+          }
+          resolve(res);
+        })
+        .catch((e) => {
+          this.ruleContext = null;
+          this._hideModal();
+          console.error("通信失败！" + e.message);
+          resolve(null);
+        });
+    });
+  }
+  _clearDebug() {
+    if (this.debug) {
+      const type = this.debug[this.debug.length - 1].type;
+      if (["nextRule", "nextBreakpoint"].indexOf(type) != -1) {
+        this.debug.pop();
+      }
+    }
+  }
+  _isDebuggerAtAfter(ruleContext) {
+    if (
+      this.extensionId &&
+      isDevtoolOpened() &&
+      this.debug &&
+      this.debug[this.debug.length - 1].type == "afterRuleExe"
+    ) {
+      const rule = this.debug[this.debug.length - 1].rule;
+      const define = this._getRuleDefineFromRuleContext(ruleContext);
+      if (
+        rule &&
+        rule.code == define?.ruleCode &&
+        rule.method.methodCode == define.methodCode &&
+        rule.method.componentCode == define.componentCode &&
+        ((!rule.method.windowCode && !define.windowCode) ||
+          rule.method.windowCode == define.windowCode)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+  _isDebuggerAtBefore(ruleContext) {
     //@ts-ignore
     const methods = window.vact_devtools.methods;
     if (this.extensionId && isDevtoolOpened()) {
       if (methods.isIgnoreBreakpoints()) {
         //忽略所有断点
         return false;
-      } else if (this.nextRule) {
-        return true;
       } else if (methods.isBreakAllRule()) {
         //断点所有规则
         return true;
-      } else {
-        const breakpoints = methods.getBreakpoints();
-        if (breakpoints && breakpoints.length > 0) {
-          const define = this._getRuleDefineFromRuleContext(ruleContext);
-          if (define) {
-            const index = indexOf(
-              { enable: true, location: define },
-              breakpoints
-            );
-            if (index != -1) {
-              const bp = breakpoints[index];
-              return bp.enable;
+      } else if (
+        this.debug.length > 0 &&
+        this.debug[this.debug.length - 1].type !== "afterRuleExe"
+      ) {
+        const type = this.debug[this.debug.length - 1].type;
+        if (type == "nextRule") {
+          return true;
+        } else if (type == "nextBreakpoint") {
+          const breakpoints = methods.getBreakpoints();
+          if (breakpoints && breakpoints.length > 0) {
+            const define = this._getRuleDefineFromRuleContext(ruleContext);
+            if (define) {
+              const index = indexOf(
+                { enable: true, location: define },
+                breakpoints
+              );
+              if (index != -1) {
+                const bp = breakpoints[index];
+                return bp.enable;
+              }
             }
           }
         }

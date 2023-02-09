@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "VAct",
-  "description": "VAct调试工具",
+  "name": "VAct Developer Tools",
+  "description": "VAct开发者调试工具",
   "version": "1.0",
   "icons": {
     "16": "images/logo16.png",
@@ -9,7 +9,7 @@
     "48": "images/logo48.png",
     "128": "images/logo128.png"
   },
-  "host_permissions": ["<all_urls>"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
   "devtools_page": "popups/devtools.html",
   "background": { "service_worker": "scripts/background.js" },
   "permissions": ["scripting"],
@@ -24,7 +24,7 @@
     {
       "extension_ids": [],
       "matches": ["<all_urls>"],
-      "resources": ["dist/assets/*.js"]
+      "resources": ["dist/assets/*.js", "images/*.png"]
     }
   ],
   "externally_connectable": {

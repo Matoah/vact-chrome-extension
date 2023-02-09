@@ -1,13 +1,16 @@
-import { Fragment, useEffect } from "react";
+import {
+  Fragment,
+  useEffect,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-import PestControlIcon from "@mui/icons-material/PestControl";
-import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import Grid from "@mui/material/Grid";
+import PestControlIcon from '@mui/icons-material/PestControl';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import Grid from '@mui/material/Grid';
 
-import FunctionCard from "../components/FunctionCard";
-import { uuid } from "../utils/StringUtils";
+import FunctionCard from '../components/FunctionCard';
+import { uuid } from '../utils/StringUtils';
 
 interface Data {
   title: string;
@@ -42,10 +45,13 @@ function Portal() {
     const actions = window.vact_devtools.actions;
     actions.ruleDebug = function (
       params: {
-        componentCode: string;
-        methodCode: string;
-        ruleCode: string;
-        windowCode?: string;
+        type: "beforeRuleExe" | "afterRuleExe";
+        rule: {
+          componentCode: string;
+          methodCode: string;
+          ruleCode: string;
+          windowCode?: string;
+        };
       },
       callback: (res: any) => void
     ) {

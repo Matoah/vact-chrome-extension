@@ -1,20 +1,26 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from 'react';
 
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import TreeItem from "@mui/lab/TreeItem";
-import TreeView from "@mui/lab/TreeView";
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TreeItem from '@mui/lab/TreeItem';
+import TreeView from '@mui/lab/TreeView';
 
-import { useSelector } from "../store";
-import { isEmptyObject, isObject } from "../utils/ObjectUtils";
+import { useSelector } from '../store';
+import {
+  isEmptyObject,
+  isObject,
+} from '../utils/ObjectUtils';
 import {
   getComponentDebugInfo,
   getRuleDebugInfo,
   getRulesetDebugInfo,
   getWindowDebugInfo,
-} from "../utils/RPCUtils";
-import { uuid } from "../utils/StringUtils";
-import { Rule } from "../utils/Types";
+} from '../utils/RPCUtils';
+import { uuid } from '../utils/StringUtils';
+import { Rule } from '../utils/Types';
 
 interface TreeNode {
   id: string;
@@ -249,7 +255,7 @@ function DebugDataTree() {
   );
   useEffect(() => {
     (async () => {
-      const tree = await toTree(data.expanded, debug);
+      const tree = await toTree(data.expanded, debug?.rule);
       setData({
         ...data,
         tree,
