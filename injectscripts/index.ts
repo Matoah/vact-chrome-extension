@@ -112,7 +112,7 @@ vact_devtools.methods = {
         url,
         async: false,
         complete: (xhr, status) => {
-          if (status == "success") {
+          if (xhr.status == 200) {
             const content = xhr.responseText;
             if (typeof content == "string") {
               const index = content.indexOf("exports.__$isErrorModule=true;");
