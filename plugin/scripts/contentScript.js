@@ -7,4 +7,4 @@ function injectScriptAsync(src) {
   };
   document.documentElement.appendChild(script);
 }
-injectScriptAsync(chrome.runtime.getURL("dist/assets/inject-28a7222b.js"));
+injectScriptAsync(chrome.runtime.getURL("dist/assets/inject-8f4f3fb2.js"));

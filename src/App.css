@@ -270,7 +270,6 @@ circle.blue-dot {
 .timeline-chart rect.interval {
   ry: 5;
   rx: 5;
-  y: 8;
   stroke: transparent;
   height: 20px;
   opacity: 0.8;

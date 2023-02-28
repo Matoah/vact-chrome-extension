@@ -33,6 +33,7 @@ class TimelineChart {
     let width = elementWidth - margin.left - margin.right;
     let height = elementHeight - margin.top - margin.bottom;
     let groupHeight = height / data.length;
+    let intervalBarMargin = (groupHeight - 20) / 2;
     const x = d3.scaleTime().domain([minDt, maxDt]).range([0, width]);
     const xAxis = (g, x) =>
       g
@@ -43,11 +44,12 @@ class TimelineChart {
       svg
         .selectAll("rect.interval")
         .attr("transform", function () {
-          const { y } = this.getBBox();
           return "translate(" + transform.x + ",0) scale(" + transform.k + ")";
         })
+        .attr("y", function () {
+          return intervalBarMargin / transform.k;
+        })
         .attr("style", function () {
-          const { height } = this.getBBox();
           return `height:${20 / transform.k}px`;
         });
     });
@@ -89,13 +91,13 @@ class TimelineChart {
       .enter()
       .append("g")
       .attr("clip-path", "url(#chart-content)")
-      .attr("transform", (d, i) => `translate(0, ${groupHeight * i})`)
+      .attr("transform", (d, i) => `translate(0, ${groupHeight * i + 1})`)
       .selectAll(".dot")
       .data((d) => d.data.filter((_) => _.type === TimelineChart.TYPE.INTERVAL))
       .enter();
 
     //let intervalBarHeight = 0.8 * groupHeight;
-    let intervalBarMargin = (groupHeight - 20) / 2;
+
     let intervals = groupIntervalItems
       .append("rect")
       .attr("class", withCustom("interval"))

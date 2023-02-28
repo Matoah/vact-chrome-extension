@@ -130,45 +130,61 @@ class RuleDebugger {
       eventManager.register({
         event: eventManager.Events.AfterWindowLoad,
         handler: () => {
-          this.callExtension({
-            data: null,
-            action: "refreshTreeMethod",
-          });
+          try {
+            this.callExtension({
+              data: null,
+              action: "refreshTreeMethod",
+            });
+          } catch (e) {
+            console.error(e);
+          }
         },
       });
       eventManager.register({
         event: eventManager.Events.AfterComponentLoad,
         handler: () => {
-          this.callExtension({
-            data: null,
-            action: "refreshTreeMethod",
-          });
+          try {
+            this.callExtension({
+              data: null,
+              action: "refreshTreeMethod",
+            });
+          } catch (e) {
+            console.error(e);
+          }
         },
       });
       eventManager.register({
         event: eventManager.Events.BeforeRuleExe,
         handler: (ruleContext) => {
-          if (
-            this._isBusinessRule(ruleContext) &&
-            this._isDebuggerAtBefore(ruleContext)
-          ) {
-            //@ts-ignore
-            if (!window.vact_devtools.methods.isBreakAllRule()) {
-              this._clearDebug();
+          try {
+            if (
+              this._isBusinessRule(ruleContext) &&
+              this._isDebuggerAtBefore(ruleContext)
+            ) {
+              //@ts-ignore
+              if (!window.vact_devtools.methods.isBreakAllRule()) {
+                this._clearDebug();
+              }
+              return this._sendDebug(ruleContext, "breforeRuleExe");
             }
-            return this._sendDebug(ruleContext, "breforeRuleExe");
+          } catch (e) {
+            console.error(e);
           }
         },
       });
       eventManager.register({
         event: eventManager.Events.AfterRuleExe,
         handler: (ruleContext) => {
-          if (
-            this._isBusinessRule(ruleContext) &&
-            this._isDebuggerAtAfter(ruleContext)
-          ) {
-            this.debug.pop();
-            return this._sendDebug(ruleContext, "afterRuleExe");
+          try {
+            if (
+              this._isBusinessRule(ruleContext) &&
+              this._isDebuggerAtAfter(ruleContext)
+            ) {
+              this.debug.pop();
+              return this._sendDebug(ruleContext, "afterRuleExe");
+            }
+          } catch (e) {
+            console.error(e);
           }
         },
       });
@@ -230,6 +246,7 @@ class RuleDebugger {
       this.extensionId &&
       isDevtoolOpened() &&
       this.debug &&
+      this.debug[this.debug.length - 1] &&
       this.debug[this.debug.length - 1].type == "afterRuleExe"
     ) {
       const rule = this.debug[this.debug.length - 1].rule;
