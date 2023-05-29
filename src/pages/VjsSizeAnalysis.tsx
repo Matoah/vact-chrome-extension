@@ -1,19 +1,25 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from 'react';
 
-import { useParams } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 
-import AnalyticsIcon from "@mui/icons-material/Analytics";
-import BubbleChartIcon from "@mui/icons-material/BubbleChart";
-import Alert from "@mui/material/Alert";
-import AlertTitle from "@mui/material/AlertTitle";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CircularProgress from "@mui/material/CircularProgress";
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import BubbleChartIcon from '@mui/icons-material/BubbleChart';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import Navigator from "../components/Navigator";
-import VjsSizeBubbleChart from "../components/VjsSizeBubbleChart";
-import VjsSizeWallChart from "../components/VjsSizeWallChart";
-import { getVjsContent } from "../utils/VjsUtils";
+import Navigator from '../components/Navigator';
+import VjsSizeBubbleChart from '../components/VjsSizeBubbleChart';
+import VjsSizeWallChart from '../components/VjsSizeWallChart';
+import { getVjsContent } from '../utils/VjsUtils';
 
 enum ChartType {
   Bubble,
@@ -57,6 +63,10 @@ function VjsSizeAnalysis() {
             },
           },
         ];
+  const nav = useNavigate();
+  const ondblclick = (vjsName:string)=>{
+    nav(`/vjsDepAnalysis/${contentId}/${vjsName}`);
+  }
   useEffect(() => {
     if (contentId) {
       getVjsContent(
@@ -64,9 +74,9 @@ function VjsSizeAnalysis() {
         (content) => {
           setChildren(
             type == ChartType.Bubble ? (
-              <VjsSizeBubbleChart content={content} />
+              <VjsSizeBubbleChart content={content} onDblClick={ondblclick}/>
             ) : (
-              <VjsSizeWallChart content={content} />
+              <VjsSizeWallChart content={content} onDblClick={ondblclick}/>
             )
           );
         },

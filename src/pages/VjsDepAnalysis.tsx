@@ -93,7 +93,7 @@ function exits(vjsName: string, vjsList: Vjs[]) {
 function filterVjsList(
   vjsList: Vjs[],
   type: DepType,
-  key: null | string,
+  key: null | string | undefined,
   result?: Vjs[],
   nameToVjsmap?: { [vjsName: string]: Vjs },
   depToVjsMap?: { [vjsName: string]: string[] }
@@ -105,7 +105,7 @@ function filterVjsList(
   if (!depToVjsMap) {
     depToVjsMap = dep2VjsMap(vjsList);
   }
-  if (key != null) {
+  if (key) {
     const vjs = nameToVjsmap[key];
     if (vjs && result.indexOf(vjs) == -1) {
       result.push(vjs);
@@ -133,7 +133,7 @@ function filterVjsList(
   return result;
 }
 
-function simplifyResult(vjsList: Vjs[], url: string, key: string | null) {
+function simplifyResult(vjsList: Vjs[], url: string, key: string | null | undefined) {
   if (!key) {
     return vjsList;
   }
@@ -225,24 +225,32 @@ function adjustResult(vjsList: Vjs[]) {
 }
 
 function VjsDepAnalysis() {
+  const ref = useRef(null);
+  const params = useParams();
+  const vjsId = params.id;
+  const vjsName = params.vjsName;
   const [data, setData] = useState<{
     type: { code: DepType; label: string; desc: string };
     vjsList: string[];
-    key: null | string;
+    key: null | string | undefined;
     simplify: boolean;
     children: JSX.Element;
   }>({
     type: options[0],
     vjsList: [],
-    key: null,
+    key: vjsName,
     simplify: true,
     children: (
-      <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
+      <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{ width: "100%", height: "100%" }}
+        >
+        <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
+      </Box>
     ),
   });
-  const ref = useRef(null);
-  const params = useParams();
-  const vjsId = params.id;
   if (!vjsId) {
     data.children = (
       <Alert severity="error">

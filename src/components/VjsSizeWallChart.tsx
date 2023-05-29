@@ -13,6 +13,7 @@ import WallMapChart from '../utils/WallMapChart';
 
 interface VjsSizeWallChartProps {
   content: string;
+  onDblClick: (vjsName:any)=>void;
 }
 
 interface VjsData {
@@ -34,7 +35,7 @@ const toJsonList = function (vjsList: Vjs[]) {
 };
 
 function VjsSizeWallChart(props: VjsSizeWallChartProps) {
-  const { content } = props;
+  const { content,onDblClick } = props;
   const ref = useRef<any>(null);
   useEffect(() => {
     const renderChart = () => {
@@ -45,7 +46,7 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
       const chart = new WallMapChart(datas, {
         path: (data: VjsData) => data.vjsName,
         label: (data: VjsData) => data.vjsName + `\n(${toFileSize(data.size)})`,
-        title: (data: VjsData) => data.vjsName,
+        title: (data: VjsData) => `vjs名称：${data.vjsName}&#10;vjs大小：${toFileSize(data.size)}&#10;双击查看依赖关系`,
         //@ts-ignore
         value: (data: VjsData) => {
           return data ? data.size : 0;
@@ -54,6 +55,7 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
         //@ts-ignore
         width: ref.current.clientWidth,
         height: ref.current.clientHeight,
+        ondblclick:(data:any)=>onDblClick(data.vjsName)
       });
       ref.current.innerHTML = "";
       ref.current.appendChild(chart);

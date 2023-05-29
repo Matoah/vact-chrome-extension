@@ -1,4 +1,7 @@
-import { Breakpoint } from "./Types";
+import {
+  Breakpoint,
+  FrontendScope,
+} from './Types';
 
 export function getVjsContent() {
   return "";
@@ -129,4 +132,31 @@ export function getRuleDebugInfo() {
 
 export function getComponentDebugInfo() {
   return null;
+}
+
+export function getFrontendScopes(): Array<FrontendScope> {
+  return [
+    {
+      type: "window",
+      instanceId: "514eedd1959d5d17b65a04d2eddf3270",
+      componentCode: "i18n_test_unit",
+      title: "表单1",
+      windowCode: "form1",
+      pId: null,
+    },
+    {
+      type: "component",
+      instanceId: "514eedd1959d5d17b65a04d2eddf3340",
+      componentCode: "i18n_test_unit",
+      title: "国际化单元测试场景",
+      pId: "514eedd1959d5d17b65a04d2eddf3270",
+    },
+    {
+      type: "component",
+      instanceId: "514eedd1959d5d17b65a04d2eddf3341",
+      componentCode: "skin_test_unit",
+      title: "皮肤测试场景",
+      pId: "514eedd1959d5d17b65a04d2eddf3270",
+    },
+  ];
 }

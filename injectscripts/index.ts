@@ -3,109 +3,102 @@ import {
   genViewTimePoint,
 } from './DataManager';
 import { register } from './EventObserver';
+import FrontendJSON from './FrontendJSON';
 import RuleDebugger from './RuleDebugger';
 import { Breakpoint } from './Types';
 import {
+  getComponentMetadata,
   getComponentParam,
+  getComponentTitle,
   getDatasourceManager,
+  getLogicDefines,
   getScopeManager,
+  getWindowMetadata,
   getWindowParam,
+  getWindowTitle,
   indexOf,
   isEmptyObject,
 } from './Utils';
 
-const handleErr = function (e) {
-  return {
-    __$vactType: "error",
-    message: e.message,
-  };
-};
+interface FrontendScopeTree {
+  instanceId: string;
+  title: string;
+  type: "component" | "window";
+  children?: FrontendScopeTree[];
+}
 
-const toJson = (obj: {}) => {
-  try {
-    const inputObj = {};
-    for (let code in obj) {
-      inputObj[code] = toVal(obj[code]);
-    }
-    //进行序列化尝试，防止通信时数据序列化失败造成功能异常
-    JSON.stringify(inputObj);
-    return inputObj;
-  } catch (e) {
-    return handleErr(e);
-  }
-};
+class VActDevTools {
+  //vact开发者工具id
+  extensionId: null | string = null;
 
-const toVal = (val: any) => {
-  if (val) {
-    if (typeof val._get == "function") {
-      val = val._get();
-    }
-    if (typeof val.serialize == "function") {
-      val = val.serialize();
-      val = val.datas.values;
-    }
-  }
-  return val;
-};
+  //vact开发者工具版本
+  vactInjectScriptVersion = "1.0";
 
-const getLogicDefines = function (
-  logics: any
-): Array<{ methodCode: string; methodName: string }> {
-  if (typeof logics != "string") {
-    try {
-      const defines: Array<{ methodCode: string; methodName: string }> = [];
-      logics = Array.isArray(logics.logic) ? logics.logic : [logics.logic];
-      logics.forEach((logic) => {
-        const ruleSet = logic.ruleSets.ruleSet.$;
-        defines.push({
-          methodCode: ruleSet.code,
-          methodName: ruleSet.name,
-        });
-      });
-      return defines;
-    } catch (e) {}
-  }
-  return [];
-};
+  vjsUrls: Array<{
+    //vjs请求标识id
+    id: string;
+    //vjs请求链接
+    url: string;
+  }> = [];
+  /**
+   * vjs沙箱
+   */
+  sandbox: null | { getService: (name: string) => any } = null;
+  /**
+   * 规则调试
+   */
+  ruleDebugger: RuleDebugger;
 
-//@ts-ignore
-const vact_devtools = window.vact_devtools || {};
-const extensionId = window.localStorage.getItem("vact_devtools_extensionId");
-const ruleDebugger = new RuleDebugger();
-ruleDebugger.setExtensionId(extensionId);
-vact_devtools.storage = {
-  vjsUrls: [],
-  sandbox: null,
-  extensionId,
-  ruleDebugger,
-};
-const _getVjsUrl = function (id) {
-  let item = vact_devtools.storage.vjsUrls.find((item) => item.id == id);
-  let url = null;
-  if (item) {
-    url = item.url;
+  constructor(extensionId: null | string) {
+    this.extensionId = extensionId;
+    this.ruleDebugger = new RuleDebugger();
+    this.ruleDebugger.setExtensionId(extensionId);
   }
-  return url;
-};
-vact_devtools.methods = {
-  vactInjectScriptVersion: "1.0",
-  isVActPlatform: function () {
+  /**
+   * 是否为VAct平台页面
+   * @returns boolean
+   */
+  isVActPlatform() {
     //@ts-ignore
     return window.VMetrix && window.VMetrix.loadBundles;
-  },
-  putVjsUrl: function (params) {
-    vact_devtools.storage.vjsUrls.push(params);
-  },
-  getVjsUrls: function () {
-    return vact_devtools.storage.vjsUrls;
-  },
-  getVjsUrl: function ({ id }) {
-    return _getVjsUrl(id);
-  },
-  getVjsContent: function ({ id }) {
+  }
+  /**
+   * 设置vjs请求链接
+   */
+  putVjsUrl(params: { id: string; url: string }) {
+    this.vjsUrls.push(params);
+  }
+  /**
+   * 获取所有vjs请求
+   * @returns
+   */
+  getVjsUrls() {
+    return this.vjsUrls;
+  }
+
+  _getVjsUrl(id: string) {
+    let item = this.vjsUrls.find((item) => item.id == id);
+    let url: null | string = null;
+    if (item) {
+      url = item.url;
+    }
+    return url;
+  }
+  /**
+   * 根据请求标识id获取vjs请求
+   */
+  getVjsUrl(params: { id: string }) {
+    const { id } = params;
+    return this._getVjsUrl(id);
+  }
+  /**
+   * 根据请求标识id获取vjs请求内容
+   */
+  getVjsContent(params: { id: string }) {
     let result = "",
-      hasError = false;
-    let url = _getVjsUrl(id);
+      hasError = false,
+      { id } = params;
+    let url = this._getVjsUrl(id);
     if (url) {
       //@ts-ignore
       $.ajax({
@@ -138,32 +131,59 @@ vact_devtools.methods = {
     } else {
       return result;
     }
-  },
-  getInitVjsNames: function () {
+  }
+  /**
+   * 获取初始化vjs名称
+   * 使用vact开发者工具，需要额外初始化一些vjs
+   * @returns
+   */
+  getInitVjsNames() {
     return ["vjs.framework.extension.platform.interface.event"];
-  },
-  vjsInited: function (sandbox) {
-    vact_devtools.storage.sandbox = sandbox;
+  }
+  /**
+   * vact页面vjs初始化完成后，触发此方法
+   */
+  vjsInited(sandbox) {
+    this.sandbox = sandbox;
     register(sandbox);
-    vact_devtools.storage.ruleDebugger.setSandbox(sandbox).mount();
-  },
-  isMonitored: function () {
+    this.ruleDebugger.setSandbox(sandbox).mount();
+  }
+  /**
+   * 是否在统计前端耗时
+   */
+  isMonitored() {
     const res = window.localStorage.getItem("vact_devtools_isMonitored");
     return res == "true";
-  },
-  markMonitored: function () {
+  }
+  /**
+   * 开始记录前端耗时统计
+   */
+  markMonitored() {
     window.localStorage.setItem("vact_devtools_isMonitored", "true");
-  },
-  markUnMonitored: function () {
+  }
+  /**
+   * 结束记录前端耗时统计
+   */
+  markUnMonitored() {
     window.localStorage.setItem("vact_devtools_isMonitored", "false");
-  },
-  clearMonitorData: function () {
+  }
+  /**
+   * 清除前端耗时数据
+   */
+  clearMonitorData() {
     clear();
-  },
-  getMonitorDatas: function (params) {
+  }
+  /**
+   * 获取前端耗时数据
+   */
+  getMonitorDatas(params) {
     return genViewTimePoint(params ? params.key : null);
-  },
-  getFrontendMethods: function () {
+  }
+  /**
+   * 获取前端所有方法定义信息
+   * @returns
+   */
+  getFrontendMethods() {
     const result: Array<{
       componentCode: string;
       componentName: string;
@@ -172,19 +192,18 @@ vact_devtools.methods = {
       methodCode: string;
       methodName: string;
     }> = [];
-    if (vact_devtools.storage.sandbox) {
+    if (this.sandbox) {
       try {
-        const routeSchema = vact_devtools.storage.sandbox.getService(
+        const routeSchema = this.sandbox.getService(
           "v_act_vjs_framework_extension_platform_data_storage_schema_route"
         );
         const componentCodes = routeSchema.ComponentRoute.getComponents();
-        componentCodes.forEach(function (componentCode) {
-          const componentMetadata = vact_devtools.storage.sandbox
-            .getService(
-              `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
-            )
-            .default.returnComponentSchema();
-          const componentName = componentMetadata.$.name;
+        componentCodes.forEach((componentCode) => {
+          const componentMetadata = getComponentMetadata(
+            this.sandbox,
+            componentCode
+          );
+          const componentName = getComponentTitle(this.sandbox, componentCode);
           const componentLogics = componentMetadata.logics;
           const logicDefines = getLogicDefines(componentLogics);
           logicDefines.forEach(function ({ methodCode, methodName }) {
@@ -197,23 +216,21 @@ vact_devtools.methods = {
           });
         });
         const winDefines = routeSchema.WindowRoute.getWindows();
-        winDefines.forEach(function ({ componentCode, windowCode }) {
-          const windowMetadata = vact_devtools.storage.sandbox
-            .getService(
-              `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
-            )
-            .getWindowDefine()
-            .getWindowMetadata();
-          const componentMetadata = vact_devtools.storage.sandbox
-            .getService(
-              `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
-            )
-            .default.returnComponentSchema();
-          const componentName = componentMetadata.$.name;
-          const windowName = windowMetadata.$.name;
+        winDefines.forEach(({ componentCode, windowCode }) => {
+          const windowMetadata = getWindowMetadata(
+            this.sandbox,
+            componentCode,
+            windowCode
+          );
+          const componentName = getComponentTitle(this.sandbox, componentCode);
+          const windowName = getWindowTitle(
+            this.sandbox,
+            componentCode,
+            windowCode
+          );
           const windowLogics = windowMetadata.logics;
           const logicDefines = getLogicDefines(windowLogics);
-          logicDefines.forEach(function ({ methodCode, methodName }) {
+          logicDefines.forEach(({ methodCode, methodName }) => {
             result.push({
               componentCode,
               componentName,
@@ -229,30 +246,21 @@ vact_devtools.methods = {
       }
     }
     return result;
-  },
-  getFrontendMethod: function (params: {
+  }
+  /**
+   * 获取指定方法定义
+   */
+  getFrontendMethod(params: {
     componentCode: string;
     methodCode: string;
     windowCode?: string;
   }) {
-    if (vact_devtools.storage.sandbox) {
+    if (this.sandbox) {
       try {
         const { componentCode, methodCode, windowCode } = params;
-        let metadata = null;
-        if (windowCode) {
-          metadata = vact_devtools.storage.sandbox
-            .getService(
-              `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
-            )
-            .getWindowDefine()
-            .getWindowMetadata();
-        } else {
-          metadata = vact_devtools.storage.sandbox
-            .getService(
-              `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
-            )
-            .default.returnComponentSchema();
-        }
+        let metadata = windowCode
+          ? getWindowMetadata(this.sandbox, componentCode, windowCode)
+          : getComponentMetadata(this.sandbox, componentCode);
         //@ts-ignore
         const logics = Array.isArray(metadata.logics.logic)
           ? //@ts-ignore
@@ -267,8 +275,11 @@ vact_devtools.methods = {
       }
     }
     return null;
-  },
-  addBreakpoint: function (breakpoint: Breakpoint) {
+  }
+  /**
+   * 添加断点信息
+   */
+  addBreakpoint(breakpoint: Breakpoint) {
     const breakpointJson = window.localStorage.getItem(
       "vact_devtools_breakpoints"
     );
@@ -278,8 +289,12 @@ vact_devtools.methods = {
       "vact_devtools_breakpoints",
       JSON.stringify(breakpoints)
     );
-  },
-  updateBreakpoint: function (breakpoint: Breakpoint) {
+  }
+  /**
+   * 更新断点信息
+   * 开发者工具中可以启用/禁用断点
+   */
+  updateBreakpoint(breakpoint: Breakpoint) {
     const breakpointJson = window.localStorage.getItem(
       "vact_devtools_breakpoints"
     );
@@ -304,8 +319,11 @@ vact_devtools.methods = {
       "vact_devtools_breakpoints",
       JSON.stringify(breakpoints)
     );
-  },
-  removeBreakpoint: function (breakpoint: Breakpoint | Breakpoint[]) {
+  }
+  /**
+   * 移除断点信息
+   */
+  removeBreakpoint(breakpoint: Breakpoint | Breakpoint[]) {
     const breakpointJson = window.localStorage.getItem(
       "vact_devtools_breakpoints"
     );
@@ -325,62 +343,97 @@ vact_devtools.methods = {
       "vact_devtools_breakpoints",
       JSON.stringify(storage)
     );
-  },
-  getBreakpoints: function () {
+  }
+  /**
+   * 获取所有断点信息
+   */
+  getBreakpoints() {
     const breakpointJson = window.localStorage.getItem(
       "vact_devtools_breakpoints"
     );
     return breakpointJson ? JSON.parse(breakpointJson) : [];
-  },
-  isBreakAllRule: function () {
+  }
+  /**
+   * 是否断点所有规则
+   */
+  isBreakAllRule() {
     const flag = window.localStorage.getItem("vact_devtools_breakallrule");
     return flag == "true";
-  },
-  markBreakAllRule: function () {
+  }
+  /**
+   * 标记断点所有规则
+   */
+  markBreakAllRule() {
     window.localStorage.setItem("vact_devtools_breakallrule", "true");
-  },
-  unmarkBreakAllRule: function () {
+  }
+  /**
+   * 取消断点所有谷子额
+   */
+  unmarkBreakAllRule() {
     window.localStorage.setItem("vact_devtools_breakallrule", "false");
-  },
-  clearBreakpoint: function () {
+  }
+  /**
+   * 清除所有断点
+   */
+  clearBreakpoint() {
     window.localStorage.setItem("vact_devtools_breakallrule", "false");
     window.localStorage.setItem("vact_devtools_breakpoints", "[]");
-  },
-  markIgnoreBreakpoints: function () {
+  }
+  /**
+   * 标记忽略所有断点
+   */
+  markIgnoreBreakpoints() {
     window.localStorage.setItem("vact_devtools_ignorebreakpoints", "true");
-  },
-  unmarkIgnoreBreakpoints: function () {
+  }
+  /**
+   * 取消忽略所有断点
+   */
+  unmarkIgnoreBreakpoints() {
     window.localStorage.setItem("vact_devtools_ignorebreakpoints", "false");
-  },
-  isIgnoreBreakpoints: function () {
+  }
+  /**
+   * 是否忽略所有断点
+   */
+  isIgnoreBreakpoints() {
     return (
       window.localStorage.getItem("vact_devtools_ignorebreakpoints") == "true"
     );
-  },
-  setChromeExtensionId: function (extensionId: string) {
-    vact_devtools.storage.extensionId = extensionId;
+  }
+  /**
+   * 设置开发者工具标识id
+   */
+  setChromeExtensionId(extensionId: string) {
+    this.extensionId = extensionId;
     window.localStorage.setItem("vact_devtools_extensionId", extensionId);
-    vact_devtools.storage.ruleDebugger.setExtensionId(extensionId);
-  },
-  print: function (params: { msg: string }) {
+    this.ruleDebugger.setExtensionId(extensionId);
+  }
+  /**
+   * 打印信息到控制台
+   */
+  print(params: { msg: string }) {
     console.log(params.msg);
-  },
+  }
+
   //获取构件实例列表
-  getComponentInstances: function () {
-    const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
-  },
-  getRuleDebugInfo: function () {
-    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+  getComponentInstances() {
+    const scopeManager = getScopeManager(this.sandbox);
+  }
+  /**
+   * 获取规则调试信息
+   * @returns
+   */
+  getRuleDebugInfo() {
+    const ruleContext = this.ruleDebugger.getRuleContext();
     if (ruleContext) {
       const ruleCfg = ruleContext.getRuleCfg();
       const ruleParams = ruleCfg.inParams;
       return JSON.parse(ruleParams);
     }
     return {};
-  },
+  }
   //获取方法调试信息
-  getRulesetDebugInfo: function () {
-    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+  getRulesetDebugInfo() {
+    const ruleContext = this.ruleDebugger.getRuleContext();
     const result = {};
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
@@ -398,77 +451,174 @@ vact_devtools.methods = {
       }
     }
     return result;
-  },
-  getWindowDebugInfo: function () {
-    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+  }
+  /**
+   * 获取窗体调试信息
+   */
+  getWindowDebugInfo() {
+    const ruleContext = this.ruleDebugger.getRuleContext();
     const result = {};
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
       const scopeId = routeContext.getScopeId();
-      const windowParam = getWindowParam(vact_devtools.storage.sandbox);
-      const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
-      const datasourceManager = getDatasourceManager(
-        vact_devtools.storage.sandbox
-      );
-      try {
-        scopeManager.openScope(scopeId);
-        const inputs = windowParam.getInputs();
-        if (inputs && !isEmptyObject(inputs)) {
-          result["输入"] = toJson(inputs);
-        }
-        const outputs = windowParam.getOutputs();
-        if (outputs && !isEmptyObject(outputs)) {
-          result["输出"] = toJson(outputs);
-        }
-        const windowScope = scopeManager.getScope(scopeId);
-        result["控件"] = toJson(windowScope.get("windowWidgetMetadata"));
-        const datasources = datasourceManager.getAll();
-        if (datasources && datasources.length > 0) {
-          const dsMap = {};
-          for (let i = 0; i < datasources.length; i++) {
-            const ds = datasources[i];
-            const metadata = ds.getMetadata();
-            dsMap[
-              metadata.getDatasourceName
-                ? metadata.getDatasourceName()
-                : metadata.getCode()
-            ] = toVal(ds);
-          }
-          result["实体"] = toJson(dsMap);
-        }
-      } finally {
-        scopeManager.closeScope();
-      }
+      return this.getWindowDatas(scopeId);
     }
     return result;
-  },
-  getComponentDebugInfo: function () {
-    const ruleContext = vact_devtools.storage.ruleDebugger.getRuleContext();
+  }
+  /**
+   * 获取窗体数据
+   * @param instanceId
+   * @returns
+   */
+  getWindowDatas(params: { instanceId: string; keepDSContructor?: boolean }) {
+    const { instanceId, keepDSContructor } = params;
+    const result = {};
+    const scopeManager = getScopeManager(this.sandbox);
+    const windowParam = getWindowParam(this.sandbox);
+    const datasourceManager = getDatasourceManager(this.sandbox);
+    try {
+      scopeManager.openScope(instanceId);
+      const inputs = windowParam.getInputs();
+      if (inputs && !isEmptyObject(inputs)) {
+        result["输入"] = toJson(inputs, keepDSContructor);
+      }
+      const outputs = windowParam.getOutputs();
+      if (outputs && !isEmptyObject(outputs)) {
+        result["输出"] = toJson(outputs, keepDSContructor);
+      }
+      const windowScope = scopeManager.getScope(instanceId);
+      result["控件"] = toJson(windowScope.get("windowWidgetMetadata"));
+      const datasources = datasourceManager.getAll();
+      if (datasources && datasources.length > 0) {
+        const dsMap = {};
+        for (let i = 0; i < datasources.length; i++) {
+          const ds = datasources[i];
+          const metadata = ds.getMetadata();
+          const key = metadata.getDatasourceName
+            ? `${metadata.getDatasourceName()}`
+            : `${metadata.getCode()}`;
+          dsMap[key] = ds; //toVal(ds,keepDSContructor);
+        }
+        result["实体"] = toJson(dsMap, keepDSContructor);
+      }
+    } finally {
+      scopeManager.closeScope();
+    }
+    return result;
+  }
+  /**
+   * 获取构件调试信息
+   */
+  getComponentDebugInfo() {
+    const ruleContext = this.ruleDebugger.getRuleContext();
     const result = {};
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
       const scopeId = routeContext.getScopeId();
-      const componentParam = getComponentParam(vact_devtools.storage.sandbox);
-      const scopeManager = getScopeManager(vact_devtools.storage.sandbox);
-      const scope = scopeManager.getScope(scopeId);
+      return this.getComponentDatas(scopeId);
+    }
+    return result;
+  }
+  /**
+   * 获取构件数据
+   * @param instanceId
+   * @returns
+   */
+  getComponentDatas(params: {
+    instanceId: string;
+    keepDSContructor?: boolean;
+  }) {
+    const { instanceId, keepDSContructor } = params;
+    const result = {};
+    const componentParam = getComponentParam(this.sandbox);
+    const scopeManager = getScopeManager(this.sandbox);
+    const scope = scopeManager.getScope(instanceId);
+    const componentCode = scope.getComponentCode();
+    try {
+      scopeManager.openScope(instanceId);
+      const vars = componentParam.getVariants(componentCode);
+      if (vars && !isEmptyObject(vars)) {
+        result["变量"] = toJson(vars, keepDSContructor);
+      }
+      const options = componentParam.getOptions(componentCode);
+      if (options && !isEmptyObject(options)) {
+        result["常量"] = toJson(options, keepDSContructor);
+      }
+    } finally {
+      scopeManager.closeScope();
+    }
+    return result;
+  }
+  /**
+   * 获取前端构件、窗体实例树
+   * @returns
+   */
+  getFrontendScopes() {
+    const scopeManager = getScopeManager(this.sandbox);
+    const scopes = scopeManager.getAll();
+    const result: Array<{
+      type: "window" | "component";
+      instanceId: string;
+      componentCode: string;
+      title: string;
+      pId: string;
+      windowCode?: string;
+    }> = [];
+    scopes.forEach((scope) => {
+      const instanceId: string = scope.getInstanceId();
       const componentCode = scope.getComponentCode();
-      try {
-        scopeManager.openScope(scopeId);
-        const vars = componentParam.getVariants(componentCode);
-        if (vars && !isEmptyObject(vars)) {
-          result["变量"] = toJson(vars);
-        }
-        const options = componentParam.getOptions(componentCode);
-        if (options && !isEmptyObject(options)) {
-          result["常量"] = toJson(options);
-        }
-      } finally {
-        scopeManager.closeScope();
+      const type = scopeManager.isWindowScope(instanceId)
+        ? "window"
+        : "component";
+      if (type == "window") {
+        const windowCode = scope.getWindowCode();
+        const title = getWindowTitle(this.sandbox, componentCode, windowCode);
+        const pId = scopeManager.getParentScopeId(instanceId);
+        result.push({
+          type: "window",
+          instanceId,
+          componentCode,
+          title,
+          pId,
+          windowCode,
+        });
+      } else {
+        const title = getComponentTitle(this.sandbox, componentCode);
+        const pId = scopeManager.getParentScopeId(instanceId);
+        result.push({
+          type: "component",
+          instanceId,
+          componentCode,
+          title,
+          pId,
+        });
       }
-    }
+    });
     return result;
-  },
+  }
+}
+
+const handleErr = function (e) {
+  return {
+    __$vactType: "error",
+    message: e.message,
+  };
 };
+
+const toJson = (obj: {}, keepDsContructor?: boolean) => {
+  const json = new FrontendJSON(obj, keepDsContructor);
+  return json.parse();
+};
+
+const toVal = (val: any, keepDsContructor?: boolean) => {
+  const json = new FrontendJSON(val, keepDsContructor);
+  return json.parse();
+};
+
+//@ts-ignore
+const vact_devtools = window.vact_devtools || {};
+const extensionId = window.localStorage.getItem("vact_devtools_extensionId");
+vact_devtools.methods = new VActDevTools(extensionId);
 //@ts-ignore
 window.vact_devtools = vact_devtools;
 export { vact_devtools };

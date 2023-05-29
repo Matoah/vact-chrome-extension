@@ -14,6 +14,7 @@ import VjsContentAnalysis from '../utils/VjsContentAnalysis';
 
 interface VjsSizeBubbleChartProps {
   content: string;
+  onDblClick: (vjsName:any)=>void;
 }
 
 interface VjsData {
@@ -35,7 +36,7 @@ const toJsonList = function (vjsList: Vjs[]) {
 };
 
 function VjsSizeBubbleChart(props: VjsSizeBubbleChartProps) {
-  const { content } = props;
+  const { content,onDblClick } = props;
   const [type, setType] = useState("bubble");
   const ref = useRef<any>(null);
   useEffect(() => {
@@ -49,10 +50,11 @@ function VjsSizeBubbleChart(props: VjsSizeBubbleChartProps) {
         //@ts-ignore
         value: (data: VjsData) => data.size,
         group: (data: VjsData) => data.vjsName,
-        title: (data: VjsData) => data.vjsName,
+        title: (data: VjsData) => `vjs名称：${data.vjsName}&#10;vjs大小：${toFileSize(data.size)}&#10;双击查看依赖关系`,
         //@ts-ignore
         width: ref.current.clientWidth,
         height: ref.current.clientHeight,
+        ondblclick:(data:any)=>onDblClick(data.vjsName)
       });
       //setChildren(null);
       ref.current.innerHTML = "";

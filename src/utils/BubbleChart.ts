@@ -27,6 +27,7 @@ function BubbleChart(
     fillOpacity = 0.7, // the fill opacity of the bubbles
     stroke, // a static stroke around the bubbles
     strokeWidth, // the stroke width around the bubbles, if any
+    ondblclick = (data:any)=>{},
     strokeOpacity, // the stroke opacity around the bubbles, if any
   } = {}
 ) {
@@ -74,7 +75,18 @@ function BubbleChart(
       link == null ? null : (d, i) => link(D[d.data], i, data)
     )
     .attr("target", link == null ? null : linkTarget)
-    .attr("transform", (d) => `translate(${d.x},${d.y})`);
+    .attr("transform", (d) => `translate(${d.x},${d.y})`)
+    .attr("style", "cursor: pointer;")
+    .attr("data-data",(d)=>JSON.stringify(data[d.data]))
+    .on("dblclick", (evt)=>{
+      let target = evt.target;
+      while(target&&target.tagName.toLowerCase()!='a'){
+        target = target.parentElement;
+      }
+      if(target){
+        ondblclick(JSON.parse(target.dataset.data))
+      }
+    });
 
   leaf
     .append("circle")
@@ -83,9 +95,9 @@ function BubbleChart(
     .attr("stroke-opacity", strokeOpacity)
     .attr("fill", G ? (d) => color(G[d.data]) : fill == null ? "none" : fill)
     .attr("fill-opacity", fillOpacity)
-    .attr("r", (d) => d.r);
+    .attr("r", (d) => d.r)
 
-  if (T) leaf.append("title").text((d) => T[d.data]);
+  if (T) leaf.append("title").html((d) => T[d.data]);
 
   if (L) {
     // A unique identifier for clip paths (to avoid conflicts).

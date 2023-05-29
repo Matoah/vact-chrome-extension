@@ -170,6 +170,33 @@ export function getDatasourceManager(sandbox) {
   ).WindowDatasource;
 }
 
+export function getWindowMetadata(sandbox,componentCode,windowCode){
+  return sandbox
+  .getService(
+    `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
+  )
+  .getWindowDefine()
+  .getWindowMetadata();
+}
+
+export function getComponentMetadata(sandbox,componentCode){
+  return sandbox
+  .getService(
+    `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
+  )
+  .default.returnComponentSchema();
+}
+
+export function getComponentTitle(sandbox,componentCode){
+  const metadata = getComponentMetadata(sandbox,componentCode);
+  return metadata.$.name;
+}
+
+export function getWindowTitle(sandbox,componentCode,windowCode){
+  const metadata = getWindowMetadata(sandbox,componentCode,windowCode);
+  return metadata.$.name;
+}
+
 export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {
   for (let index = 0; index < breakpoints.length; index++) {
     const bp = breakpoints[index];
@@ -233,4 +260,24 @@ export const isDevtoolOpened = function () {
   } else {
     return false;
   }
+};
+
+export function  getLogicDefines (
+  logics: any
+): Array<{ methodCode: string; methodName: string }> {
+  if (typeof logics != "string") {
+    try {
+      const defines: Array<{ methodCode: string; methodName: string }> = [];
+      logics = Array.isArray(logics.logic) ? logics.logic : [logics.logic];
+      logics.forEach((logic) => {
+        const ruleSet = logic.ruleSets.ruleSet.$;
+        defines.push({
+          methodCode: ruleSet.code,
+          methodName: ruleSet.name,
+        });
+      });
+      return defines;
+    } catch (e) {}
+  }
+  return [];
 };

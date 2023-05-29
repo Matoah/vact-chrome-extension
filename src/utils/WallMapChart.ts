@@ -40,6 +40,7 @@ function WallMapChart(
     strokeWidth, // stroke width for node rects
     strokeOpacity, // stroke opacity for node rects
     strokeLinejoin, // stroke line join for node rects
+    ondblclick=(data:any)=>{}
   } = {}
 ) {
   // If id and parentId options are specified, or the path option, use d3.stratify
@@ -102,8 +103,18 @@ function WallMapChart(
     .join("a")
     .attr("xlink:href", link == null ? null : (d, i) => link(d.data, d))
     .attr("target", link == null ? null : linkTarget)
-    .attr("transform", (d) => `translate(${d.x0},${d.y0})`);
-
+    .attr("transform", (d) => `translate(${d.x0},${d.y0})`)
+    .attr("style", "cursor: pointer;")
+    .attr("data-data",(d)=>JSON.stringify(d.data))
+    .on("dblclick", (evt)=>{
+      let target = evt.target;
+      while(target&&target.tagName.toLowerCase()!='a'){
+        target = target.parentElement;
+      }
+      if(target){
+        ondblclick(JSON.parse(target.dataset.data))
+      }
+    });
   node
     .append("rect")
     .attr("fill", color ? (d, i) => color(G[i]) : fill)
@@ -116,7 +127,7 @@ function WallMapChart(
     .attr("height", (d) => d.y1 - d.y0);
 
   if (T) {
-    node.append("title").text((d, i) => T[i]);
+    node.append("title").html((d, i) => T[i]);
   }
 
   if (L) {

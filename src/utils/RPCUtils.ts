@@ -5,6 +5,7 @@ import {
   getComponentDebugInfo as getMockComponentDebugInfo,
   getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
+  getFrontendScopes as getMockFrontendScopes,
   getMonitorMockDatas,
   getRuleDebugInfo as getMockRuleDebugInfo,
   getRulesetDebugInfo as getMockRulesetDebugInfo,
@@ -20,8 +21,11 @@ import {
   unmarkBreakAllRule as unmarkMockBreakAllRule,
   unmarkIgnoreBreakpoints as unmarkMockIgnoreBreakpoints,
   updateBreakpoint as updateMockBreakpoint,
-} from "./MockUtils";
-import { Breakpoint } from "./Types";
+} from './MockUtils';
+import {
+  Breakpoint,
+  FrontendScope,
+} from './Types';
 
 export function isMonitored() {
   return new Promise<boolean>((resolve, reject) => {
@@ -414,6 +418,51 @@ export function getRuleDebugInfo() {
       promise.then(resolve).catch(reject);
     } else {
       resolve(getMockRuleDebugInfo());
+    }
+  });
+}
+
+export function getFrontendScopes() {
+  return new Promise<Array<FrontendScope>>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getFrontendScopes", {});
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve(getMockFrontendScopes());
+    }
+  });
+}
+
+export function getWindowDatas(instanceId: string) {
+  return new Promise<{} | null>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getWindowDatas", {
+        instanceId,
+        keepDSContructor:true
+      });
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve({"输入":{"windowCode":"gz_zdys_Task20190612088","componentCode":"v_gz_new","workspaceKey":""},"控件":{"__$vactType":"error","message":"Converting circular structure to JSON\\n    --> starting at object with constructor 'HTMLDivElement'\\n    |     property '__reactContainer$dvpewyrngvh' -> object with constructor 'Uj'\\n    |     property 'stateNode' -> object with constructor 'Wj'\\n    --- property 'containerInfo' closes the circle"},"实体":{"autotest_gz02_Task20190612088":{"metadata":{"model":[{"datasourceName":"autotest_gz02_Task20190612088","fields":[{"code":"id","name":"id","length":64,"type":"char","precision":0,"defaultValue":null,"expression":""},{"code":"colText","name":"colText","length":1000,"type":"text","precision":0,"defaultValue":null,"expression":""},{"code":"colDouble","name":"colDouble","length":6,"type":"number","precision":4,"defaultValue":null,"expression":""},{"code":"colBoolean","name":"colBoolean","length":1,"type":"boolean","precision":0,"defaultValue":false,"expression":""},{"code":"colDate","name":"colDate","length":255,"type":"date","precision":0,"defaultValue":null,"expression":""},{"code":"colDateTime","name":"colDateTime","length":255,"type":"longDate","precision":0,"defaultValue":null,"expression":""},{"code":"colInt","name":"colInt","length":3,"type":"integer","precision":0,"defaultValue":null,"expression":""},{"code":"wenben","name":"wenben","length":255,"type":"char","precision":0,"defaultValue":null,"expression":""}]}]},"datas":{"values":[{"id":"43778f22e1f04892b3ab7c0132afd017","colText":"默认长文本","colDouble":2.3,"colBoolean":true,"colDate":"2017-06-06","colDateTime":"2019-06-18 08:56:09","colInt":1,"wenben":null},{"id":"a95d7ecba5a244198828fac9c5b3ec14","colText":"默认长文本","colDouble":2.3,"colBoolean":true,"colDate":"2016-12-30","colDateTime":"2016-12-30 09:01:55","colInt":1,"wenben":null},{"id":"ab9ef94c9a564e6eb8ac9a12a18ee6cc","colText":"默认长文本","colDouble":7.8,"colBoolean":true,"colDate":"2016-12-30","colDateTime":"2016-12-30 09:01:55","colInt":1,"wenben":null},{"id":"cd87f3017a7d45248f67d6e353887fd9","colText":"默认长文本","colDouble":2.3,"colBoolean":true,"colDate":"2016-12-30","colDateTime":"2016-12-30 09:01:55","colInt":1,"wenben":null}],"recordCount":4}}}});
+    }
+  });
+}
+
+export function getComponentDatas(instanceId:string){
+  return new Promise<{} | null>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getComponentDatas", {
+        instanceId,
+        keepDSContructor:true
+      });
+      promise.then(resolve).catch(reject);
+    } else {
+      resolve({});
     }
   });
 }

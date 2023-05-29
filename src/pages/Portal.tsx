@@ -31,8 +31,8 @@ function getDatas(): Data[] {
     {
       title: "功能调试",
       avatarIcon: <PestControlIcon sx={{ width: "68px", height: "68px" }} />,
-      desc: "实时调试规则执行，展示规则执行时上下文信息，包括规则配置，方法输入输出，窗体控件信息...",
-      to: "/frontendDebugger",
+      desc: "实时调试前端信息，包括构件、窗体中各种数据，以及规则执行情况...",
+      to: "/frontendAnalysis",
     },
   ];
 }

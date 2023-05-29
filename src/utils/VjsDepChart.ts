@@ -117,7 +117,9 @@ function VjsDepChart(element: any, vjsList: Vjs[]) {
     .append("circle")
     .attr("stroke", (d) => color(d.type))
     .attr("stroke-width", 1.5)
-    .attr("r", 4);
+    .attr("r", 4)
+    .append('title')
+    .html((d) => d.id);
 
   node
     .append("text")

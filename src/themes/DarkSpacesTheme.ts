@@ -544,6 +544,19 @@ export const DarkSpacesTheme = createTheme({
         },
       },
     },
+    MuiAccordionSummary:{
+      styleOverrides: {
+        root: {
+          borderBottomWidth:'1px',
+          borderBottomColor: colors.primary.light,
+          borderBottomStyle: 'solid',
+          borderRadius:'0px',
+          "&.Mui-expanded": {
+            borderBottomWidth:'0px',
+          },
+        },
+      },
+    },
     MuiAvatar: {
       styleOverrides: {
         root: {

@@ -46,6 +46,10 @@ interface FrontendDebuggerState {
   debugCallbackId?: string;
 }
 
+interface FrontendDataPortalState {
+  selectNode:ScopeTreeNode|null
+}
+
 interface Operation {
   code: string;
   title: string;
@@ -80,6 +84,15 @@ interface MethodTreeNode {
   children?: MethodTreeNode[];
 }
 
+interface ScopeTreeNode{
+  id: string;
+  type: "component"|"window";
+  label:string;
+  componentCode:string;
+  windowCode?:string
+  children?:ScopeTreeNode[]
+}
+
 interface RuleConfigTreeNode {
   id: string;
   label: string;
@@ -96,6 +109,12 @@ interface MethodTreeSearchItem {
   windowCode?: string;
   methodCode?: string;
   label: string;
+}
+
+interface ScopeTreeSearchItem{
+  id:string;
+  instanceId:string;
+  label:string
 }
 
 interface MethodInfo {
@@ -130,10 +149,29 @@ interface Logic {
   };
 }
 
+interface FrontendScope {
+    type:"window"|"component",
+    instanceId:string,
+    componentCode:string,
+    title:string,
+    pId:string|null,
+    windowCode?:string
+}
+
+interface TreeNode {
+  id: string;
+  label: string;
+  type: string;
+  isFolder?: boolean;
+  children?: TreeNode[];
+}
+
 export {
   type Breakpoint,
   type Debug,
+  type FrontendDataPortalState,
   type FrontendDebuggerState,
+  type FrontendScope,
   type Logic,
   type Method,
   type MethodInfo,
@@ -144,4 +182,7 @@ export {
   type Rule,
   type RuleConfigTreeNode,
   type RuleInstance,
+  type ScopeTreeNode,
+  type ScopeTreeSearchItem,
+  type TreeNode,
 };
