@@ -26,6 +26,10 @@ import {
   useDispatch,
   useSelector,
 } from '../store';
+import {
+  on,
+  un,
+} from '../utils/DevTools';
 import { getFrontendScopes } from '../utils/RPCUtils';
 import {
   filterScopeTree,
@@ -64,7 +68,7 @@ function FrontendScopeTree(props: FrontendScopeTreeProps) {
     console.error(e);
     nav("/500");
   };
-  useEffect(() => {
+  const fetchDataHandler = () => {
     getFrontendScopes()
       .then((scopes) => {
         const scopeTree = toScopeTree(scopes);
@@ -76,26 +80,28 @@ function FrontendScopeTree(props: FrontendScopeTreeProps) {
         });
       })
       .catch(errHandler);
-  }, [selectNode, data.search, dispatch]);
+  };
   useEffect(() => {
-    //@ts-ignore
-    window.vact_devtools.actions._refreshScopeTreeMethod = () => {
-      getFrontendScopes()
-        .then((scopes) => {
-          const methodTree = toScopeTree(scopes);
-          setData({
-            ...data,
-            expanded: getAllNodeIds(methodTree),
-            scopeTree: filterScopeTree(methodTree, data.search),
-          });
-        })
-        .catch(errHandler);
-    };
+    fetchDataHandler();
+    on({
+      eventName: "windowInited",
+      handler: fetchDataHandler,
+    });
+    on({
+      eventName: "componentInited",
+      handler: fetchDataHandler,
+    });
     return () => {
-      //@ts-ignore
-      delete window.vact_devtools.actions._refreshTreeMethod;
+      un({
+        eventName: "windowInited",
+        handler: fetchDataHandler,
+      });
+      un({
+        eventName: "componentInited",
+        handler: fetchDataHandler,
+      });
     };
-  }, []);
+  }, [selectNode, data.search, dispatch]);
   return (
     <Fragment>
       <Box
@@ -156,7 +162,9 @@ function FrontendScopeTree(props: FrontendScopeTreeProps) {
             }}
             onNodeSelect={(evt: any, nodeId: any) => {
               if (nodeId) {
-                dispatch(setScopeTreeNode(getScopeTreeNodeById(nodeId,data.scopeTree)));
+                dispatch(
+                  setScopeTreeNode(getScopeTreeNodeById(nodeId, data.scopeTree))
+                );
               } else {
                 dispatch(setScopeTreeNode(null));
               }

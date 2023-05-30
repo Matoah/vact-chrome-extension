@@ -1,35 +1,50 @@
-import { Fragment, ReactNode, useEffect, useState } from "react";
+import {
+  Fragment,
+  ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-import CallToActionIcon from "@mui/icons-material/CallToAction";
-import FolderIcon from "@mui/icons-material/Folder";
-import SchemaIcon from "@mui/icons-material/Schema";
-import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
-import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import CallToActionIcon from '@mui/icons-material/CallToAction';
+import FolderIcon from '@mui/icons-material/Folder';
+import SchemaIcon from '@mui/icons-material/Schema';
+import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import { setMethod } from "../slices/fontendDebugger";
-import { useDispatch, useSelector } from "../store";
+import { setMethod } from '../slices/fontendDebugger';
+import {
+  useDispatch,
+  useSelector,
+} from '../store';
+import {
+  on,
+  un,
+} from '../utils/DevTools';
 import {
   filterMethodTree,
   getAllNodeIds,
   toMethodTree,
   toMethodTreeNodeId,
   toMethodTreeSearchItems,
-} from "../utils/MethodTreeUtils";
-import { getFrontendMethods } from "../utils/RPCUtils";
-import { MethodTreeNode, MethodTreeSearchItem } from "../utils/Types";
-import CustomTreeView from "./CustomTreeView";
-import MinusSquare from "./MinusSquare";
-import PlusSquare from "./PlusSquare";
+} from '../utils/MethodTreeUtils';
+import { getFrontendMethods } from '../utils/RPCUtils';
+import {
+  MethodTreeNode,
+  MethodTreeSearchItem,
+} from '../utils/Types';
+import CustomTreeView from './CustomTreeView';
+import MinusSquare from './MinusSquare';
+import PlusSquare from './PlusSquare';
 
 interface FrontendMethodTreeProps {}
 
@@ -52,7 +67,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
     console.error(e);
     nav("/500");
   };
-  useEffect(() => {
+  const fetchDataHandler = () => {
     getFrontendMethods()
       .then((methods) => {
         const methodTree = toMethodTree(methods);
@@ -64,26 +79,16 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
         });
       })
       .catch(errHandler);
+  }
+  useEffect(()=>{
+    fetchDataHandler();
+    on({eventName:"windowInited",handler:fetchDataHandler});
+    on({eventName:"componentInited",handler:fetchDataHandler});
+    return ()=>{
+      un({eventName:"windowInited",handler:fetchDataHandler});
+      un({eventName:"componentInited",handler:fetchDataHandler});
+    }
   }, [method, data.search, dispatch]);
-  useEffect(() => {
-    //@ts-ignore
-    window.vact_devtools.actions._refreshTreeMethod = () => {
-      getFrontendMethods()
-        .then((methods) => {
-          const methodTree = toMethodTree(methods);
-          setData({
-            ...data,
-            expanded: getAllNodeIds(methodTree),
-            methodTree: filterMethodTree(methodTree, data.search),
-          });
-        })
-        .catch(errHandler);
-    };
-    return () => {
-      //@ts-ignore
-      delete window.vact_devtools.actions._refreshTreeMethod;
-    };
-  }, []);
   return (
     <Fragment>
       <Box

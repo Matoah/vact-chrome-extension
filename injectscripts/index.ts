@@ -4,6 +4,7 @@ import {
 } from './DataManager';
 import { register } from './EventObserver';
 import FrontendJSON from './FrontendJSON';
+import FrontendOberser from './FrontendOberser';
 import RuleDebugger from './RuleDebugger';
 import { Breakpoint } from './Types';
 import {
@@ -49,10 +50,13 @@ class VActDevTools {
    */
   ruleDebugger: RuleDebugger;
 
+  frontendOberser: FrontendOberser;
+
   constructor(extensionId: null | string) {
     this.extensionId = extensionId;
     this.ruleDebugger = new RuleDebugger();
     this.ruleDebugger.setExtensionId(extensionId);
+    this.frontendOberser = new FrontendOberser();
   }
   /**
    * 是否为VAct平台页面
@@ -147,6 +151,7 @@ class VActDevTools {
     this.sandbox = sandbox;
     register(sandbox);
     this.ruleDebugger.setSandbox(sandbox).mount();
+    this.frontendOberser.mount(this.extensionId,this.sandbox);
   }
   /**
    * 是否在统计前端耗时
@@ -461,7 +466,7 @@ class VActDevTools {
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
       const scopeId = routeContext.getScopeId();
-      return this.getWindowDatas(scopeId);
+      return this.getWindowDatas({instanceId:scopeId});
     }
     return result;
   }
@@ -515,7 +520,7 @@ class VActDevTools {
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
       const scopeId = routeContext.getScopeId();
-      return this.getComponentDatas(scopeId);
+      return this.getComponentDatas({instanceId:scopeId});
     }
     return result;
   }

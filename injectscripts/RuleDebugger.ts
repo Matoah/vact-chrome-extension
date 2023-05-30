@@ -128,32 +128,6 @@ class RuleDebugger {
     if (this.sandbox) {
       const eventManager = getEventManager(this.sandbox);
       eventManager.register({
-        event: eventManager.Events.AfterWindowLoad,
-        handler: () => {
-          try {
-            this.callExtension({
-              data: null,
-              action: "refreshTreeMethod",
-            });
-          } catch (e) {
-            console.error(e);
-          }
-        },
-      });
-      eventManager.register({
-        event: eventManager.Events.AfterComponentLoad,
-        handler: () => {
-          try {
-            this.callExtension({
-              data: null,
-              action: "refreshTreeMethod",
-            });
-          } catch (e) {
-            console.error(e);
-          }
-        },
-      });
-      eventManager.register({
         event: eventManager.Events.BeforeRuleExe,
         handler: (ruleContext) => {
           try {
@@ -234,7 +208,7 @@ class RuleDebugger {
     });
   }
   _clearDebug() {
-    if (this.debug) {
+    if (this.debug&&this.debug.length>0) {
       const type = this.debug[this.debug.length - 1].type;
       if (["nextRule", "nextBreakpoint"].indexOf(type) != -1) {
         this.debug.pop();
@@ -274,7 +248,8 @@ class RuleDebugger {
       } else if (methods.isBreakAllRule()) {
         //断点所有规则
         return true;
-      } else if (
+      } 
+      if (
         this.debug.length > 0 &&
         this.debug[this.debug.length - 1].type !== "afterRuleExe"
       ) {
@@ -282,19 +257,20 @@ class RuleDebugger {
         if (type == "nextRule") {
           return true;
         } else if (type == "nextBreakpoint") {
-          const breakpoints = methods.getBreakpoints();
-          if (breakpoints && breakpoints.length > 0) {
-            const define = this._getRuleDefineFromRuleContext(ruleContext);
-            if (define) {
-              const index = indexOf(
-                { enable: true, location: define },
-                breakpoints
-              );
-              if (index != -1) {
-                const bp = breakpoints[index];
-                return bp.enable;
-              }
-            }
+          
+        }
+      }
+      const breakpoints = methods.getBreakpoints();
+      if (breakpoints && breakpoints.length > 0) {
+        const define = this._getRuleDefineFromRuleContext(ruleContext);
+        if (define) {
+          const index = indexOf(
+            { enable: true, location: define },
+            breakpoints
+          );
+          if (index != -1) {
+            const bp = breakpoints[index];
+            return bp.enable;
           }
         }
       }

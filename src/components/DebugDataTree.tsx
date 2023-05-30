@@ -68,7 +68,7 @@ const toTreeNode = function (id: string, key: string, val: any): TreeNode {
   } else {
     return {
       id,
-      label: `${key}:${val}`,
+      label: `${key}:${typeof val == 'string' ? '"'+val+'"':val}`,
       type: "none",
     };
   }

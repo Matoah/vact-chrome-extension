@@ -24,13 +24,10 @@ import VjsSizeUlList from './pages/VjsSizeUlList';
 import Status500 from './status/500';
 import store from './store';
 import { DarkSpacesTheme } from './themes/DarkSpacesTheme';
+import { init } from './utils/DevTools';
 
 function App() {
-  //@ts-ignore
-  const vact_devtools = window.vact_devtools || {};
-  vact_devtools.actions = vact_devtools.actions || {};
-  //@ts-ignore
-  window.vact_devtools = vact_devtools;
+  init();
   return (
     <Provider store={store}>
       <ThemeProvider theme={DarkSpacesTheme}>
@@ -43,13 +40,22 @@ function App() {
             <Route path="/vjsDepUrlList" element={<VjsDepUrlList />} />
             <Route path="/vjsSizeAnalysis/:id" element={<VjsSizeAnalysis />} />
             <Route path="/vjsDepAnalysis/:id" element={<VjsDepAnalysis />} />
-            <Route path="/vjsDepAnalysis/:id/:vjsName" element={<VjsDepAnalysis />} />
+            <Route
+              path="/vjsDepAnalysis/:id/:vjsName"
+              element={<VjsDepAnalysis />}
+            />
             <Route path="/frontendAnalysis" element={<FrontendAnalysis />} />
             <Route path="/frontendMonitor" element={<FrontendMonitor />} />
-            <Route path="/frontendRuleExeRecord" element={<FrontendRuleExeRecord />} />
+            <Route
+              path="/frontendRuleExeRecord"
+              element={<FrontendRuleExeRecord />}
+            />
             <Route path="/timelineMonitor" element={<TimelineMonitor />} />
             <Route path="/frontendDebugger" element={<FrontendDebugger />} />
-            <Route path="/frontendDataPortal" element={<FrontendDataPortal/>}/>
+            <Route
+              path="/frontendDataPortal"
+              element={<FrontendDataPortal />}
+            />
             <Route path="/500" element={<Status500 />} />
           </Routes>
         </BrowserRouter>

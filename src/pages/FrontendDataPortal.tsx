@@ -1,30 +1,13 @@
 import { Fragment } from 'react';
 
-import RefreshIcon from '@mui/icons-material/Refresh';
 import Box from '@mui/material/Box';
 
 import FrontendDataPanel from '../components/FrontendDataPanel';
 import FrontendScopeTree from '../components/FrontendScopeTree';
 import Navigator from '../components/Navigator';
 import { SplitPane } from '../components/splitpanel';
-import { setScopeTreeNode } from '../slices/fontendDataPortal';
-import {
-  useDispatch,
-  useSelector,
-} from '../store';
 
 function FrontendDataPortal() {
-  const { selectNode } = useSelector((state) => state.frontendDataPortal);
-  const dispatch = useDispatch();
-  const menus = [
-        {
-          title: "刷新",
-          icon: <RefreshIcon fontSize="large" />,
-          click: () => {
-            dispatch(setScopeTreeNode(Object.create(selectNode)));
-          },
-        },
-      ];
   return (
     <Fragment>
       <Box
@@ -62,7 +45,7 @@ function FrontendDataPortal() {
           </Box>
         </SplitPane>
       </Box>
-      <Navigator menus={menus}/>
+      <Navigator/>
     </Fragment>
   );
 }

@@ -6,6 +6,7 @@ import {
 
 import { useNavigate } from 'react-router-dom';
 
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   alpha,
@@ -16,6 +17,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
 import { useSelector } from '../store';
@@ -30,14 +32,24 @@ function WindowInputPortal(props: { data: {} | null }) {
   const { data } = props;
   //@ts-ignore
   const inputs = data ? data["输入"] : null;
-  return <VariableDisplayTable variables={inputs} prefix='窗体输入'></VariableDisplayTable>
+  return (
+    <VariableDisplayTable
+      variables={inputs}
+      prefix="窗体输入"
+    ></VariableDisplayTable>
+  );
 }
 
 function WindowOutputPortal(props: { data: {} | null }) {
   const { data } = props;
   //@ts-ignore
   const outputs = data ? data["输出"] : null;
-  return <VariableDisplayTable variables={outputs} prefix='窗体输出'></VariableDisplayTable>
+  return (
+    <VariableDisplayTable
+      variables={outputs}
+      prefix="窗体输出"
+    ></VariableDisplayTable>
+  );
 }
 
 function WindowEntityPortal(props: { data: {} | null }) {
@@ -45,18 +57,24 @@ function WindowEntityPortal(props: { data: {} | null }) {
   const theme = useTheme();
   //@ts-ignore
   const entities = data ? data["实体"] : null;
-  if(entities){
-    const children = Object.keys(entities).map((name,index)=>{
+  const [expanded, setExpanded] = useState<{ [entityCode: string]: boolean }>(
+    {}
+  );
+  if (entities) {
+    const children = Object.keys(entities).map((name, index) => {
       const entityJson = entities[name];
-      return <Card key={name} sx={{
-        marginTop: index>0 ? "16px":"0px",
-        "&:hover": {
-          transform: "translateY(-5px) !important",
-          boxShadow: `0 2rem 8rem 0 ${alpha(
-            //@ts-ignore
-            theme.colors.alpha.black[100],
-            0.05
-          )}, 
+      return (
+        <Card
+          key={name}
+          sx={{
+            marginTop: index > 0 ? "16px" : "0px",
+            "&:hover": {
+              transform: "translateY(-5px) !important",
+              boxShadow: `0 2rem 8rem 0 ${alpha(
+                //@ts-ignore
+                theme.colors.alpha.black[100],
+                0.05
+              )}, 
             0 0.6rem 1.6rem ${alpha(
               //@ts-ignore
               theme.colors.alpha.black[100],
@@ -67,17 +85,67 @@ function WindowEntityPortal(props: { data: {} | null }) {
               theme.colors.alpha.black[100],
               0.1
             )}`,
-        },
-        }}>
-        <Box sx={{display:'flex',justifyContent:"center",padding:'16px 0px'}}>
-          <Typography variant="button" sx={{textTransform:"none"}}>{name}</Typography>
-        </Box>
-        <DatasourceTable data={entityJson}></DatasourceTable>
-      </Card>
+            },
+          }}
+        >
+          <Box
+            sx={{ display: "flex" }}
+            onClick={() => {
+              setExpanded({
+                ...expanded,
+                [name]: !expanded[name],
+              });
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                width: "100%",
+                justifyContent: "center",
+                padding: "16px 0px",
+              }}
+            >
+              <Typography variant="button" sx={{ textTransform: "none" }}>
+                {name}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              {expanded[name] ? (
+                <IconButton
+                  sx={{ border: "none", outline: "none !important" }}
+                  onClick={() => {
+                    setExpanded({
+                      ...expanded,
+                      [name]: false,
+                    });
+                  }}
+                >
+                  <ExpandLessIcon></ExpandLessIcon>
+                </IconButton>
+              ) : (
+                <IconButton
+                  sx={{ border: "none", outline: "none !important" }}
+                  onClick={() => {
+                    setExpanded({
+                      ...expanded,
+                      [name]: true,
+                    });
+                  }}
+                >
+                  <ExpandMoreIcon></ExpandMoreIcon>
+                </IconButton>
+              )}
+            </Box>
+          </Box>
+          {expanded[name] ? (
+            <DatasourceTable data={entityJson}></DatasourceTable>
+          ) : null}
+        </Card>
+      );
     });
-    return <Fragment>{children}</Fragment>
-  }else{
-    return <Typography>没有窗体实体信息！</Typography>
+    return <Fragment>{children}</Fragment>;
+  } else {
+    return <Typography>没有窗体实体信息！</Typography>;
   }
 }
 
@@ -85,10 +153,10 @@ function WindowWidgetPortal(props: { data: {} | null }) {
   const { data } = props;
   //@ts-ignore
   const widgets = data ? data["控件"] : null;
-  if(widgets){
-    return <JsonDataTreeView json={widgets}></JsonDataTreeView>
-  }else{
-    return <Typography>没有窗体控件信息！</Typography>
+  if (widgets) {
+    return <JsonDataTreeView json={widgets}></JsonDataTreeView>;
+  } else {
+    return <Typography>没有窗体控件信息！</Typography>;
   }
 }
 
