@@ -160,7 +160,7 @@ interface FrontendScope {
 
 interface TreeNode {
   id: string;
-  label: string;
+  label: string|ReactNode;
   type: string;
   isFolder?: boolean;
   children?: TreeNode[];

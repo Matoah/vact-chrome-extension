@@ -175,8 +175,8 @@ export function getWindowMetadata(sandbox,componentCode,windowCode){
   .getService(
     `vact.vjs.framework.extension.platform.init.view.schema.window.${componentCode}.${windowCode}`
   )
-  .getWindowDefine()
-  .getWindowMetadata();
+  ?.getWindowDefine()
+  ?.getWindowMetadata();
 }
 
 export function getComponentMetadata(sandbox,componentCode){
@@ -184,17 +184,17 @@ export function getComponentMetadata(sandbox,componentCode){
   .getService(
     `vact.vjs.framework.extension.platform.init.view.schema.component.${componentCode}`
   )
-  .default.returnComponentSchema();
+  ?.default?.returnComponentSchema();
 }
 
 export function getComponentTitle(sandbox,componentCode){
   const metadata = getComponentMetadata(sandbox,componentCode);
-  return metadata.$.name;
+  return metadata?.$?.name;
 }
 
 export function getWindowTitle(sandbox,componentCode,windowCode){
   const metadata = getWindowMetadata(sandbox,componentCode,windowCode);
-  return metadata.$.name;
+  return metadata?.$?.name;
 }
 
 export function indexOf(breakpoint: Breakpoint, breakpoints: Breakpoint[]) {

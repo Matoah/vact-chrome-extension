@@ -9,10 +9,7 @@ import TreeItem from '@mui/lab/TreeItem';
 import TreeView from '@mui/lab/TreeView';
 
 import { useSelector } from '../store';
-import {
-  isEmptyObject,
-  isObject,
-} from '../utils/ObjectUtils';
+import { isEmptyObject } from '../utils/ObjectUtils';
 import {
   getComponentDebugInfo,
   getRuleDebugInfo,
@@ -20,80 +17,11 @@ import {
   getWindowDebugInfo,
 } from '../utils/RPCUtils';
 import { uuid } from '../utils/StringUtils';
-import { Rule } from '../utils/Types';
-
-interface TreeNode {
-  id: string;
-  label: string;
-  type: string;
-  isFolder?: boolean;
-  children?: TreeNode[];
-}
-
-const arrayToTree = function (prefix: string, array: any[]): TreeNode[] {
-  const tree: TreeNode[] = [];
-  if (array.length == 0) {
-    tree.push({
-      id: `${prefix}_$_emptyArray`,
-      label: "[]",
-      type: "none",
-    });
-  } else {
-    for (let i = 0; i < array.length; i++) {
-      const item = array[i];
-      const id = `${prefix}_$_${i}`;
-      tree.push(toTreeNode(id, i + "", item));
-    }
-  }
-  return tree;
-};
-
-const toTreeNode = function (id: string, key: string, val: any): TreeNode {
-  if (Array.isArray(val)) {
-    const isEmpty = val.length == 0;
-    return {
-      id,
-      label: isEmpty ? `${key}:[]` : key,
-      type: "none",
-      children: isEmpty ? undefined : arrayToTree(id, val),
-    };
-  } else if (isObject(val)) {
-    const isEmpty = isEmptyObject(val);
-    return {
-      id,
-      label: isEmpty ? `${key}:{}` : key,
-      type: "none",
-      children: isEmpty ? undefined : objectToTree(id, val),
-    };
-  } else {
-    return {
-      id,
-      label: `${key}:${typeof val == 'string' ? '"'+val+'"':val}`,
-      type: "none",
-    };
-  }
-};
-
-const objectToTree = function (
-  prefix: string,
-  object: { [code: string]: any }
-): TreeNode[] {
-  const tree: TreeNode[] = [];
-  if (isEmptyObject(object)) {
-    tree.push({
-      id: `${prefix}_$_emptyObject`,
-      label: "",
-      type: "none",
-    });
-  } else {
-    for (let attr in object) {
-      const val = object[attr];
-      const id = `${prefix}_$_${attr}`;
-      tree.push(toTreeNode(id, attr, val));
-    }
-  }
-  return tree;
-};
+import { objectToTree } from '../utils/TreeUtils';
+import {
+  Rule,
+  TreeNode,
+} from '../utils/Types';
 
 const getRuleTree = async function (debug: Rule, expanded: string[]) {
   const id = "debug_$_data_$_rule";
