@@ -40,7 +40,7 @@ function WallMapChart(
     strokeWidth, // stroke width for node rects
     strokeOpacity, // stroke opacity for node rects
     strokeLinejoin, // stroke line join for node rects
-    ondblclick=(data:any)=>{}
+    onclick=(data:any,event:any)=>{}
   } = {}
 ) {
   // If id and parentId options are specified, or the path option, use d3.stratify
@@ -106,13 +106,13 @@ function WallMapChart(
     .attr("transform", (d) => `translate(${d.x0},${d.y0})`)
     .attr("style", "cursor: pointer;")
     .attr("data-data",(d)=>JSON.stringify(d.data))
-    .on("dblclick", (evt)=>{
+    .on("click", (evt)=>{
       let target = evt.target;
       while(target&&target.tagName.toLowerCase()!='a'){
         target = target.parentElement;
       }
       if(target){
-        ondblclick(JSON.parse(target.dataset.data))
+        onclick(JSON.parse(target.dataset.data),evt)
       }
     });
   node

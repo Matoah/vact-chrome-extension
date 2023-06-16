@@ -64,8 +64,12 @@ function VjsSizeAnalysis() {
           },
         ];
   const nav = useNavigate();
-  const ondblclick = (vjsName:string)=>{
-    nav(`/vjsDepAnalysis/${contentId}/${vjsName}`);
+  const onclick = (vjsName:string,isCtrl:boolean)=>{
+    if(isCtrl){
+      nav(`/vjsContentAnalysis/${vjsName}`);
+    }else{
+      nav(`/vjsDepAnalysis/${contentId}/${vjsName}`);
+    }
   }
   useEffect(() => {
     if (contentId) {
@@ -74,9 +78,9 @@ function VjsSizeAnalysis() {
         (content) => {
           setChildren(
             type == ChartType.Bubble ? (
-              <VjsSizeBubbleChart content={content} onDblClick={ondblclick}/>
+              <VjsSizeBubbleChart content={content} onClick={onclick}/>
             ) : (
-              <VjsSizeWallChart content={content} onDblClick={ondblclick}/>
+              <VjsSizeWallChart content={content} onClick={onclick}/>
             )
           );
         },

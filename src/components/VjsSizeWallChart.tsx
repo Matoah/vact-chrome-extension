@@ -9,11 +9,15 @@ import Typography from '@mui/material/Typography';
 import { toFileSize } from '../utils/NumberUtils';
 import Vjs from '../utils/Vjs';
 import VjsContentAnalysis from '../utils/VjsContentAnalysis';
+import {
+  isComponentSchemVjs,
+  isWindowSchemaVjs,
+} from '../utils/VjsUtils';
 import WallMapChart from '../utils/WallMapChart';
 
 interface VjsSizeWallChartProps {
   content: string;
-  onDblClick: (vjsName:any)=>void;
+  onClick:(vjsName:string,isCtrl:boolean)=>void;
 }
 
 interface VjsData {
@@ -35,7 +39,7 @@ const toJsonList = function (vjsList: Vjs[]) {
 };
 
 function VjsSizeWallChart(props: VjsSizeWallChartProps) {
-  const { content,onDblClick } = props;
+  const { content,onClick } = props;
   const ref = useRef<any>(null);
   useEffect(() => {
     const renderChart = () => {
@@ -46,7 +50,7 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
       const chart = new WallMapChart(datas, {
         path: (data: VjsData) => data.vjsName,
         label: (data: VjsData) => data.vjsName + `\n(${toFileSize(data.size)})`,
-        title: (data: VjsData) => `vjs名称：${data.vjsName}&#10;vjs大小：${toFileSize(data.size)}&#10;双击查看依赖关系`,
+        title: (data: VjsData) => `vjs名称：${data.vjsName}&#10;vjs大小：${toFileSize(data.size)}&#10;单击查看依赖关系${isWindowSchemaVjs(data.vjsName) ? "&#10;Ctrl+单击查看窗体配置大小详情":(isComponentSchemVjs(data.vjsName) ? "&#10;Ctrl+单击查看构件配置大小详情":"")}`,
         //@ts-ignore
         value: (data: VjsData) => {
           return data ? data.size : 0;
@@ -55,7 +59,7 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
         //@ts-ignore
         width: ref.current.clientWidth,
         height: ref.current.clientHeight,
-        ondblclick:(data:any)=>onDblClick(data.vjsName)
+        onclick:(data:any,evt:any)=>onClick(data.vjsName,evt.ctrlKey)
       });
       ref.current.innerHTML = "";
       ref.current.appendChild(chart);

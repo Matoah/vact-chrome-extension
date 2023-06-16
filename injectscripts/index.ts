@@ -105,11 +105,24 @@ class VActDevTools {
     let url = this._getVjsUrl(id);
     if (url) {
       //@ts-ignore
-      $.ajax({
-        url,
-        async: false,
-        complete: (xhr, status) => {
-          if (xhr.status == 200) {
+      let xhr = null;
+      if(window.XMLHttpRequest){
+        //@ts-ignore
+        xhr = new XMLHttpRequest();
+      }else{
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+      }
+      //@ts-ignore
+      xhr.open('POST',url,false);
+      //@ts-ignore
+      xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded"); 
+      //@ts-ignore
+      xhr.onreadystatechange =function(){
+        //@ts-ignore
+        if(xhr.readyState==4){
+          //@ts-ignore
+          if(xhr.status == 200){
+            //@ts-ignore
             const content = xhr.responseText;
             if (typeof content == "string") {
               const index = content.indexOf("exports.__$isErrorModule=true;");
@@ -124,8 +137,10 @@ class VActDevTools {
               result = "请求url失败！";
             }
           }
-        },
-      });
+        }
+      }
+      //@ts-ignore
+      xhr.send();
     } else {
       hasError = true;
       result = "未找到指定的vjs！";
@@ -600,6 +615,30 @@ class VActDevTools {
       }
     });
     return result;
+  }
+  /**
+   * 获取窗体配置信息（元数据）
+   * @param params 
+   * @returns 
+   */
+  getWindowMetadata(params: {
+    componentCode: string;
+    windowCode: string;
+  }){
+    const {componentCode,windowCode} = params;
+    return getWindowMetadata(this.sandbox,componentCode,windowCode);
+  }
+
+  /**
+   * 获取构件配置信息（元数据）
+   * @param params 
+   * @returns 
+   */
+  getComponentMetadata(params: {
+    componentCode: string;
+  }){
+    const {componentCode} = params;
+    return getComponentMetadata(this.sandbox,componentCode);
   }
 }
 

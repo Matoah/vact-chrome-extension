@@ -466,3 +466,34 @@ export function getComponentDatas(instanceId:string){
     }
   });
 }
+
+export function getWindowMetadata(componentCode:string,windowCode:string){
+  return new Promise<{} | null>((resolve,reject)=>{
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getWindowMetadata", {
+        componentCode,
+        windowCode
+      });
+      promise.then((rs:any)=>{resolve(rs||{})}).catch(reject);
+    } else {
+      resolve({});
+    }
+  });
+}
+
+export function getComponentMetadata(componentCode:string){
+  return new Promise<{} | null>((resolve,reject)=>{
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getComponentMetadata", {
+        componentCode
+      });
+      promise.then((rs:any)=>{resolve(rs||{})}).catch(reject);
+    } else {
+      resolve({});
+    }
+  });
+}

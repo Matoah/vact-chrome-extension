@@ -27,7 +27,7 @@ function BubbleChart(
     fillOpacity = 0.7, // the fill opacity of the bubbles
     stroke, // a static stroke around the bubbles
     strokeWidth, // the stroke width around the bubbles, if any
-    ondblclick = (data:any)=>{},
+    onclick = (data:any,event:any)=>{},
     strokeOpacity, // the stroke opacity around the bubbles, if any
   } = {}
 ) {
@@ -78,13 +78,13 @@ function BubbleChart(
     .attr("transform", (d) => `translate(${d.x},${d.y})`)
     .attr("style", "cursor: pointer;")
     .attr("data-data",(d)=>JSON.stringify(data[d.data]))
-    .on("dblclick", (evt)=>{
+    .on("click",(evt)=>{
       let target = evt.target;
       while(target&&target.tagName.toLowerCase()!='a'){
         target = target.parentElement;
       }
       if(target){
-        ondblclick(JSON.parse(target.dataset.data))
+        onclick(JSON.parse(target.dataset.data),evt)
       }
     });
 

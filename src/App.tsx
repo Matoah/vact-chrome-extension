@@ -17,6 +17,7 @@ import FrontendRuleExeRecord from './pages/FrontendRuleExeRecord';
 import PerformanceAnalysis from './pages/PerformanceAnalysis';
 import Portal from './pages/Portal';
 import TimelineMonitor from './pages/TimelineMonitor';
+import VjsContentAnalysis from './pages/VjsContentAnalysis';
 import VjsDepAnalysis from './pages/VjsDepAnalysis';
 import VjsDepUrlList from './pages/VjsDepUrlList';
 import VjsSizeAnalysis from './pages/VjsSizeAnalysis';
@@ -38,6 +39,7 @@ function App() {
             <Route path="/performance" element={<PerformanceAnalysis />} />
             <Route path="/vjsSizeUrlList" element={<VjsSizeUlList />} />
             <Route path="/vjsDepUrlList" element={<VjsDepUrlList />} />
+            <Route path="/vjsContentAnalysis/:vjsName" element={<VjsContentAnalysis/>}/>
             <Route path="/vjsSizeAnalysis/:id" element={<VjsSizeAnalysis />} />
             <Route path="/vjsDepAnalysis/:id" element={<VjsDepAnalysis />} />
             <Route
