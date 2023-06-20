@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react';
 
+import Draggable from 'react-draggable';
 import { useNavigate } from 'react-router-dom';
 
 import ArrowCircleLeftIcon from '@mui/icons-material/ArrowCircleLeft';
@@ -61,14 +62,16 @@ interface NavigatorProps {
 function Navigator(props: NavigatorProps) {
   const { backUrl, menus } = props;
   const ref = useRef<any>(null);
-  const [isOpen, setOpen] = useState<boolean>(false);
-  const handleOpen = (): void => {
-    setOpen(true);
-  };
-
-  const handleClose = (): void => {
-    setOpen(false);
-  };
+  const [state, setState] = useState<{ isOpen: boolean; preOperation: string }>(
+    { isOpen: false, preOperation: "" }
+  );
+  const handleClose = ()=>{
+    setState({
+      ...state,
+      isOpen:false
+    });
+  }
+  console.log("state:"+JSON.stringify(state));
   const nav = useNavigate();
   let goBack = backUrl
     ? () => {
@@ -77,59 +80,86 @@ function Navigator(props: NavigatorProps) {
     : () => {
         nav(-1);
       };
+
   return (
     <Fragment>
-      <NavigatorButton>
-        <Fab ref={ref} onClick={handleOpen} color="primary" aria-label="add">
-          <MenuIcon />
-        </Fab>
-        <Menu
-          disableScrollLock
-          anchorEl={ref.current}
-          onClose={handleClose}
-          open={isOpen}
-          anchorOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-        >
-          {menus
-            ? menus.map((menu) => {
-                return (
-                  <MenuItem
-                    onClick={() => {
-                      handleClose();
-                      menu.click();
-                    }}
-                    key={menu.title}
-                  >
-                    <Tooltip title={menu.title}>{menu.icon}</Tooltip>
-                  </MenuItem>
-                );
-              })
-            : null}
-          <MenuItem
+      <Draggable
+        onDrag={(evt) => {
+          setState({
+            isOpen: false,
+            preOperation: "onDrag",
+          });
+        }}
+      >
+        <NavigatorButton>
+          <Fab
+            ref={ref}
             onClick={() => {
-              handleClose();
-              nav("/");
+              if (state.preOperation != "onDrag") {
+                setState({
+                  isOpen: !state.isOpen,
+                  preOperation: state.preOperation,
+                });
+              } else {
+                setState({
+                  isOpen: state.isOpen,
+                  preOperation: "onClick",
+                });
+              }
+            }}
+            color="primary"
+            aria-label="add"
+          >
+            <MenuIcon />
+          </Fab>
+          <Menu
+            disableScrollLock
+            anchorEl={ref.current}
+            onClose={handleClose}
+            open={state.isOpen}
+            anchorOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
             }}
           >
-            <HouseIcon fontSize="large" />
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleClose();
-              goBack();
-            }}
-          >
-            <ArrowCircleLeftIcon fontSize="large" />
-          </MenuItem>
-        </Menu>
-      </NavigatorButton>
+            {menus
+              ? menus.map((menu) => {
+                  return (
+                    <MenuItem
+                      onClick={() => {
+                        handleClose();
+                        menu.click();
+                      }}
+                      key={menu.title}
+                    >
+                      <Tooltip title={menu.title}>{menu.icon}</Tooltip>
+                    </MenuItem>
+                  );
+                })
+              : null}
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                nav("/");
+              }}
+            >
+              <HouseIcon fontSize="large" />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                goBack();
+              }}
+            >
+              <ArrowCircleLeftIcon fontSize="large" />
+            </MenuItem>
+          </Menu>
+        </NavigatorButton>
+      </Draggable>
     </Fragment>
   );
 }

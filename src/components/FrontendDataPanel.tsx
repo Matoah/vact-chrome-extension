@@ -11,21 +11,21 @@ interface FrontendDataPanelProps{
 }
 
 export default function FrontendDataPanel(props:FrontendDataPanelProps) {
-    const { selectNode } = useSelector((state) => state.frontendDataPortal);
+  const { selectNode } = useSelector((state) => state.frontendDataPortal);
   return (
-    <Fragment>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        <Card sx={{ flex: 1, overflow: "auto" }}>
-            {selectNode ? (selectNode.type=="window" ? <WindowDataPortal/>:<ComponentDataPortal/>):null}
-        </Card>
-      </Box>
-    </Fragment>
-  );
+      <Fragment>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <Card sx={{ flex: 1, overflow: "auto" }}>
+              {selectNode ? (selectNode.type=="window" ? <WindowDataPortal/>:<ComponentDataPortal/>):null}
+          </Card>
+        </Box>
+      </Fragment>
+    );
 }
