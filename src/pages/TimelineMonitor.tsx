@@ -1,19 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import $ from "jquery";
+import $ from 'jquery';
 
-import HomeIcon from "@mui/icons-material/Home";
-import Box from "@mui/material/Box";
-import Breadcrumbs from "@mui/material/Breadcrumbs";
-import CircularProgress from "@mui/material/CircularProgress";
-import Link from "@mui/material/Link";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import Typography from "@mui/material/Typography";
+import HomeIcon from '@mui/icons-material/Home';
+import Box from '@mui/material/Box';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+import CircularProgress from '@mui/material/CircularProgress';
+import Link from '@mui/material/Link';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import Typography from '@mui/material/Typography';
 
-import Navigator from "../components/Navigator";
-import { getMonitorDatas } from "../utils/RPCUtils";
-import TimelineChart from "../utils/TimelineChart";
+import Navigator from '../components/Navigator';
+import { getMonitorDatas } from '../utils/RPCUtils';
+import TimelineChart from '../utils/TimelineChart';
 
 function _createTimeLineChart(params: {
   datas: any;
@@ -67,7 +71,18 @@ function _dealDatas(datas: MonitorData[]) {
 function TimelineMonitor() {
   const [children, setChildren] = useState(function () {
     return (
-      <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
+      <Box
+        sx={{
+          position: "absolute",
+          display: "flex",
+          width: "100%",
+          height: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress size={80} sx={{ boxShadow: 0 }}></CircularProgress>
+      </Box>
     );
   });
   const [data, setData] = useState<{
@@ -125,7 +140,7 @@ function TimelineMonitor() {
                 justifyContent: "center",
               }}
             >
-              <Typography>暂无数据</Typography>
+              <Typography sx={{ color: "#fff" }}>暂无数据</Typography>
             </Box>
           );
         }

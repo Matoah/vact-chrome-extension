@@ -25,6 +25,7 @@ import {
 import {
   Breakpoint,
   FrontendScope,
+  VjsUrl,
 } from './Types';
 
 export function isMonitored() {
@@ -108,18 +109,59 @@ export function getVjsContent(id: string) {
   });
 }
 
-interface VjsUrl {
-  id: string;
-  url: string;
-}
-
 export function getVjsUrls() {
   return new Promise<VjsUrl[]>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
       const promise = window.vact_devtools.sendRequest("getVjsUrls", {});
-      promise.then(resolve).catch(reject);
+      promise
+        .then((urls: Array<{ id: string; url: string }>) => {
+          const vjsUrls: VjsUrl[] = [];
+          if (Array.isArray(urls)) {
+            //@ts-ignore
+            window.chrome.devtools.network.getHAR((log) => {
+              const entries = log.entries;
+              urls.forEach((vjs) => {
+                const url = vjs.url;
+                //@ts-ignore
+                const vjsFilename: string = url
+                  .split("?")[0]
+                  .split(/[\\/]/)
+                  .pop();
+                let notFound = true;
+                for (let index = 0; index < entries.length; index++) {
+                  const entry: {
+                    request: { url: string };
+                    response: { content: { size: number } };
+                  } = entries[index];
+                  const { request, response } = entry;
+                  const requestUrl = request.url;
+                  if (requestUrl.indexOf(vjsFilename) != -1) {
+                    vjsUrls.push({
+                      id: vjs.id,
+                      url: vjs.url,
+                      size: response.content.size,
+                    });
+                    notFound = false;
+                    break;
+                  }
+                }
+                if(notFound){
+                  vjsUrls.push({
+                    id: vjs.id,
+                    url: vjs.url,
+                    size: -1,
+                  });
+                }
+              });
+              resolve(vjsUrls);
+            });
+          } else {
+            resolve(vjsUrls);
+          }
+        })
+        .catch(reject);
     } else {
       resolve(getVjsUrlList());
     }
@@ -442,23 +484,164 @@ export function getWindowDatas(instanceId: string) {
       //@ts-ignore
       const promise = window.vact_devtools.sendRequest("getWindowDatas", {
         instanceId,
-        keepDSContructor:true
+        keepDSContructor: true,
       });
       promise.then(resolve).catch(reject);
     } else {
-      resolve({"输入":{"windowCode":"gz_zdys_Task20190612088","componentCode":"v_gz_new","workspaceKey":""},"控件":{"__$vactType":"error","message":"Converting circular structure to JSON\\n    --> starting at object with constructor 'HTMLDivElement'\\n    |     property '__reactContainer$dvpewyrngvh' -> object with constructor 'Uj'\\n    |     property 'stateNode' -> object with constructor 'Wj'\\n    --- property 'containerInfo' closes the circle"},"实体":{"autotest_gz02_Task20190612088":{"metadata":{"model":[{"datasourceName":"autotest_gz02_Task20190612088","fields":[{"code":"id","name":"id","length":64,"type":"char","precision":0,"defaultValue":null,"expression":""},{"code":"colText","name":"colText","length":1000,"type":"text","precision":0,"defaultValue":null,"expression":""},{"code":"colDouble","name":"colDouble","length":6,"type":"number","precision":4,"defaultValue":null,"expression":""},{"code":"colBoolean","name":"colBoolean","length":1,"type":"boolean","precision":0,"defaultValue":false,"expression":""},{"code":"colDate","name":"colDate","length":255,"type":"date","precision":0,"defaultValue":null,"expression":""},{"code":"colDateTime","name":"colDateTime","length":255,"type":"longDate","precision":0,"defaultValue":null,"expression":""},{"code":"colInt","name":"colInt","length":3,"type":"integer","precision":0,"defaultValue":null,"expression":""},{"code":"wenben","name":"wenben","length":255,"type":"char","precision":0,"defaultValue":null,"expression":""}]}]},"datas":{"values":[{"id":"43778f22e1f04892b3ab7c0132afd017","colText":"默认长文本","colDouble":2.3,"colBoolean":true,"colDate":"2017-06-06","colDateTime":"2019-06-18 08:56:09","colInt":1,"wenben":null},{"id":"a95d7ecba5a244198828fac9c5b3ec14","colText":"默认长文本","colDouble":2.3,"colBoolean":true,"colDate":"2016-12-30","colDateTime":"2016-12-30 09:01:55","colInt":1,"wenben":null},{"id":"ab9ef94c9a564e6eb8ac9a12a18ee6cc","colText":"默认长文本","colDouble":7.8,"colBoolean":true,"colDate":"2016-12-30","colDateTime":"2016-12-30 09:01:55","colInt":1,"wenben":null},{"id":"cd87f3017a7d45248f67d6e353887fd9","colText":"默认长文本","colDouble":2.3,"colBoolean":true,"colDate":"2016-12-30","colDateTime":"2016-12-30 09:01:55","colInt":1,"wenben":null}],"recordCount":4}}}});
+      resolve({
+        输入: {
+          windowCode: "gz_zdys_Task20190612088",
+          componentCode: "v_gz_new",
+          workspaceKey: "",
+        },
+        控件: {
+          __$vactType: "error",
+          message:
+            "Converting circular structure to JSON\\n    --> starting at object with constructor 'HTMLDivElement'\\n    |     property '__reactContainer$dvpewyrngvh' -> object with constructor 'Uj'\\n    |     property 'stateNode' -> object with constructor 'Wj'\\n    --- property 'containerInfo' closes the circle",
+        },
+        实体: {
+          autotest_gz02_Task20190612088: {
+            metadata: {
+              model: [
+                {
+                  datasourceName: "autotest_gz02_Task20190612088",
+                  fields: [
+                    {
+                      code: "id",
+                      name: "id",
+                      length: 64,
+                      type: "char",
+                      precision: 0,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                    {
+                      code: "colText",
+                      name: "colText",
+                      length: 1000,
+                      type: "text",
+                      precision: 0,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                    {
+                      code: "colDouble",
+                      name: "colDouble",
+                      length: 6,
+                      type: "number",
+                      precision: 4,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                    {
+                      code: "colBoolean",
+                      name: "colBoolean",
+                      length: 1,
+                      type: "boolean",
+                      precision: 0,
+                      defaultValue: false,
+                      expression: "",
+                    },
+                    {
+                      code: "colDate",
+                      name: "colDate",
+                      length: 255,
+                      type: "date",
+                      precision: 0,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                    {
+                      code: "colDateTime",
+                      name: "colDateTime",
+                      length: 255,
+                      type: "longDate",
+                      precision: 0,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                    {
+                      code: "colInt",
+                      name: "colInt",
+                      length: 3,
+                      type: "integer",
+                      precision: 0,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                    {
+                      code: "wenben",
+                      name: "wenben",
+                      length: 255,
+                      type: "char",
+                      precision: 0,
+                      defaultValue: null,
+                      expression: "",
+                    },
+                  ],
+                },
+              ],
+            },
+            datas: {
+              values: [
+                {
+                  id: "43778f22e1f04892b3ab7c0132afd017",
+                  colText: "默认长文本",
+                  colDouble: 2.3,
+                  colBoolean: true,
+                  colDate: "2017-06-06",
+                  colDateTime: "2019-06-18 08:56:09",
+                  colInt: 1,
+                  wenben: null,
+                },
+                {
+                  id: "a95d7ecba5a244198828fac9c5b3ec14",
+                  colText: "默认长文本",
+                  colDouble: 2.3,
+                  colBoolean: true,
+                  colDate: "2016-12-30",
+                  colDateTime: "2016-12-30 09:01:55",
+                  colInt: 1,
+                  wenben: null,
+                },
+                {
+                  id: "ab9ef94c9a564e6eb8ac9a12a18ee6cc",
+                  colText: "默认长文本",
+                  colDouble: 7.8,
+                  colBoolean: true,
+                  colDate: "2016-12-30",
+                  colDateTime: "2016-12-30 09:01:55",
+                  colInt: 1,
+                  wenben: null,
+                },
+                {
+                  id: "cd87f3017a7d45248f67d6e353887fd9",
+                  colText: "默认长文本",
+                  colDouble: 2.3,
+                  colBoolean: true,
+                  colDate: "2016-12-30",
+                  colDateTime: "2016-12-30 09:01:55",
+                  colInt: 1,
+                  wenben: null,
+                },
+              ],
+              recordCount: 4,
+            },
+          },
+        },
+      });
     }
   });
 }
 
-export function getComponentDatas(instanceId:string){
+export function getComponentDatas(instanceId: string) {
   return new Promise<{} | null>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
       const promise = window.vact_devtools.sendRequest("getComponentDatas", {
         instanceId,
-        keepDSContructor:true
+        keepDSContructor: true,
       });
       promise.then(resolve).catch(reject);
     } else {
@@ -467,31 +650,39 @@ export function getComponentDatas(instanceId:string){
   });
 }
 
-export function getWindowMetadata(componentCode:string,windowCode:string){
-  return new Promise<{} | null>((resolve,reject)=>{
+export function getWindowMetadata(componentCode: string, windowCode: string) {
+  return new Promise<{} | null>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
       const promise = window.vact_devtools.sendRequest("getWindowMetadata", {
         componentCode,
-        windowCode
+        windowCode,
       });
-      promise.then((rs:any)=>{resolve(rs||{})}).catch(reject);
+      promise
+        .then((rs: any) => {
+          resolve(rs || {});
+        })
+        .catch(reject);
     } else {
       resolve({});
     }
   });
 }
 
-export function getComponentMetadata(componentCode:string){
-  return new Promise<{} | null>((resolve,reject)=>{
+export function getComponentMetadata(componentCode: string) {
+  return new Promise<{} | null>((resolve, reject) => {
     //@ts-ignore
     if (window.vact_devtools && window.vact_devtools.sendRequest) {
       //@ts-ignore
       const promise = window.vact_devtools.sendRequest("getComponentMetadata", {
-        componentCode
+        componentCode,
       });
-      promise.then((rs:any)=>{resolve(rs||{})}).catch(reject);
+      promise
+        .then((rs: any) => {
+          resolve(rs || {});
+        })
+        .catch(reject);
     } else {
       resolve({});
     }

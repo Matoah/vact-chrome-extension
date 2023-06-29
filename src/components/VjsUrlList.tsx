@@ -22,23 +22,23 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import Navigator from '../components/Navigator';
+import { toFileSize } from '../utils/NumberUtils';
 import { getVjsUrls } from '../utils/RPCUtils';
+import { VjsUrl } from '../utils/Types';
 
 interface VjsUrlListProps {
   tip: string;
   click: (id: string) => void;
 }
 
-interface VjsUrl {
+interface VjsItem {
   id: string;
-  url: string;
+  child: JSX.Element;
+  size: number;
 }
 
-function filter(
-  urls: VjsUrl[],
-  search: string
-): Array<{ id: string; child: JSX.Element }> {
-  const res: any[] = [];
+function filter(urls: VjsUrl[], search: string): VjsItem[] {
+  const res: VjsItem[] = [];
   if (urls.length > 0) {
     urls.forEach((item: VjsUrl) => {
       const url = item.url;
@@ -79,6 +79,7 @@ function filter(
         res.push({
           id: item.id,
           child: <Fragment key={item.id}>{children}</Fragment>,
+          size: item.size,
         });
       }
     });
@@ -95,7 +96,7 @@ function VjsUrlList(pros: VjsUrlListProps) {
   useEffect(() => {
     getVjsUrls().then(setUrls);
   }, []);
-  let vjsUrls: Array<{ id: string; child: JSX.Element }> = [];
+  let vjsUrls: VjsItem[] = [];
   if (search == "") {
     urls.forEach((url) => {
       vjsUrls.push({
@@ -105,6 +106,7 @@ function VjsUrlList(pros: VjsUrlListProps) {
             {url.url}
           </Typography>
         ),
+        size: url.size,
       });
     });
   } else {
@@ -137,7 +139,10 @@ function VjsUrlList(pros: VjsUrlListProps) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="center">{"vjs链接"}</TableCell>
+                <TableCell align="center">{"链接"}</TableCell>
+                <TableCell align="center" sx={{ width: "100px" }}>
+                  {"大小"}
+                </TableCell>
                 <TableCell align="center" sx={{ width: "100px" }}>
                   {"操作"}
                 </TableCell>
@@ -151,6 +156,13 @@ function VjsUrlList(pros: VjsUrlListProps) {
                       <Box display="flex">
                         <Box pl={1} sx={{ flex: 1 }}>
                           {url.child}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center" sx={{ width: "100px" }}>
+                      <Box display="flex">
+                        <Box pl={1} sx={{ flex: 1 }}>
+                          {url.size == -1 ? "未记录" : toFileSize(url.size)}
                         </Box>
                       </Box>
                     </TableCell>

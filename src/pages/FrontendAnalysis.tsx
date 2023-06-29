@@ -1,6 +1,5 @@
 import { Fragment } from 'react';
 
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
 import Grid from '@mui/material/Grid';
@@ -25,7 +24,7 @@ function getDatas(): Data[] {
       ),
       desc: "搜寻当前已打开构件、窗体；查看构件变量、窗体输入、窗体输出、窗体实体等数据...",
       to: "/frontendDataPortal",
-    },
+    }/*,
     {
       title: "规则执行顺序",
       avatarIcon: (
@@ -33,7 +32,7 @@ function getDatas(): Data[] {
       ),
       desc: "实时记录前端规则执行顺序，并以回放的方式展示...",
       to: "/frontendRuleExeRecord",
-    },
+    }*/,
     {
       title: "前端规则调试",
       avatarIcon: <BugReportIcon sx={{ width: "68px", height: "68px" }} />,

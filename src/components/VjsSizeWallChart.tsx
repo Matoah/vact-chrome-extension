@@ -17,7 +17,7 @@ import WallMapChart from '../utils/WallMapChart';
 
 interface VjsSizeWallChartProps {
   content: string;
-  onClick:(vjsName:string,isCtrl:boolean)=>void;
+  onClick: (vjsName: string, isCtrl: boolean) => void;
 }
 
 interface VjsData {
@@ -41,6 +41,7 @@ const toJsonList = function (vjsList: Vjs[]) {
 function VjsSizeWallChart(props: VjsSizeWallChartProps) {
   const { content,onClick } = props;
   const ref = useRef<any>(null);
+  const ref1 = useRef<any>(null);
   useEffect(() => {
     const renderChart = () => {
       const vjsSizeAnalyze = new VjsContentAnalysis(content);
@@ -50,7 +51,16 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
       const chart = new WallMapChart(datas, {
         path: (data: VjsData) => data.vjsName,
         label: (data: VjsData) => data.vjsName + `\n(${toFileSize(data.size)})`,
-        title: (data: VjsData) => `vjs名称：${data.vjsName}&#10;vjs大小：${toFileSize(data.size)}&#10;单击查看依赖关系${isWindowSchemaVjs(data.vjsName) ? "&#10;Ctrl+单击查看窗体配置大小详情":(isComponentSchemVjs(data.vjsName) ? "&#10;Ctrl+单击查看构件配置大小详情":"")}`,
+        title: (data: VjsData) =>
+          `vjs名称：${data.vjsName}&#10;vjs大小：${toFileSize(
+            data.size
+          )}&#10;单击查看依赖关系${
+            isWindowSchemaVjs(data.vjsName)
+              ? "&#10;Ctrl+单击查看窗体配置大小详情"
+              : isComponentSchemVjs(data.vjsName)
+              ? "&#10;Ctrl+单击查看构件配置大小详情"
+              : ""
+          }`,
         //@ts-ignore
         value: (data: VjsData) => {
           return data ? data.size : 0;
@@ -59,10 +69,14 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
         //@ts-ignore
         width: ref.current.clientWidth,
         height: ref.current.clientHeight,
-        onclick:(data:any,evt:any)=>onClick(data.vjsName,evt.ctrlKey)
+        onclick: (data: any, evt: any) => onClick(data.vjsName, evt.ctrlKey),
       });
       ref.current.innerHTML = "";
       ref.current.appendChild(chart);
+      ref1.current.innerHTML = `<h5 style="color: #ccc;text-align: left;padding: 0;margin: 4px 0px 0px 4px;">总个数：${
+        vjsList.length
+      }</h5><h5 style="color: #ccc;text-align: left;padding: 0;margin: 4px 0px 0px 4px;">总大小：${toFileSize(content.length)}</h5>`;
+      ref1.current.style.display = 'block';
     };
     window.addEventListener("resize", renderChart);
     renderChart();
@@ -71,27 +85,44 @@ function VjsSizeWallChart(props: VjsSizeWallChartProps) {
     };
   }, []);
   return (
-    <div ref={ref} style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <div
-        style={{
-          width: "100%",
-          height: "calc(100% - 35px)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        ref={ref}
+        style={{ width: "100%", height: "100%", padding: "0px", margin: "0px" }}
       >
-        <CircularProgress size={80} />
-        <Typography
-          variant="subtitle2"
-          color="inherit"
-          component="div"
-          sx={{ marginTop: "16px" }}
+        <div
+          style={{
+            width: "100%",
+            height: "calc(100% - 35px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          正在分析中，请稍候...
-        </Typography>
+          <CircularProgress size={80} />
+          <Typography
+            variant="subtitle2"
+            color="inherit"
+            component="div"
+            sx={{ marginTop: "16px" }}
+          >
+            正在分析中，请稍候...
+          </Typography>
+        </div>
       </div>
+      <div
+        ref={ref1}
+        style={{
+          position: "absolute",
+          left: "8px",
+          bottom: "8px",
+          borderRadius: "8px",
+          display: "none",
+          width: "110px",
+          height: "60px",
+        }}
+      ></div>
     </div>
   );
 }

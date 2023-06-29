@@ -166,6 +166,12 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
+interface VjsUrl {
+  id: string;
+  url: string;
+  size: number;
+}
+
 export {
   type Breakpoint,
   type Debug,
@@ -185,4 +191,5 @@ export {
   type ScopeTreeNode,
   type ScopeTreeSearchItem,
   type TreeNode,
+  type VjsUrl,
 };

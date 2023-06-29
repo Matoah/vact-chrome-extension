@@ -12,7 +12,7 @@
   "optional_host_permissions": ["https://*/*", "http://*/*"],
   "devtools_page": "popups/devtools.html",
   "background": { "service_worker": "scripts/background.js" },
-  "permissions": ["scripting"],
+  "permissions": ["scripting","devtools_page"],
   "content_scripts": [
     {
       "js": ["scripts/contentScript.js"],
