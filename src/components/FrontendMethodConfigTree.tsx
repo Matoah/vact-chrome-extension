@@ -1,19 +1,26 @@
-import { Fragment, useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from 'react';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 import {
   addBreakpoint,
   removeBreakpoint,
   setRule,
-} from "../slices/fontendDebugger";
-import { useDispatch, useSelector } from "../store";
-import { getFrontendMethod } from "../utils/RPCUtils";
+} from '../slices/fontendDebugger';
+import {
+  useDispatch,
+  useSelector,
+} from '../store';
+import { getFrontendMethod } from '../utils/RPCUtils';
 import {
   getAllNodeIds,
   getBreakpointByNodeId,
@@ -21,11 +28,11 @@ import {
   ruleInstanceToId,
   toTree,
   TreeNode,
-} from "../utils/RuleConfigTreeUtils";
-import CustomTreeView from "./CustomTreeView";
-import DebugIcon from "./DebugIcon";
-import MinusSquare from "./MinusSquare";
-import PlusSquare from "./PlusSquare";
+} from '../utils/RuleConfigTreeUtils';
+import CustomTreeView from './CustomTreeView';
+import DebugIcon from './DebugIcon';
+import MinusSquare from './MinusSquare';
+import PlusSquare from './PlusSquare';
 
 interface FrontendMethodConfigTreeProps {}
 
@@ -109,20 +116,35 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
                 <Box
                   sx={{ display: "flex", alignItems: "center", p: 0.5, pr: 0 }}
                 >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: "inherit",
-                      flexGrow: 1,
-                    }}
-                  >
-                    {node.label}
-                  </Typography>
+                  {node.tips ? (
+                    <Tooltip title={node.tips} sx={{maxWidth:'auto'}}  enterDelay={1000}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: "inherit",
+                          flexGrow: 1,
+                        }}
+                      >
+                        {node.label}
+                      </Typography>
+                    </Tooltip>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: "inherit",
+                        flexGrow: 1,
+                      }}
+                    >
+                      {node.label}
+                    </Typography>
+                  )}
                   <Tooltip title={node.desc}>
                     <Typography
                       variant="caption"
                       color="inherit"
                       sx={{
+                        whiteSpace:"nowrap",
                         width: "300px",
                         textTransform: "none",
                         overflow: "hidden",

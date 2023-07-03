@@ -1,7 +1,11 @@
+import { Fragment } from 'react';
+
 import {
   Element,
   xml2js,
 } from 'xml-js';
+
+import Typography from '@mui/material/Typography';
 
 import { uuid } from '../utils/StringUtils';
 import {
@@ -29,6 +33,7 @@ interface TreeNode {
   label: string;
   type: "rule" | "if" | "else" | "foreach";
   desc?: string;
+  tips?: JSX.Element;
   ruleCode?: string;
   debug?: boolean | { debug: boolean; condition: string };
   children?: TreeNode[];
@@ -107,6 +112,11 @@ const dispatcher = {
       label: "IF",
       type: "if",
       desc: condition,
+      tips:(
+        <Fragment>
+          <Typography variant="body2">{condition}</Typography>
+        </Fragment>
+      ),
       children,
     };
   },
@@ -137,7 +147,6 @@ const dispatcher = {
       id: uuid(),
       label: "ELSE",
       type: "else",
-      desc: "",
       children,
     };
   },
@@ -151,12 +160,21 @@ const dispatcher = {
     }
   ): TreeNode {
     const code = element.attributes?.code + "";
+    const {ruleCode,instanceCode,instanceName,ruleName} = map[code].$;
+    const label = instanceName || ruleName;
     return {
       id: ruleInstanceToId(code, currentMethod),
       type: "rule",
       ruleCode: code,
-      label: map[code].$.instanceName || map[code].$.ruleName,
-      desc: "",
+      label, 
+      tips: (
+        <Fragment>
+          <Typography variant="body2" sx={{whiteSpace:'nowrap'}}>{`规则名称：${ruleName}`}</Typography>
+          <Typography variant="body2" sx={{whiteSpace:'nowrap'}}>{`规则编号：${ruleCode}`}</Typography>
+          <Typography variant="body2" sx={{whiteSpace:'nowrap'}}>{`实例名称：${instanceName}`}</Typography>
+          <Typography variant="body2" sx={{whiteSpace:'nowrap'}}>{`实例编号：${instanceCode}`}</Typography>
+        </Fragment>
+      ),
     };
   },
   foreach: function (
@@ -210,7 +228,6 @@ const dispatcher = {
       id: uuid(),
       label: `Foreach(var ${varCode} in ${entityCode})`,
       type: "foreach",
-      desc: "",
       children,
     };
   },

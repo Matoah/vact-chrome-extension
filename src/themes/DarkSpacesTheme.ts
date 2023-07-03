@@ -1093,6 +1093,7 @@ export const DarkSpacesTheme = createTheme({
         tooltip: {
           backgroundColor: alpha(colors.alpha.black["100"], 0.95),
           padding: "8px 16px",
+          maxWidth: 'none !important',
           fontSize: 13,
         },
         arrow: {
