@@ -218,7 +218,7 @@ function FrontendMethodTree(props: FrontendMethodTreeProps) {
                     color="inherit"
                     sx={{ mr: 1 }}
                   />
-                  <Tooltip title={tooltipTitle} enterDelay={1000} sx={{maxWidth:"auto"}}>
+                  <Tooltip title={tooltipTitle} enterDelay={1000} enterNextDelay={1000} sx={{maxWidth:"auto"}}>
                     <Typography
                       variant="body2"
                       sx={{

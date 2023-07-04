@@ -117,7 +117,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
                   sx={{ display: "flex", alignItems: "center", p: 0.5, pr: 0 }}
                 >
                   {node.tips ? (
-                    <Tooltip title={node.tips} sx={{maxWidth:'auto'}}  enterDelay={1000}>
+                    <Tooltip title={node.tips} sx={{maxWidth:'auto'}}   enterDelay={1000} enterNextDelay={1000}>
                       <Typography
                         variant="body2"
                         sx={{
@@ -139,7 +139,7 @@ function FrontendMethodConfigTree(props: FrontendMethodConfigTreeProps) {
                       {node.label}
                     </Typography>
                   )}
-                  <Tooltip title={node.desc}>
+                  <Tooltip title={node.desc}  enterDelay={1000} enterNextDelay={1000}>
                     <Typography
                       variant="caption"
                       color="inherit"
