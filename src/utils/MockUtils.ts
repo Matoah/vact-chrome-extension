@@ -1,5 +1,6 @@
 import {
   Breakpoint,
+  ConsoleSetting,
   FrontendScope,
 } from './Types';
 
@@ -159,4 +160,14 @@ export function getFrontendScopes(): Array<FrontendScope> {
       pId: "514eedd1959d5d17b65a04d2eddf3270",
     },
   ];
+}
+
+let localConsoleSetting:ConsoleSetting|null = null;
+
+export function getConsoleSetting(){
+  return localConsoleSetting||{}
+}
+
+export function setConsoleSetting(consoleSetting:ConsoleSetting){
+  localConsoleSetting = consoleSetting;
 }

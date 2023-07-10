@@ -154,5 +154,20 @@ function StringLabel(params: { value: any }) {
     }
     return tree;
   };
+  interface Node{
+    id:string,
+    children?:Node[]
+  }
+  const getAllNodeIds = function(tree:Node[]){
+    let result: string[] = [];
+    tree.forEach((node) => {
+      result.push(node.id);
+      const children = node.children;
+      if (children && children.length > 0) {
+        result = result.concat(getAllNodeIds(children));
+      }
+    });
+    return result;
+  }
 
-export { arrayToTree, objectToTree };
+export { arrayToTree, getAllNodeIds, objectToTree };

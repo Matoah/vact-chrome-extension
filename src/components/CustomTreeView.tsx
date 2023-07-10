@@ -115,3 +115,4 @@ function CustomTreeView(pros: CustomTreeViewProps) {
 }
 
 export default CustomTreeView;
+export { CustomTreeView, type TreeNode };

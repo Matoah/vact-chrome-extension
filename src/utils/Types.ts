@@ -172,8 +172,17 @@ interface VjsUrl {
   size: number;
 }
 
+interface ConsoleSetting{
+  enable?:boolean;
+  enableDebug?:boolean;
+  enableInfo?:boolean;
+  enableWarn?:boolean;
+  enableError?:boolean;
+}
+
 export {
   type Breakpoint,
+  type ConsoleSetting,
   type Debug,
   type FrontendDataPortalState,
   type FrontendDebuggerState,

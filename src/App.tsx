@@ -14,6 +14,7 @@ import FrontendDataPortal from './pages/FrontendDataPortal';
 import FrontendDebugger from './pages/FrontendDebugger';
 import FrontendMonitor from './pages/FrontendMonitor';
 import FrontendRuleExeRecord from './pages/FrontendRuleExeRecord';
+import FrontendSetting from './pages/FrontendSetting';
 import PerformanceAnalysis from './pages/PerformanceAnalysis';
 import Portal from './pages/Portal';
 import TimelineMonitor from './pages/TimelineMonitor';
@@ -48,6 +49,7 @@ function App() {
             />
             <Route path="/frontendAnalysis" element={<FrontendAnalysis />} />
             <Route path="/frontendMonitor" element={<FrontendMonitor />} />
+            <Route path="/frontendSetting" element={<FrontendSetting />} />
             <Route
               path="/frontendRuleExeRecord"
               element={<FrontendRuleExeRecord />}

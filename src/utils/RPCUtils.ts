@@ -3,6 +3,7 @@ import {
   clearBreakpoint as clearMockBreakpoint,
   getBreakpoints as getMockBreakpoints,
   getComponentDebugInfo as getMockComponentDebugInfo,
+  getConsoleSetting as getMockConsoleSetting,
   getFrontendMethod as getMockFrontendMethod,
   getFrontendMethods as getMockFrontendMethods,
   getFrontendScopes as getMockFrontendScopes,
@@ -18,12 +19,14 @@ import {
   markBreakAllRule as markMockBreakAllRule,
   markIgnoreBreakpoints as markMockIgnoreBreakpoints,
   removeBreakpoint as removeMockBreakpoint,
+  setConsoleSetting as setMockConsoleSetting,
   unmarkBreakAllRule as unmarkMockBreakAllRule,
   unmarkIgnoreBreakpoints as unmarkMockIgnoreBreakpoints,
   updateBreakpoint as updateMockBreakpoint,
 } from './MockUtils';
 import {
   Breakpoint,
+  ConsoleSetting,
   FrontendScope,
   VjsUrl,
 } from './Types';
@@ -147,7 +150,7 @@ export function getVjsUrls() {
                     break;
                   }
                 }
-                if(notFound){
+                if (notFound) {
                   vjsUrls.push({
                     id: vjs.id,
                     url: vjs.url,
@@ -685,6 +688,43 @@ export function getComponentMetadata(componentCode: string) {
         .catch(reject);
     } else {
       resolve({});
+    }
+  });
+}
+
+export function setConsoleSetting(consoleSetting: ConsoleSetting) {
+  return new Promise<void>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest(
+        "setConsoleSetting",
+        consoleSetting
+      );
+      promise
+        .then((rs: any) => {
+          resolve(rs || {});
+        })
+        .catch(reject);
+    } else {
+      resolve(setMockConsoleSetting(consoleSetting));
+    }
+  });
+}
+
+export function getConsoleSetting(){
+  return new Promise<ConsoleSetting>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("getConsoleSetting", {});
+      promise
+        .then((rs: any) => {
+          resolve(rs || {});
+        })
+        .catch(reject);
+    } else {
+      resolve(getMockConsoleSetting());
     }
   });
 }

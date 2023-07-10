@@ -21,11 +21,12 @@ import {
   isEmptyObject,
 } from './Utils';
 
-interface FrontendScopeTree {
-  instanceId: string;
-  title: string;
-  type: "component" | "window";
-  children?: FrontendScopeTree[];
+interface ConsoleSetting {
+  enable?: boolean;
+  enableDebug?: boolean;
+  enableInfo?: boolean;
+  enableWarn?: boolean;
+  enableError?: boolean;
 }
 
 class VActDevTools {
@@ -41,6 +42,31 @@ class VActDevTools {
     //vjs请求链接
     url: string;
   }> = [];
+
+  LOCALSTORAGEKEYS = {
+    /**
+     * 忽略所有规则断点
+     */
+    ignorebreakpoints: "ignorebreakpoints",
+    /**
+     * 中断所有规则
+     */
+    breakallrule: "breakallrule",
+    /**
+     * chrome插件id
+     */
+    extensionId: "extensionId",
+    /**
+     * 规则断点
+     */
+    breakpoints: "breakpoints",
+    /**
+     * 是否记录前端耗时
+     */
+    isMonitored: "isMonitored",
+    //日志设置
+    consoleSetting: "consoleSetting",
+  };
   /**
    * vjs沙箱
    */
@@ -52,11 +78,29 @@ class VActDevTools {
 
   frontendOberser: FrontendOberser;
 
-  constructor(extensionId: null | string) {
-    this.extensionId = extensionId;
+  consoleSetting: null | ConsoleSetting;
+
+  constructor() {
+    this.extensionId = this._getLocalStorage(this.LOCALSTORAGEKEYS.extensionId);
     this.ruleDebugger = new RuleDebugger();
-    this.ruleDebugger.setExtensionId(extensionId);
+    this.ruleDebugger.setExtensionId(this.extensionId);
     this.frontendOberser = new FrontendOberser();
+  }
+
+  _setLocalStorage(key: string, value: string) {
+    window.localStorage.setItem(this._toLocalStorageKey(key), value);
+  }
+
+  _getLocalStorage(key: string) {
+    return window.localStorage.getItem(this._toLocalStorageKey(key));
+  }
+  /**
+   * 生成vact开发者工具key
+   * @param key
+   * @returns
+   */
+  _toLocalStorageKey(key: string) {
+    return `vact_devtools_${key}`;
   }
   /**
    * 是否为VAct平台页面
@@ -106,22 +150,22 @@ class VActDevTools {
     if (url) {
       //@ts-ignore
       let xhr = null;
-      if(window.XMLHttpRequest){
+      if (window.XMLHttpRequest) {
         //@ts-ignore
         xhr = new XMLHttpRequest();
-      }else{
+      } else {
         xhr = new ActiveXObject("Microsoft.XMLHTTP");
       }
       //@ts-ignore
-      xhr.open('POST',url,false);
+      xhr.open("POST", url, false);
       //@ts-ignore
-      xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded"); 
+      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       //@ts-ignore
-      xhr.onreadystatechange =function(){
+      xhr.onreadystatechange = function () {
         //@ts-ignore
-        if(xhr.readyState==4){
+        if (xhr.readyState == 4) {
           //@ts-ignore
-          if(xhr.status == 200){
+          if (xhr.status == 200) {
             //@ts-ignore
             const content = xhr.responseText;
             if (typeof content == "string") {
@@ -138,7 +182,7 @@ class VActDevTools {
             }
           }
         }
-      }
+      };
       //@ts-ignore
       xhr.send();
     } else {
@@ -166,26 +210,25 @@ class VActDevTools {
     this.sandbox = sandbox;
     register(sandbox);
     this.ruleDebugger.setSandbox(sandbox).mount();
-    this.frontendOberser.mount(this.extensionId,this.sandbox);
+    this.frontendOberser.mount(this.extensionId, this.sandbox);
   }
   /**
    * 是否在统计前端耗时
    */
   isMonitored() {
-    const res = window.localStorage.getItem("vact_devtools_isMonitored");
-    return res == "true";
+    return this._getLocalStorage(this.LOCALSTORAGEKEYS.isMonitored) == "true";
   }
   /**
    * 开始记录前端耗时统计
    */
   markMonitored() {
-    window.localStorage.setItem("vact_devtools_isMonitored", "true");
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.isMonitored, "true");
   }
   /**
    * 结束记录前端耗时统计
    */
   markUnMonitored() {
-    window.localStorage.setItem("vact_devtools_isMonitored", "false");
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.isMonitored, "false");
   }
   /**
    * 清除前端耗时数据
@@ -300,13 +343,13 @@ class VActDevTools {
    * 添加断点信息
    */
   addBreakpoint(breakpoint: Breakpoint) {
-    const breakpointJson = window.localStorage.getItem(
-      "vact_devtools_breakpoints"
+    const breakpointJson = this._getLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints
     );
     const breakpoints = breakpointJson ? JSON.parse(breakpointJson) : [];
     breakpoints.push(breakpoint);
-    window.localStorage.setItem(
-      "vact_devtools_breakpoints",
+    this._setLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints,
       JSON.stringify(breakpoints)
     );
   }
@@ -315,8 +358,8 @@ class VActDevTools {
    * 开发者工具中可以启用/禁用断点
    */
   updateBreakpoint(breakpoint: Breakpoint) {
-    const breakpointJson = window.localStorage.getItem(
-      "vact_devtools_breakpoints"
+    const breakpointJson = this._getLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints
     );
     const breakpoints: Breakpoint[] = breakpointJson
       ? JSON.parse(breakpointJson)
@@ -335,8 +378,8 @@ class VActDevTools {
         }
       }
     }
-    window.localStorage.setItem(
-      "vact_devtools_breakpoints",
+    this._setLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints,
       JSON.stringify(breakpoints)
     );
   }
@@ -344,8 +387,8 @@ class VActDevTools {
    * 移除断点信息
    */
   removeBreakpoint(breakpoint: Breakpoint | Breakpoint[]) {
-    const breakpointJson = window.localStorage.getItem(
-      "vact_devtools_breakpoints"
+    const breakpointJson = this._getLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints
     );
     const breakpoints: Breakpoint[] = breakpointJson
       ? JSON.parse(breakpointJson)
@@ -359,8 +402,8 @@ class VActDevTools {
         storage.push(bp);
       }
     });
-    window.localStorage.setItem(
-      "vact_devtools_breakpoints",
+    this._setLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints,
       JSON.stringify(storage)
     );
   }
@@ -368,8 +411,8 @@ class VActDevTools {
    * 获取所有断点信息
    */
   getBreakpoints() {
-    const breakpointJson = window.localStorage.getItem(
-      "vact_devtools_breakpoints"
+    const breakpointJson = this._getLocalStorage(
+      this.LOCALSTORAGEKEYS.breakpoints
     );
     return breakpointJson ? JSON.parse(breakpointJson) : [];
   }
@@ -377,46 +420,45 @@ class VActDevTools {
    * 是否断点所有规则
    */
   isBreakAllRule() {
-    const flag = window.localStorage.getItem("vact_devtools_breakallrule");
-    return flag == "true";
+    return this._getLocalStorage(this.LOCALSTORAGEKEYS.breakallrule) == "true";
   }
   /**
    * 标记断点所有规则
    */
   markBreakAllRule() {
-    window.localStorage.setItem("vact_devtools_breakallrule", "true");
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.breakallrule, "true");
   }
   /**
    * 取消断点所有谷子额
    */
   unmarkBreakAllRule() {
-    window.localStorage.setItem("vact_devtools_breakallrule", "false");
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.breakallrule, "false");
   }
   /**
    * 清除所有断点
    */
   clearBreakpoint() {
-    window.localStorage.setItem("vact_devtools_breakallrule", "false");
-    window.localStorage.setItem("vact_devtools_breakpoints", "[]");
+    this.unmarkBreakAllRule();
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.breakpoints, "[]");
   }
   /**
    * 标记忽略所有断点
    */
   markIgnoreBreakpoints() {
-    window.localStorage.setItem("vact_devtools_ignorebreakpoints", "true");
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.ignorebreakpoints, "true");
   }
   /**
    * 取消忽略所有断点
    */
   unmarkIgnoreBreakpoints() {
-    window.localStorage.setItem("vact_devtools_ignorebreakpoints", "false");
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.ignorebreakpoints, "false");
   }
   /**
    * 是否忽略所有断点
    */
   isIgnoreBreakpoints() {
     return (
-      window.localStorage.getItem("vact_devtools_ignorebreakpoints") == "true"
+      this._getLocalStorage(this.LOCALSTORAGEKEYS.ignorebreakpoints) == "true"
     );
   }
   /**
@@ -424,7 +466,7 @@ class VActDevTools {
    */
   setChromeExtensionId(extensionId: string) {
     this.extensionId = extensionId;
-    window.localStorage.setItem("vact_devtools_extensionId", extensionId);
+    this._setLocalStorage(this.LOCALSTORAGEKEYS.extensionId, extensionId);
     this.ruleDebugger.setExtensionId(extensionId);
   }
   /**
@@ -481,7 +523,7 @@ class VActDevTools {
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
       const scopeId = routeContext.getScopeId();
-      return this.getWindowDatas({instanceId:scopeId});
+      return this.getWindowDatas({ instanceId: scopeId });
     }
     return result;
   }
@@ -535,7 +577,7 @@ class VActDevTools {
     if (ruleContext) {
       const routeContext = ruleContext.getRouteContext();
       const scopeId = routeContext.getScopeId();
-      return this.getComponentDatas({instanceId:scopeId});
+      return this.getComponentDatas({ instanceId: scopeId });
     }
     return result;
   }
@@ -618,51 +660,86 @@ class VActDevTools {
   }
   /**
    * 获取窗体配置信息（元数据）
-   * @param params 
-   * @returns 
+   * @param params
+   * @returns
    */
-  getWindowMetadata(params: {
-    componentCode: string;
-    windowCode: string;
-  }){
-    const {componentCode,windowCode} = params;
-    return getWindowMetadata(this.sandbox,componentCode,windowCode);
+  getWindowMetadata(params: { componentCode: string; windowCode: string }) {
+    const { componentCode, windowCode } = params;
+    return getWindowMetadata(this.sandbox, componentCode, windowCode);
   }
 
   /**
    * 获取构件配置信息（元数据）
-   * @param params 
-   * @returns 
+   * @param params
+   * @returns
    */
-  getComponentMetadata(params: {
-    componentCode: string;
-  }){
-    const {componentCode} = params;
-    return getComponentMetadata(this.sandbox,componentCode);
+  getComponentMetadata(params: { componentCode: string }) {
+    const { componentCode } = params;
+    return getComponentMetadata(this.sandbox, componentCode);
+  }
+  /**
+   * 设置日志打印信息
+   * @param logSetting
+   */
+  setConsoleSetting(consoleSetting: ConsoleSetting) {
+    this.consoleSetting = consoleSetting;
+    this._setLocalStorage(
+      this.LOCALSTORAGEKEYS.consoleSetting,
+      JSON.stringify(consoleSetting)
+    );
+  }
+  /**
+   * 获取日志打印信息
+   */
+  getConsoleSetting() {
+    const consoleSetting = this._getLocalStorage(
+      this.LOCALSTORAGEKEYS.consoleSetting
+    );
+    return consoleSetting ? JSON.parse(consoleSetting) : {};
+  }
+  _getConsoleSettingFromCache(){
+    if(!this.consoleSetting){
+      this.consoleSetting = this.getConsoleSetting();
+    }
+  }
+  /**
+   * 是否打印调试日志
+   */
+  isEnableDebugLog() {
+    this._getConsoleSettingFromCache();
+    return (!!this.consoleSetting?.enable)&&(!!this.consoleSetting?.enableDebug)
+  }
+  /**
+   * 是否打印消息日志
+   */
+  isEnableInfoLog() {
+    this._getConsoleSettingFromCache();
+    return (!!this.consoleSetting?.enable)&&(!!this.consoleSetting?.enableInfo)
+  }
+  /**
+   * 是否打印警告日志
+   */
+  isEnableWarnLog() {
+    this._getConsoleSettingFromCache();
+    return (!!this.consoleSetting?.enable)&&(!!this.consoleSetting?.enableWarn)
+  }
+  /**
+   * 是否打印错误日志
+   */
+  isEnableErrorLog() {
+    this._getConsoleSettingFromCache();
+    return (!!this.consoleSetting?.enable)&&(!!this.consoleSetting?.enableError)
   }
 }
-
-const handleErr = function (e) {
-  return {
-    __$vactType: "error",
-    message: e.message,
-  };
-};
 
 const toJson = (obj: {}, keepDsContructor?: boolean) => {
   const json = new FrontendJSON(obj, keepDsContructor);
   return json.parse();
 };
 
-const toVal = (val: any, keepDsContructor?: boolean) => {
-  const json = new FrontendJSON(val, keepDsContructor);
-  return json.parse();
-};
-
 //@ts-ignore
 const vact_devtools = window.vact_devtools || {};
-const extensionId = window.localStorage.getItem("vact_devtools_extensionId");
-vact_devtools.methods = new VActDevTools(extensionId);
+vact_devtools.methods = new VActDevTools();
 //@ts-ignore
 window.vact_devtools = vact_devtools;
 export { vact_devtools };

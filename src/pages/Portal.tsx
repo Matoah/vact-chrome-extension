@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import PestControlIcon from '@mui/icons-material/PestControl';
+import SettingsIcon from '@mui/icons-material/Settings';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import Grid from '@mui/material/Grid';
 
@@ -33,6 +34,11 @@ function getDatas(): Data[] {
       avatarIcon: <PestControlIcon sx={{ width: "68px", height: "68px" }} />,
       desc: "实时调试前端信息，包括构件、窗体中各种数据，以及规则执行情况...",
       to: "/frontendAnalysis",
+    },{
+      title: "设置",
+      avatarIcon: <SettingsIcon sx={{ width: "68px", height: "68px" }} />,
+      desc: "动态调整前端配置，方便灵活使用VAct各种功能...",
+      to: "/frontendSetting",
     },
   ];
 }
