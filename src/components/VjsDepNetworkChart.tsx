@@ -1,17 +1,22 @@
-import Vjs from "../utils/Vjs";
-import { useEffect, useRef } from "react";
-import VjsDepChart from "../utils/VjsDepChart";
+import {
+  useEffect,
+  useRef,
+} from 'react';
+
+import Vjs from '../utils/Vjs';
+import VjsDepChart from '../utils/VjsDepChart';
 
 interface VjsDepNetworkChartProps {
   vjsList: Vjs[];
+  highlights?: string[];
 }
 
 function VjsDepNetworkChart(pros: VjsDepNetworkChartProps) {
-  const { vjsList } = pros;
+  const { vjsList, highlights } = pros;
   const ref = useRef(null);
   useEffect(() => {
     const renderChart = () => {
-      VjsDepChart(ref.current, vjsList);
+      VjsDepChart(ref.current, vjsList, highlights);
     };
     window.addEventListener("resize", renderChart);
     renderChart();

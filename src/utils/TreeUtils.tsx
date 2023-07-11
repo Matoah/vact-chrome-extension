@@ -7,6 +7,8 @@ import {
 } from '../utils/ObjectUtils';
 import { TreeNode } from './Types';
 
+const JOIN_CHAR = "_$_";
+
 function StringLabel(params: { value: any }) {
     const { value } = params;
     return <span style={{ color: "#35c4d7" }}>{value}</span>;
@@ -42,7 +44,7 @@ function StringLabel(params: { value: any }) {
     const tree: TreeNode[] = [];
     if (array.length == 0) {
       tree.push({
-        id: `${prefix}_$_emptyArray`,
+        id: `${prefix}${JOIN_CHAR}emptyArray`,
         label: (
           <Clipboard
             value="[]"
@@ -54,7 +56,7 @@ function StringLabel(params: { value: any }) {
     } else {
       for (let i = 0; i < array.length; i++) {
         const item = array[i];
-        const id = `${prefix}_$_${i}`;
+        const id = `${prefix}${JOIN_CHAR}${i}`;
         tree.push(toTreeNode(id, i + "", item));
       }
     }
@@ -141,14 +143,14 @@ function StringLabel(params: { value: any }) {
     const tree: TreeNode[] = [];
     if (isEmptyObject(object)) {
       tree.push({
-        id: `${prefix}_$_emptyObject`,
+        id: `${prefix}${JOIN_CHAR}emptyObject`,
         label: "",
         type: "none",
       });
     } else {
       for (let attr in object) {
         const val = object[attr];
-        const id = `${prefix}_$_${attr}`;
+        const id = `${prefix}${JOIN_CHAR}${attr}`;
         tree.push(toTreeNode(id, attr, val));
       }
     }
@@ -170,4 +172,28 @@ function StringLabel(params: { value: any }) {
     return result;
   }
 
-export { arrayToTree, getAllNodeIds, objectToTree };
+const jsonPathToExpanded = function(prefix:string,jsonPath:string[]){
+  const expanded:string[] = [];
+  jsonPath.forEach(path=>{
+    const rs = `${prefix}${JOIN_CHAR}${path}`
+    expanded.push(rs);
+    prefix = rs
+  });
+  return expanded;
+}
+
+const jsonPathToNodeId = function(prefix:string,jsonPath:string[]){
+  jsonPath.forEach(path=>{
+    const rs = `${prefix}${JOIN_CHAR}${path}`
+    prefix = rs
+  });
+  return prefix;
+}
+
+export {
+  arrayToTree,
+  getAllNodeIds,
+  jsonPathToExpanded,
+  jsonPathToNodeId,
+  objectToTree,
+};

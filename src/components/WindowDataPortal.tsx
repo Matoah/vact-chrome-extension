@@ -15,9 +15,15 @@ import {
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import { useSelector } from '../store';
@@ -149,12 +155,130 @@ function WindowEntityPortal(props: { data: {} | null }) {
   }
 }
 
+function getAllWidgetCodes(widgets: any) {
+  let widgetCodes: string[] = [];
+  if (widgets) {
+    widgets = Array.isArray(widgets) ? widgets : [widgets];
+    widgets.forEach((widget: any) => {
+      const code = widget.properties?.code;
+      if (code) {
+        widgetCodes.push(code);
+      }
+      const controls = widget.controls;
+      if (controls && controls.length > 0) {
+        widgetCodes = widgetCodes.concat(getAllWidgetCodes(controls));
+      }
+    });
+  }
+  return widgetCodes;
+}
+
+function toOptions(widgetCodes: string[]) {
+  const options: Array<{ label: string }> = [];
+  widgetCodes.forEach((widgetCode) => options.push({ label: widgetCode }));
+  return options;
+}
+
+function toJsonPath(widgetCode: string, widget: any,paths?:string[]){
+  paths = paths ? paths:[];
+  if (widgetCode && widget) {
+    const code = widget.properties?.code;
+    if(code == widgetCode){
+      paths.push("properties");
+      paths.push("code");
+      return true;
+    }else{
+      const controls = widget.controls;
+      if(controls&&controls.length>0){
+        paths.push("controls");
+        for (let index = 0; index < controls.length; index++) {
+          const control = controls[index];
+          paths.push(""+index);
+          const rs = toJsonPath(widgetCode,control,paths);
+          if(rs){
+            return true;
+          }else{
+            paths.pop();
+          }
+        }
+        paths.pop();
+      }
+    }
+  }
+  return false;
+}
+
+function getJsonPath(widgetCode: string, widget: any) {
+  const paths:string[] = [];
+  toJsonPath(widgetCode,widget,paths);
+  return paths;
+}
+
 function WindowWidgetPortal(props: { data: {} | null }) {
   const { data } = props;
   //@ts-ignore
   const widgets = data ? data["控件"] : null;
   if (widgets) {
-    return <JsonDataTreeView json={widgets}></JsonDataTreeView>;
+    const [data, setData] = useState<{
+      search?: { label: string };
+      searchItems: Array<{ label: string }>;
+    }>(()=>{
+      return {
+        search: undefined,
+        searchItems: toOptions(getAllWidgetCodes(widgets)),
+      }
+    });
+    const expanded = getJsonPath(
+      data.search ? data.search.label : "",
+      widgets
+    )
+    return (
+      <List>
+        <ListItem disablePadding>
+          <Autocomplete
+            value={data.search}
+            sx={{ width: "100%" }}
+            options={data.searchItems}
+            autoHighlight
+            autoSelect
+            onChange={(evt, search: any) => {
+              setData({
+                ...data,
+                search,
+              });
+            }}
+            getOptionLabel={(option) => option.label}
+            renderOption={(props, option) => {
+              return (
+                <ListItem disablePadding {...props} key={option.label}>
+                  <ListItemButton>
+                    <ListItemText primary={option.label} />
+                  </ListItemButton>
+                </ListItem>
+              );
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="请输入控件编号"
+                inputProps={{
+                  ...params.inputProps,
+                  autoComplete: "new-password", // disable autocomplete and autofill
+                }}
+              />
+            )}
+          />
+        </ListItem>
+        <ListItem disablePadding>
+          <JsonDataTreeView
+            sx={{ width: "100%" }}
+            json={widgets}
+            expanded={expanded}
+            selected={expanded}
+          ></JsonDataTreeView>
+        </ListItem>
+      </List>
+    );
   } else {
     return <Typography>没有窗体控件信息！</Typography>;
   }

@@ -304,10 +304,10 @@ export const DarkSpacesTheme = createTheme({
     },
     action: {
       active: colors.alpha.black[100],
-      hover: colors.primary.lighter,
+      hover: colors.primary.light,
       hoverOpacity: 0.1,
       selected: colors.alpha.black[10],
-      selectedOpacity: 0.1,
+      selectedOpacity: 0.3,
       disabled: colors.alpha.black[50],
       disabledBackground: colors.alpha.black[5],
       disabledOpacity: 0.38,
@@ -721,6 +721,9 @@ export const DarkSpacesTheme = createTheme({
           "& .MuiTouchRipple-root": {
             opacity: 0.3,
           },
+          "&.MuiListItemButton-root": {
+            transition: "background-color .5s"
+          }
         },
       },
     },
@@ -1003,11 +1006,10 @@ export const DarkSpacesTheme = createTheme({
           background: colors.alpha.black[5],
         },
         root: {
-          transition: "background-color .2s",
-
-          "&.MuiTableRow-hover:hover": {
-            backgroundColor: alpha(colors.alpha.black[5], 0.05),
-          },
+          transition: "background-color .5s",
+          /*"&.MuiTableRow-hover:hover": {
+            backgroundColor: alpha(colors.alpha.black[5], 0.3),
+          },*/
         },
       },
     },
@@ -1187,6 +1189,16 @@ export const DarkSpacesTheme = createTheme({
           lineHeight: 1.7,
         },
       },
+    },
+    MuiTreeItem:{
+      styleOverrides: {
+        content:{
+          transition: "background-color .2s",
+          "&.Mui-focused":{
+            background:`${alpha(colors.primary.light,0.3)} !important`
+          }
+        }
+      }
     },
   },
   shape: {

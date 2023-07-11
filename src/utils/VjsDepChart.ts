@@ -38,7 +38,7 @@ function linkArc(d: any) {
 
 const colorTypes = ["licensing", "suit", "resolved"];
 
-function VjsDepChart(element: any, vjsList: Vjs[]) {
+function VjsDepChart(element: any, vjsList: Vjs[], highlights?: string[]) {
   const width = element.clientWidth,
     height = element.clientHeight;
   const links: Array<{ source: string; target: string; type: string }> = [];
@@ -118,13 +118,20 @@ function VjsDepChart(element: any, vjsList: Vjs[]) {
     .attr("stroke", (d) => color(d.type))
     .attr("stroke-width", 1.5)
     .attr("r", 4)
-    .append('title')
+    .append("title")
     .html((d) => d.id);
 
   node
     .append("text")
     .attr("x", 8)
     .attr("y", "0.31em")
+    .attr("style", (d) => {
+      return highlights
+        ? highlights.indexOf(d.id) != -1
+          ? "color:yellow;"
+          : "color:white;"
+        : "color:white;";
+    })
     .text((d) => d.id)
     .clone(true)
     .lower()

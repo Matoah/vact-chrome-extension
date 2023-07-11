@@ -278,7 +278,7 @@ function VjsDepAnalysis() {
               ...data,
               vjsList: getVjsNames(vjsList),
               children: (
-                <VjsDepNetworkChart vjsList={result}></VjsDepNetworkChart>
+                <VjsDepNetworkChart vjsList={result} highlights={ data.key ? [data.key]:undefined}></VjsDepNetworkChart>
               ),
             });
           })
