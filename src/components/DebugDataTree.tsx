@@ -12,8 +12,8 @@ import { useSelector } from '../store';
 import { isEmptyObject } from '../utils/ObjectUtils';
 import {
   getComponentDebugInfo,
+  getMethodDebugInfo,
   getRuleDebugInfo,
-  getRulesetDebugInfo,
   getWindowDebugInfo,
 } from '../utils/RPCUtils';
 import { uuid } from '../utils/StringUtils';
@@ -47,7 +47,7 @@ const getRuleSetTree = async function (debug: Rule, expanded: string[]) {
   const id = "debug_$_data_$_ruleset";
   let children = undefined;
   if (expanded.indexOf(id) != -1) {
-    const rulesetDebug = await getRulesetDebugInfo();
+    const rulesetDebug = await getMethodDebugInfo();
     if (rulesetDebug && !isEmptyObject(rulesetDebug)) {
       children = objectToTree(id, rulesetDebug);
     }

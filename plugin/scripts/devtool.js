@@ -11,7 +11,7 @@ function uuid() {
 
 chrome.devtools.inspectedWindow.eval(
   `(function(id){
-  window.vact_devtools.methods.setChromeExtensionId(id);
+  window.vact_devtools.methods.apply("setChromeExtensionId",id);
 })("${chrome.runtime.id}")`,
   function (res, e) {
     if (e) {
@@ -39,7 +39,7 @@ chrome.devtools.panels.create(
             `(function(){
               let res = null;
               try{
-                const rs = window.vact_devtools.methods.${method}(${JSON.stringify(
+                const rs = window.vact_devtools.methods.apply("${method}",${JSON.stringify(
               params
             )});
                 res = {

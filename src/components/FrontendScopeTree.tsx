@@ -72,11 +72,13 @@ function FrontendScopeTree(props: FrontendScopeTreeProps) {
     getFrontendScopes()
       .then((scopes) => {
         const scopeTree = toScopeTree(scopes);
-        setData({
-          ...data,
-          searchItems: toScopeTreeSearchItems(scopes),
-          expanded: getAllNodeIds(scopeTree),
-          scopeTree: filterScopeTree(scopeTree, data.search),
+        setData((data)=>{
+          return {
+            ...data,
+            searchItems: toScopeTreeSearchItems(scopes),
+            expanded: data.expanded&&data.expanded.length>0 ? data.expanded:getAllNodeIds(scopeTree),
+            scopeTree: filterScopeTree(scopeTree, data.search),
+          }
         });
       })
       .catch(errHandler);

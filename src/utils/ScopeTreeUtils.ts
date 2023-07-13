@@ -6,7 +6,11 @@ import {
 } from './Types';
 
 const sortHandler = function (n1: ScopeTreeNode, n2: ScopeTreeNode) {
-    return n1.label.localeCompare(n2.label);
+    let label1 = n1.label;
+    label1 = typeof label1 =='string' ? label1:''
+    let label2 = n2.label;
+    label2 = typeof label2 =='string' ? label2:''
+    return label1.localeCompare(label2);
   };
 
 export function toScopeTree(scopes: Array<FrontendScope>): ScopeTreeNode[] {

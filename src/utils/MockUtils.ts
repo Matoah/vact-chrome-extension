@@ -119,7 +119,7 @@ export function isIgnoreBreakpoints() {
   return ignorebreakpoints;
 }
 
-export function getRulesetDebugInfo() {
+export function getMethodDebugInfo() {
   return null;
 }
 

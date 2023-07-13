@@ -1,85 +1,107 @@
-//@ts-nocheck
-import * as dataManager from './DataManager';
-import TimePoint from './TimePoint';
+import MonitorManager from '../manager/MonitorManager';
+import MonitorDataManager from '../manager/private/MonitorDataManager';
+import TimePoint from '../model/TimePoint';
 import {
   getEventManager,
   getScopeManager,
-} from './Utils';
-
-let sb;
+} from '../utils/VjsUtils';
 
 /**
  * 获取路由上下文的时间点
  * */
 function _getRouteTimePoint(routeContext, type) {
-  const info = {};
   let scopeId = routeContext.getScopeId();
-  const scopeManager = getScopeManager(sb);
+  const scopeManager = getScopeManager();
   if (!scopeId) scopeId = scopeManager.getCurrentScopeId();
-  info.scopeId = scopeId;
-  info.parentScopeId = scopeManager.getParentScopeId(scopeId);
-  var scope = scopeManager.getScope(scopeId);
-  info.componentCode = scope.getComponentCode();
+  const parentScopeId = scopeManager.getParentScopeId(scopeId);
+  const scope = scopeManager.getScope(scopeId);
+  const componentCode = scope.getComponentCode();
+  let windowCode = undefined;
   if (scopeManager.isWindowScope(scopeId)) {
-    info.windowCode = scope.getWindowCode();
+    windowCode = scope.getWindowCode();
   }
-  var routeCfg = routeContext.getRouteConfig();
+  const routeCfg = routeContext.getRouteConfig();
+  let funCode = undefined,
+    key = undefined,
+    timePointType = undefined,
+    series: undefined | number = undefined,
+    parentKey = undefined;
   if (routeCfg) {
-    var funCode = routeCfg.getCode();
-    info.funCode = funCode;
-    var monitorSign = routeContext._monitorSign;
-    info.key = monitorSign;
-    info.type = type;
-    info.series = TimePoint.Series.Route;
+    funCode = routeCfg.getCode();
+    const monitorSign = routeContext._monitorSign;
+    key = monitorSign;
+    timePointType = type;
+    series = TimePoint.Series.Route;
     var parentRule = routeContext.getParentRuleContext();
     if (
       parentRule &&
       !parentRule.getRouteContext().isVirtual &&
       parentRule._monitorSign
     ) {
-      info.parentKey = parentRule._monitorSign;
+      parentKey = parentRule._monitorSign;
     }
-    return new TimePoint(info);
+    return new TimePoint({
+      scopeId,
+      parentScopeId,
+      componentCode,
+      windowCode,
+      funCode,
+      key,
+      type: timePointType,
+      series,
+      parentKey,
+    });
   }
   return null;
 }
 
 function _getRuleTimePoint(ruleContext, type) {
-  const scopeManager = getScopeManager(sb);
-  var rr = ruleContext.getRouteContext();
+  const scopeManager = getScopeManager();
+  const rr = ruleContext.getRouteContext();
   if (rr.isVirtual) {
     //虚拟路由里面的规则不作显示
     return null;
   }
-  var info = {};
-  info.key = ruleContext._monitorSign;
-  var monitorSign = rr._monitorSign;
-  if (monitorSign) info.parentKey = monitorSign;
-  var scopeId = scopeManager.getCurrentScopeId();
-  info.scopeId = scopeId;
-  var scope = scopeManager.getScope();
-  info.componentCode = scope.getComponentCode();
+  const key = ruleContext._monitorSign;
+  const monitorSign = rr._monitorSign;
+  let parentKey = undefined;
+  if (monitorSign) parentKey = monitorSign;
+  const scopeId = scopeManager.getCurrentScopeId();
+  const scope = scopeManager.getScope();
+  const componentCode = scope.getComponentCode();
+  let winCode = undefined;
   if (scopeManager.isWindowScope(scopeId)) {
-    info.winCode = scope.getWindowCode();
+    winCode = scope.getWindowCode();
   }
-  var routeCfg = rr.getRouteConfig();
-  info.funCode = routeCfg.getCode();
-  var ruleCfg = ruleContext.getRuleCfg();
-  info.ruleCode = ruleCfg.ruleCode;
-  info.ruleName = ruleCfg.instanceName;
-  info.ruleInstanceCode = ruleCfg.instanceCode;
-  info.type = type;
-  info.series = TimePoint.Series.Rule;
-  return new TimePoint(info);
+  const routeCfg = rr.getRouteConfig();
+  const funCode = routeCfg.getCode();
+  const ruleCfg = ruleContext.getRuleCfg();
+  const ruleCode = ruleCfg.ruleCode;
+  const ruleName = ruleCfg.instanceName;
+  const ruleInstanceCode = ruleCfg.instanceCode;
+  const series = TimePoint.Series.Rule;
+  return new TimePoint({
+    key,
+    parentKey,
+    scopeId,
+    componentCode,
+    windowCode:winCode,
+    funCode,
+    ruleCode,
+    ruleName,
+    ruleInstanceCode,
+    type,
+    series,
+  });
 }
 /**
  * 获取窗体相关的时间点
  * */
 function _getWindowTimePoint(scopeId, type, uuid) {
-  const scopeManager = getScopeManager(sb);
-  var scope = scopeManager.getScope(scopeId);
-  var componentCode = scope.getComponentCode();
-  var winCode = scope.getWindowCode();
+  const scopeManager = getScopeManager();
+  const scope = scopeManager.getScope(scopeId);
+  const componentCode = scope.getComponentCode();
+  const winCode = scope.getWindowCode();
   return new TimePoint({
     componentCode: componentCode,
     windowCode: winCode,
@@ -92,9 +114,9 @@ function _getWindowTimePoint(scopeId, type, uuid) {
  * 获取构件相关的时间点
  * */
 function _getComponentTimePoint(scopeId, type, uuid) {
-  const scopeManager = getScopeManager(sb);
-  var scope = scopeManager.getScope(scopeId);
-  var componentCode = scope.getComponentCode();
+  const scopeManager = getScopeManager();
+  const scope = scopeManager.getScope(scopeId);
+  const componentCode = scope.getComponentCode();
   return new TimePoint({
     componentCode: componentCode,
     key: uuid,
@@ -107,18 +129,18 @@ function _getComponentTimePoint(scopeId, type, uuid) {
  * 获取rpc相关的时间点
  * */
 function _getRPCTimePoint(request, type, uuid) {
-  var operations = request.getOperations();
-  var operationList = [];
-  var componentCode = null;
-  var winCode = null;
-  var rpcCode = null;
+  const operations = request.getOperations();
+  const operationList:string[] = [];
+  let componentCode = "";
+  let winCode = undefined;
+  let rpcCode:string|undefined = undefined;
   if (operations && operations.length > 0) {
-    for (var i = 0, l = operations.length; i < l; i++) {
-      var operation = operations[i];
+    for (let i = 0, l = operations.length; i < l; i++) {
+      const operation = operations[i];
       componentCode = operation.getComponentCode();
       winCode = operation.getWindowCode();
-      var operationCode;
-      var params = operation.getParams();
+      let operationCode;
+      const params = operation.getParams();
       if (params.hasOwnProperty("ruleSetCode")) {
         operationCode = params["ruleSetCode"];
       } else if (params.hasOwnProperty("transaction_action")) {
@@ -146,8 +168,7 @@ function _getRPCTimePoint(request, type, uuid) {
  * 监控状态是否开启
  * */
 function isOpenMonitor() {
-  //@ts-ignore
-  return window.vact_devtools.methods.isMonitored();
+  return MonitorManager.getInstance().isMonitored();
 }
 
 /**
@@ -155,9 +176,9 @@ function isOpenMonitor() {
  */
 function beforeRouteExe(rr) {
   if (isOpenMonitor()) {
-    var time = _getRouteTimePoint(rr, TimePoint.Types.BeforeRouteExe);
+    const time = _getRouteTimePoint(rr, TimePoint.Types.BeforeRouteExe);
     if (time) {
-      dataManager.add(time);
+      MonitorDataManager.getInstance().add(time);
     }
   }
 }
@@ -167,16 +188,16 @@ function beforeRouteExe(rr) {
  */
 function afterRouteExe(rr) {
   if (isOpenMonitor()) {
-    var monitorSign = rr._monitorSign;
+    const monitorSign = rr._monitorSign;
     if (monitorSign) {
       if (rr._isInnerRoute) {
         //删除对应的方法执行前时间点
-        dataManager.remove(monitorSign);
+        MonitorDataManager.getInstance().remove(monitorSign);
       } else {
         if (!rr.isVirtual && rr._monitorSign) {
-          var time = _getRouteTimePoint(rr, TimePoint.Types.AfterRouteExe);
+          const time = _getRouteTimePoint(rr, TimePoint.Types.AfterRouteExe);
           if (time) {
-            dataManager.add(time);
+            MonitorDataManager.getInstance().add(time);
           }
         }
       }
@@ -185,17 +206,17 @@ function afterRouteExe(rr) {
 }
 
 function _isBusinessRule(ruleContext) {
-  var ruleInstance = ruleContext.getRuleCfg();
+  const ruleInstance = ruleContext.getRuleCfg();
   return ruleInstance.hasOwnProperty("transactionType");
 }
 
 function beforeRuleExe(ruleContext) {
   if (isOpenMonitor()) {
     if (_isBusinessRule(ruleContext)) {
-      var time = _getRuleTimePoint(ruleContext, TimePoint.Types.BeforeRuleExe);
-      if (time) dataManager.add(time);
+      const time = _getRuleTimePoint(ruleContext, TimePoint.Types.BeforeRuleExe);
+      if (time) MonitorDataManager.getInstance().add(time);
     } else {
-      var routeContext = ruleContext.getRouteContext();
+      const routeContext = ruleContext.getRouteContext();
       routeContext._isInnerRoute = true;
     }
   }
@@ -204,111 +225,111 @@ function beforeRuleExe(ruleContext) {
 function afterRuleExe(ruleContext) {
   if (isOpenMonitor()) {
     if (_isBusinessRule(ruleContext)) {
-      var time = _getRuleTimePoint(ruleContext, TimePoint.Types.AfterRuleExe);
-      if (time) dataManager.add(time);
+      const time = _getRuleTimePoint(ruleContext, TimePoint.Types.AfterRuleExe);
+      if (time) MonitorDataManager.getInstance().add(time);
     }
   }
 }
 
 function beforeWindowLoad(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getWindowTimePoint(
+    const time = _getWindowTimePoint(
       scopeId,
       TimePoint.Types.BeforeWindowLoad,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function afterWindowLoad(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getWindowTimePoint(
+    const time = _getWindowTimePoint(
       scopeId,
       TimePoint.Types.AfterWindowLoad,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function beforeWindowRender(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getWindowTimePoint(
+    const time = _getWindowTimePoint(
       scopeId,
       TimePoint.Types.BeforeWindowRender,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function afterWindowRender(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getWindowTimePoint(
+    const time = _getWindowTimePoint(
       scopeId,
       TimePoint.Types.AfterWindowRender,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function beforeWindowInit(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getWindowTimePoint(
+    const time = _getWindowTimePoint(
       scopeId,
       TimePoint.Types.BeforeWindowInit,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function afterWindowInit(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getWindowTimePoint(
+    const time = _getWindowTimePoint(
       scopeId,
       TimePoint.Types.AfterWindowInit,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function beforeComponentInit(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getComponentTimePoint(
+    const time = _getComponentTimePoint(
       scopeId,
       TimePoint.Types.BeforeComponentInit,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function afterComponentInit(scopeId, uuid) {
   if (isOpenMonitor()) {
-    var time = _getComponentTimePoint(
+    const time = _getComponentTimePoint(
       scopeId,
       TimePoint.Types.AfterComponentInit,
       uuid
     );
-    dataManager.add(time);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function beforeRPC(request, uuid) {
   if (isOpenMonitor()) {
-    var time = _getRPCTimePoint(request, TimePoint.Types.BeforeRPC, uuid);
-    dataManager.add(time);
+    const time = _getRPCTimePoint(request, TimePoint.Types.BeforeRPC, uuid);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
 function afterRPC(request, uuid) {
   if (isOpenMonitor()) {
-    var time = _getRPCTimePoint(request, TimePoint.Types.AfterRPC, uuid);
-    dataManager.add(time);
+    const time = _getRPCTimePoint(request, TimePoint.Types.AfterRPC, uuid);
+    MonitorDataManager.getInstance().add(time);
   }
 }
 
@@ -316,38 +337,35 @@ function afterRPC(request, uuid) {
  * 开启监控
  * */
 function openMonitor() {
-  //@ts-ignore
-  window.vact_devtools.methods.markMonitored();
+  MonitorManager.getInstance().markMonitored();
 }
 
 /**
  * 关闭监控
  * */
 function closeMonitor() {
-  //@ts-ignore
-  window.vact_devtools.methods.markUnMonitored();
+  MonitorManager.getInstance().markUnMonitored()
 }
 
 export function doStart() {
   //删除已组装的数据
-  dataManager.clearTreeData();
+  MonitorDataManager.getInstance().clearTreeData();
   openMonitor();
 }
 
 export function doStop() {
   //删除已组装的数据
-  dataManager.clearTreeData();
+  MonitorDataManager.getInstance().clearTreeData();
   closeMonitor();
 }
 
 export function doClear() {
   closeMonitor();
-  dataManager.clear();
+  MonitorDataManager.getInstance().clear();
 }
 
-export function register(sandbox) {
-  sb = sandbox;
-  const eventManager = getEventManager(sb);
+export function mount() {
+  const eventManager = getEventManager();
   eventManager.register({
     event: eventManager.Events.BeforeRouteExe,
     handler: beforeRouteExe,

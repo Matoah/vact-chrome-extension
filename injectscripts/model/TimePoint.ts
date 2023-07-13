@@ -1,3 +1,23 @@
+interface TimePointParams {
+  time?: Date;
+  type?: number;
+  key?: string;
+  series?: number;
+  componentCode: string;
+  componentName?: string;
+  windowCode?: string;
+  windowName?: string;
+  funCode?: string;
+  funName?: string;
+  ruleCode?: string;
+  ruleName?: string;
+  ruleInstanceCode?: string;
+  rpcCode?: string;
+  parentKey?: string;
+  scopeId?: string;
+  parentScopeId?: string;
+}
+
 class TimePoint {
   static Types = {
     BeforeRuleExe: -1,
@@ -25,24 +45,24 @@ class TimePoint {
   };
 
   time: Date;
-  type: number;
-  key: string;
-  series: number;
+  type?: number;
+  key?: string;
+  series?: number;
   componentCode: string;
-  componentName: string;
-  windowCode: string;
-  windowName: string;
-  funCode: string;
-  funName: string;
-  ruleCode: string;
-  ruleName: string;
-  ruleInstanceCode: string;
-  rpcCode: string;
-  parentKey: string;
-  scopeId: string;
-  parentScopeId: string;
-  constructor(params) {
-    this.time = new Date();
+  componentName?: string;
+  windowCode?: string;
+  windowName?: string;
+  funCode?: string;
+  funName?: string;
+  ruleCode?: string;
+  ruleName?: string;
+  ruleInstanceCode?: string;
+  rpcCode?: string;
+  parentKey?: string;
+  scopeId?: string;
+  parentScopeId?: string;
+  constructor(params: TimePointParams) {
+    this.time = params.time || new Date();
     this.type = params.type;
     this.key = params.key;
     this.series = params.series;
@@ -222,3 +242,4 @@ class TimePoint {
   }
 }
 export default TimePoint;
+export { TimePoint, TimePointParams };

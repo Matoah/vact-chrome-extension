@@ -1,9 +1,12 @@
+import { indexOf } from '../../utils/BreakpointUtils';
+import { isDevtoolOpened } from '../../utils/ConsoleUtils';
 import {
   getEventManager,
   getScopeManager,
-  indexOf,
-  isDevtoolOpened,
-} from './Utils';
+} from '../../utils/VjsUtils';
+import BreakpointManager from '../BreakpointManager';
+import ExtensionManager from '../ExtensionManager';
+import MethodManager from '../MethodManager';
 
 interface Method {
   componentCode: string;
@@ -14,24 +17,22 @@ interface Rule {
   method: Method;
   code: string;
 }
-class RuleDebugger {
-  extensionId;
-  sandbox;
+class RuleDebuggerManager {
+
+  private static INSTANCE:RuleDebuggerManager|null = null;
+
+  static getInstance(){
+    if(RuleDebuggerManager.INSTANCE == null){
+      RuleDebuggerManager.INSTANCE = new RuleDebuggerManager();
+    }
+    return RuleDebuggerManager.INSTANCE;
+  }
+
   port;
   modal;
   nextRule = false;
   debug: Array<{ type: string; rule?: Rule }> = [];
   ruleContext;
-  setExtensionId(extensionId: string | null) {
-    if (extensionId) {
-      this.extensionId = extensionId;
-    }
-    return this;
-  }
-  setSandbox(sandbox: any) {
-    this.sandbox = sandbox;
-    return this;
-  }
   _initModal() {
     if (!this.modal) {
       const modal = document.createElement("div");
@@ -72,10 +73,9 @@ class RuleDebugger {
       if (info) {
         const routeContext = ruleContext.getRouteContext();
         const scopeId = routeContext.getScopeId();
-        const scope = getScopeManager(this.sandbox).getScope(scopeId);
+        const scope = getScopeManager().getScope(scopeId);
         if (scope && scope.getWindowCode) {
-          //@ts-ignore
-          const logic = window.vact_devtools.methods.getFrontendMethod({
+          const logic = MethodManager.getInstance().getFrontendMethod({
             componentCode: info.componentCode,
             windowCode: info.windowCode,
             methodCode: info.methodCode,
@@ -101,7 +101,7 @@ class RuleDebugger {
     const routeContext = ruleContext.getRouteContext();
     const routeCfg = routeContext.getRouteConfig();
     const scopeId = routeContext.getScopeId();
-    const scope = getScopeManager(this.sandbox).getScope(scopeId);
+    const scope = getScopeManager().getScope(scopeId);
     const ruleCfg = ruleContext.getRuleCfg();
     if (ruleCfg && routeCfg && scope) {
       const methodCode: string = routeCfg.getCode();
@@ -125,46 +125,41 @@ class RuleDebugger {
     return null;
   }
   mount() {
-    if (this.sandbox) {
-      const eventManager = getEventManager(this.sandbox);
-      eventManager.register({
-        event: eventManager.Events.BeforeRuleExe,
-        handler: (ruleContext) => {
-          try {
-            if (
-              this._isBusinessRule(ruleContext) &&
-              this._isDebuggerAtBefore(ruleContext)
-            ) {
-              //@ts-ignore
-              if (!window.vact_devtools.methods.isBreakAllRule()) {
-                this._clearDebug();
-              }
-              return this._sendDebug(ruleContext, "breforeRuleExe");
+    const eventManager = getEventManager();
+    eventManager.register({
+      event: eventManager.Events.BeforeRuleExe,
+      handler: (ruleContext) => {
+        try {
+          if (
+            this._isBusinessRule(ruleContext) &&
+            this._isDebuggerAtBefore(ruleContext)
+          ) {
+            if (!BreakpointManager.getInstance().isBreakAllRule()) {
+              this._clearDebug();
             }
-          } catch (e) {
-            console.error(e);
+            return this._sendDebug(ruleContext, "breforeRuleExe");
           }
-        },
-      });
-      eventManager.register({
-        event: eventManager.Events.AfterRuleExe,
-        handler: (ruleContext) => {
-          try {
-            if (
-              this._isBusinessRule(ruleContext) &&
-              this._isDebuggerAtAfter(ruleContext)
-            ) {
-              this.debug.pop();
-              return this._sendDebug(ruleContext, "afterRuleExe");
-            }
-          } catch (e) {
-            console.error(e);
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
+    eventManager.register({
+      event: eventManager.Events.AfterRuleExe,
+      handler: (ruleContext) => {
+        try {
+          if (
+            this._isBusinessRule(ruleContext) &&
+            this._isDebuggerAtAfter(ruleContext)
+          ) {
+            this.debug.pop();
+            return this._sendDebug(ruleContext, "afterRuleExe");
           }
-        },
-      });
-    } else {
-      throw Error("无法挂载规则调试器！原因：未设置sandbox");
-    }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   }
   _sendDebug(ruleContext, type: "breforeRuleExe" | "afterRuleExe") {
     return new Promise((resolve, reject) => {
@@ -208,7 +203,7 @@ class RuleDebugger {
     });
   }
   _clearDebug() {
-    if (this.debug&&this.debug.length>0) {
+    if (this.debug && this.debug.length > 0) {
       const type = this.debug[this.debug.length - 1].type;
       if (["nextRule", "nextBreakpoint"].indexOf(type) != -1) {
         this.debug.pop();
@@ -217,7 +212,6 @@ class RuleDebugger {
   }
   _isDebuggerAtAfter(ruleContext) {
     if (
-      this.extensionId &&
       isDevtoolOpened() &&
       this.debug &&
       this.debug[this.debug.length - 1] &&
@@ -239,16 +233,15 @@ class RuleDebugger {
     return false;
   }
   _isDebuggerAtBefore(ruleContext) {
-    //@ts-ignore
-    const methods = window.vact_devtools.methods;
-    if (this.extensionId && isDevtoolOpened()) {
+    const methods = BreakpointManager.getInstance();
+    if (isDevtoolOpened()) {
       if (methods.isIgnoreBreakpoints()) {
         //忽略所有断点
         return false;
       } else if (methods.isBreakAllRule()) {
         //断点所有规则
         return true;
-      } 
+      }
       if (
         this.debug.length > 0 &&
         this.debug[this.debug.length - 1].type !== "afterRuleExe"
@@ -257,7 +250,6 @@ class RuleDebugger {
         if (type == "nextRule") {
           return true;
         } else if (type == "nextBreakpoint") {
-          
         }
       }
       const breakpoints = methods.getBreakpoints();
@@ -285,54 +277,46 @@ class RuleDebugger {
     action: "ruleDebug" | "refreshTreeMethod";
   }) {
     return new Promise<null | any>((resolve, reject) => {
-      if (this.extensionId && this.sandbox) {
-        try {
-          //@ts-ignore
-          chrome.runtime.sendMessage(
-            this.extensionId,
-            { data: params.data, action: params.action, type: "vact" },
-            function (response: any) {
-              //@ts-ignore
-              if (chrome.runtime.lastError) {
-                resolve(null);
-              } else {
-                resolve(response);
-              }
+      try {
+        //@ts-ignore
+        chrome.runtime.sendMessage(
+          ExtensionManager.getInstance().getExtensionId(),
+          { data: params.data, action: params.action, type: "vact" },
+          function (response: any) {
+            //@ts-ignore
+            if (chrome.runtime.lastError) {
+              resolve(null);
+            } else {
+              resolve(response);
             }
-          );
-        } catch (e) {
-          reject(e);
-        }
-      } else {
-        resolve(null);
+          }
+        );
+      } catch (e) {
+        reject(e);
       }
     });
   }
   sendMessage(params) {
     return new Promise<null | { operation: string }>((resolve, reject) => {
-      if (this.extensionId && this.sandbox) {
-        try {
-          //@ts-ignore
-          chrome.runtime.sendMessage(
-            this.extensionId,
-            { data: params, action: "ruleDebug", type: "vact" },
-            function (response: { operation: string }) {
-              //@ts-ignore
-              if (chrome.runtime.lastError) {
-                resolve(null);
-              } else {
-                resolve(response);
-              }
+      try {
+        //@ts-ignore
+        chrome.runtime.sendMessage(
+          ExtensionManager.getInstance().getExtensionId(),
+          { data: params, action: "ruleDebug", type: "vact" },
+          function (response: { operation: string }) {
+            //@ts-ignore
+            if (chrome.runtime.lastError) {
+              resolve(null);
+            } else {
+              resolve(response);
             }
-          );
-        } catch (e) {
-          reject(e);
-        }
-      } else {
-        resolve(null);
+          }
+        );
+      } catch (e) {
+        reject(e);
       }
     });
   }
 }
 
-export default RuleDebugger;
+export default RuleDebuggerManager;
