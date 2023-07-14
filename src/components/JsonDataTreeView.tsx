@@ -25,10 +25,12 @@ interface JsonDataTreeViewProps {
   expanded?: string[];
   selected?: string[];
   sx?: SxProps<Theme>;
+  onMouseOver?: (node: TreeNode) => void;
+  onMouseLeave? : ()=>void
 }
 
 export default function JsonDataTreeView(props: JsonDataTreeViewProps) {
-  const { json, expanded, selected, sx } = props;
+  const { json, expanded, selected, sx, onMouseOver,onMouseLeave } = props;
   const [data, setData] = useState<{
     expanded: string[];
     tree: TreeNode[];
@@ -49,6 +51,12 @@ export default function JsonDataTreeView(props: JsonDataTreeViewProps) {
       nodeId={node.id}
       label={node.label}
       sx={{ textAlign: "left" }}
+      onMouseOverCapture={(evt) => {
+        if (onMouseOver) {
+          evt.preventDefault();
+          onMouseOver(node);
+        }
+      }}
     >
       {Array.isArray(node.children) && node.children.length > 0 ? (
         node.children.map((node) => renderTreeChildren(node))
@@ -81,6 +89,12 @@ export default function JsonDataTreeView(props: JsonDataTreeViewProps) {
   }, [selected]);
   return (
     <TreeView
+      onMouseLeave={(evt)=>{
+        if (onMouseLeave) {
+          evt.preventDefault();
+          onMouseLeave();
+        }
+      }}
       sx={sx ? sx : {}}
       selected={data.selected}
       expanded={data.expanded}

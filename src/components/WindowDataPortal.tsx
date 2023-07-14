@@ -27,7 +27,12 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import { useSelector } from '../store';
-import { getWindowDatas } from '../utils/RPCUtils';
+import {
+  getWindowDatas,
+  highlightWidget,
+  unHighlightWidget,
+} from '../utils/RPCUtils';
+import { TreeNode } from '../utils/Types';
 import DatasourceTable from './DatasourceTable';
 import JsonDataTreeView from './JsonDataTreeView';
 import VariableDisplayTable from './VariableDisplayTable';
@@ -179,25 +184,25 @@ function toOptions(widgetCodes: string[]) {
   return options;
 }
 
-function toJsonPath(widgetCode: string, widget: any,paths?:string[]){
-  paths = paths ? paths:[];
+function toJsonPath(widgetCode: string, widget: any, paths?: string[]) {
+  paths = paths ? paths : [];
   if (widgetCode && widget) {
     const code = widget.properties?.code;
-    if(code == widgetCode){
+    if (code == widgetCode) {
       paths.push("properties");
       paths.push("code");
       return true;
-    }else{
+    } else {
       const controls = widget.controls;
-      if(controls&&controls.length>0){
+      if (controls && controls.length > 0) {
         paths.push("controls");
         for (let index = 0; index < controls.length; index++) {
           const control = controls[index];
-          paths.push(""+index);
-          const rs = toJsonPath(widgetCode,control,paths);
-          if(rs){
+          paths.push("" + index);
+          const rs = toJsonPath(widgetCode, control, paths);
+          if (rs) {
             return true;
-          }else{
+          } else {
             paths.pop();
           }
         }
@@ -209,29 +214,26 @@ function toJsonPath(widgetCode: string, widget: any,paths?:string[]){
 }
 
 function getJsonPath(widgetCode: string, widget: any) {
-  const paths:string[] = [];
-  toJsonPath(widgetCode,widget,paths);
+  const paths: string[] = [];
+  toJsonPath(widgetCode, widget, paths);
   return paths;
 }
 
-function WindowWidgetPortal(props: { data: {} | null }) {
-  const { data } = props;
+function WindowWidgetPortal(props: { instanceId: string; data: {} | null }) {
+  const { instanceId, data } = props;
   //@ts-ignore
   const widgets = data ? data["控件"] : null;
   if (widgets) {
     const [data, setData] = useState<{
       search?: { label: string };
       searchItems: Array<{ label: string }>;
-    }>(()=>{
+    }>(() => {
       return {
         search: undefined,
         searchItems: toOptions(getAllWidgetCodes(widgets)),
-      }
+      };
     });
-    const expanded = getJsonPath(
-      data.search ? data.search.label : "",
-      widgets
-    )
+    const expanded = getJsonPath(data.search ? data.search.label : "", widgets);
     return (
       <List>
         <ListItem disablePadding>
@@ -275,6 +277,39 @@ function WindowWidgetPortal(props: { data: {} | null }) {
             json={widgets}
             expanded={expanded}
             selected={expanded}
+            onMouseLeave={()=>{
+              unHighlightWidget();
+            }}
+            onMouseOver={(treeNode:TreeNode) => {
+              try {
+                const nodeId = treeNode.id;
+                const paths = nodeId.split("_$_");
+                //删除root
+                paths.splice(0, 1);
+                let widget = widgets;
+                const pathLen = paths.length;
+                let index = 0,
+                  node = widgets;
+                while (index < pathLen) {
+                  const p = paths[index];
+                  node = node[p];
+                  if (paths[index - 1] == "controls") {
+                    widget = node;
+                  }
+                  index++;
+                }
+                if (widget) {
+                  const widgetCode = widget.properties.code;
+                  highlightWidget({
+                    instanceId,
+                    widgetCode,
+                  });
+                }
+              } catch (e) {
+                console.log("高亮控件时出现异常！");
+                console.log(e);
+              }
+            }}
           ></JsonDataTreeView>
         </ListItem>
       </List>
@@ -334,7 +369,10 @@ export default function WindowDataPortal(props: WindowDataPortalProps) {
           <Typography>窗体控件</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <WindowWidgetPortal data={data}></WindowWidgetPortal>
+          <WindowWidgetPortal
+            data={data}
+            instanceId={selectNode ? selectNode.id:""}
+          ></WindowWidgetPortal>
         </AccordionDetails>
       </Accordion>
     </Fragment>

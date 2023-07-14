@@ -32,6 +32,7 @@ import { getVjsContent } from '../utils/VjsUtils';
 enum DepType {
   InverseDep,
   ForwardDep,
+  CycleDep
 }
 
 const options = [
@@ -44,7 +45,7 @@ const options = [
     code: DepType.ForwardDep,
     label: "正向查找",
     desc: "根据指定的vjs名称，查找其依赖路径，例：A依赖B，B依赖C，查找A，得到结果：A->B->C",
-  },
+  }
 ];
 
 function getVjsNames(vjsList: Vjs[]) {
@@ -161,10 +162,15 @@ function simplifyResult(vjsList: Vjs[], url: string, key: string | null | undefi
   const foundedVjsList: Vjs[] = [];
   const iterate = (vjs: Vjs) => {
     if (!exits(vjs.getName(), tmp) && !exits(vjs.getName(), foundedVjsList)) {
+      const vjsIndex = tmp.length;
       tmp.push(vjs);
       foundedVjsList.push(vjs);
       const vjsName = vjs.getName();
       if (key == vjsName) {
+        //移除其他多余依赖，精简视图
+        const newVjs = vjs.clone();
+        newVjs.setDeps([]);
+        tmp[vjsIndex] = newVjs;
         return true;
       } else {
         const deps = vjs.getDeps();
@@ -176,6 +182,10 @@ function simplifyResult(vjsList: Vjs[], url: string, key: string | null | undefi
             if (def) {
               const res = iterate(def);
               if (res) {
+                //移除其他多余依赖，精简视图
+                const newVjs = vjs.clone();
+                newVjs.setDeps([dep]);
+                tmp[vjsIndex] = newVjs;
                 hasFounded = true;
               }
             }

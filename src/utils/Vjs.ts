@@ -34,8 +34,16 @@ class Vjs {
     return this.deps;
   }
 
+  setDeps(deps:string[]){
+    this.deps = deps;
+  }
+
   getImpls() {
     return this.impls;
+  }
+
+  clone(){
+    return new Vjs(this.name,this.size,this.deps,this.impls);
   }
 }
 

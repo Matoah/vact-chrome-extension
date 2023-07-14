@@ -46,15 +46,20 @@ function notifyDevtools(msg) {
   vact_devtool_ports.forEach(function (port) {
     port.postMessage(msg);
   });
-}
+}*/
 
 chrome.runtime.onConnect.addListener(function (port) {
-  if (port.name == "VAct-devtool-page") {
-    console.log("onConnect" + new Date());
+  if(port.name == "VAct-devtool-page") {
     port.onDisconnect.addListener(function (port) {
       chrome.devtools.inspectedWindow.eval(
-        `(function(){console.log('onDisconnect')})()`
+        `(function(){
+          let res = null;
+          try{
+            const rs = window.vact_devtools.methods.apply("unHighlightWidget",{});
+          }catch(e){
+          }
+        }())`
       );
     });
   }
-});*/
+});

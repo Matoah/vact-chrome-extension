@@ -23,10 +23,9 @@ chrome.devtools.inspectedWindow.eval(
 chrome.runtime.connect({
   name: "VAct-devtool-page",
 });
-
 chrome.devtools.panels.create(
   "VAct",
-  "",
+  "images/logo16.png",
   "/dist/index.html",
   function (extensionPanel) {
     extensionPanel.onShown.addListener(function tmp(panelWindow) {

@@ -728,3 +728,37 @@ export function getConsoleSetting(){
     }
   });
 }
+
+export function highlightWidget(params:{instanceId:string,widgetCode:string}){
+  return new Promise<void>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("highlightWidget", params);
+      promise
+        .then((rs: any) => {
+          resolve();
+        })
+        .catch(reject);
+    } else {
+      resolve();
+    }
+  });
+}
+
+export function unHighlightWidget(){
+  return new Promise<void>((resolve, reject) => {
+    //@ts-ignore
+    if (window.vact_devtools && window.vact_devtools.sendRequest) {
+      //@ts-ignore
+      const promise = window.vact_devtools.sendRequest("unHighlightWidget", {});
+      promise
+        .then((rs: any) => {
+          resolve();
+        })
+        .catch(reject);
+    } else {
+      resolve();
+    }
+  });
+}
