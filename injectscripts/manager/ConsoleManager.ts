@@ -84,6 +84,15 @@ class ConsoleManager implements ExposeMethod {
   }
 
   /**
+   * 是否打印统计日志
+   * @returns 
+   */
+  isEnableCountLog(){
+    this._getConsoleSettingFromCache();
+    return !!this.consoleSetting?.enable && !!this.consoleSetting?.enableCount;
+  }
+
+  /**
    * 打印信息到控制台
    */
   print(params: { msg: string }) {

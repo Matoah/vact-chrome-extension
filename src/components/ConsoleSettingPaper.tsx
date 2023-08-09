@@ -32,6 +32,10 @@ function ConsoleSettingPaper(props: ConsoleSettingProps) {
         label: "启用日志打印",
         children: [
           {
+            id: "enableCount",
+            label: "统计",
+          },
+          {
             id: "enableDebug",
             label: "调试",
           },

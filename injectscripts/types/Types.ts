@@ -14,6 +14,7 @@ interface ConsoleSetting {
   enableInfo?: boolean;
   enableWarn?: boolean;
   enableError?: boolean;
+  enableCount?: boolean;
 }
 
 interface ExposeMethod {
