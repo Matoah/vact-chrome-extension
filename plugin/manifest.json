@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VAct Developer Tools",
-  "description": "VAct开发者调试工具",
+  "description": "VAct开发者调试工具，提供性能分析、功能调试等功能，是VAct开发、配置人员必备插件。",
   "version": "1.0",
   "icons": {
     "16": "images/logo16.png",
